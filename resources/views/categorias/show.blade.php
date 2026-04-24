@@ -1,102 +1,56 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detalle de Categoría</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 40px;
-            background: #f7f7f7;
-        }
-        .container {
-            max-width: 700px;
-            margin: auto;
-            background: #fff;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,.08);
-        }
-        .row {
-            margin-bottom: 15px;
-        }
-        .label {
-            font-weight: bold;
-            color: #374151;
-        }
-        .value {
-            margin-top: 5px;
-        }
-        .actions {
-            margin-top: 20px;
-            display: flex;
-            gap: 10px;
-        }
-        a, button {
-            background: #111827;
-            color: white;
-            padding: 10px 14px;
-            text-decoration: none;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-        .btn-edit {
-            background: #2563eb;
-        }
-        .btn-delete {
-            background: #dc2626;
-        }
-        form {
-            display: inline;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Detalle de Categoría</h1>
+<x-app-layout>
+    <x-slot name="header">
+        <h2 class="h4 mb-0 text-dark">Detalle de Categoría</h2>
+    </x-slot>
 
-        <div class="row">
-            <div class="label">ID</div>
-            <div class="value">{{ $categoria->id }}</div>
-        </div>
+    <div class="container py-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="mb-3">
+                    <h5 class="mb-1">ID</h5>
+                    <p class="mb-0">{{ $categoria->id }}</p>
+                </div>
 
-        <div class="row">
-            <div class="label">Nombre</div>
-            <div class="value">{{ $categoria->nombre }}</div>
-        </div>
+                <div class="mb-3">
+                    <h5 class="mb-1">Nombre</h5>
+                    <p class="mb-0">{{ $categoria->nombre }}</p>
+                </div>
 
-        <div class="row">
-            <div class="label">Descripción</div>
-            <div class="value">{{ $categoria->descripcion ?? 'Sin descripción' }}</div>
-        </div>
+                <div class="mb-3">
+                    <h5 class="mb-1">Descripción</h5>
+                    <p class="mb-0">{{ $categoria->descripcion ?: 'Sin descripción' }}</p>
+                </div>
 
-        <div class="row">
-            <div class="label">Estado</div>
-            <div class="value">{{ $categoria->estado ? 'Activa' : 'Inactiva' }}</div>
-        </div>
+                <div class="mb-3">
+                    <h5 class="mb-1">Estado</h5>
+                    @if ($categoria->estado)
+                        <span class="badge bg-success">Activa</span>
+                    @else
+                        <span class="badge bg-secondary">Inactiva</span>
+                    @endif
+                </div>
 
-        <div class="row">
-            <div class="label">Fecha de creación</div>
-            <div class="value">{{ $categoria->created_at ? $categoria->created_at->format('d/m/Y H:i') : 'N/A' }}</div>
-        </div>
+                <div class="mb-3">
+                    <h5 class="mb-1">Fecha de creación</h5>
+                    <p class="mb-0">{{ $categoria->created_at?->format('d/m/Y H:i') }}</p>
+                </div>
 
-        <div class="row">
-            <div class="label">Última actualización</div>
-            <div class="value">{{ $categoria->updated_at ? $categoria->updated_at->format('d/m/Y H:i') : 'N/A' }}</div>
-        </div>
+                <div class="mb-4">
+                    <h5 class="mb-1">Última actualización</h5>
+                    <p class="mb-0">{{ $categoria->updated_at?->format('d/m/Y H:i') }}</p>
+                </div>
 
-        <div class="actions">
-            <a href="{{ route('categorias.index') }}">Volver</a>
-            <a href="{{ route('categorias.edit', $categoria->id) }}" class="btn-edit">Editar</a>
+                <div class="d-flex gap-2">
+                    <a href="{{ route('categorias.index') }}" class="btn btn-secondary">Volver</a>
+                    <a href="{{ route('categorias.edit', $categoria->id) }}" class="btn btn-warning text-dark">Editar</a>
 
-            <form action="{{ route('categorias.destroy', $categoria->id) }}" method="POST" onsubmit="return confirm('¿Deseas eliminar esta categoría?')">
-                @csrf
-                @method('DELETE')
-                <button type="submit" class="btn-delete">Eliminar</button>
-            </form>
+                    <form action="{{ route('categorias.destroy', $categoria->id) }}" method="POST" onsubmit="return confirm('¿Deseas eliminar esta categoría?')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-danger">Eliminar</button>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
-</body>
-</html>
+</x-app-layout>

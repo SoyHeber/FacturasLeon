@@ -1,120 +1,69 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar Categoría</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 40px;
-            background: #f7f7f7;
-        }
-        .container {
-            max-width: 700px;
-            margin: auto;
-            background: #fff;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,.08);
-        }
-        label {
-            display: block;
-            margin-top: 15px;
-            margin-bottom: 6px;
-            font-weight: bold;
-        }
-        input[type="text"], textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-        }
-        textarea {
-            resize: vertical;
-            min-height: 100px;
-        }
-        .actions {
-            margin-top: 20px;
-            display: flex;
-            gap: 10px;
-        }
-        button, a {
-            background: #111827;
-            color: white;
-            padding: 10px 14px;
-            text-decoration: none;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-        .btn-secondary {
-            background: #6b7280;
-        }
-        .error-list {
-            background: #fee2e2;
-            color: #991b1b;
-            padding: 12px;
-            border-radius: 6px;
-            margin-bottom: 15px;
-        }
-        .checkbox {
-            margin-top: 15px;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Editar Categoría</h1>
+<x-app-layout>
+    <x-slot name="header">
+        <h2 class="h4 mb-0 text-dark">Editar Categoría</h2>
+    </x-slot>
 
-        @if ($errors->any())
-            <div class="error-list">
-                <strong>Corrige los siguientes errores:</strong>
-                <ul>
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
+    <div class="container py-4">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                @if ($errors->any())
+                    <div class="alert alert-danger">
+                        <strong>Corrige los siguientes errores:</strong>
+                        <ul class="mb-0 mt-2">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
+                <form action="{{ route('categorias.update', $categoria->id) }}" method="POST">
+                    @csrf
+                    @method('PUT')
+
+                    <div class="mb-3">
+                        <label for="nombre" class="form-label">Nombre</label>
+                        <input
+                            type="text"
+                            name="nombre"
+                            id="nombre"
+                            class="form-control"
+                            value="{{ old('nombre', $categoria->nombre) }}"
+                            maxlength="100"
+                            required
+                        >
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="descripcion" class="form-label">Descripción</label>
+                        <textarea
+                            name="descripcion"
+                            id="descripcion"
+                            class="form-control"
+                            rows="4"
+                        >{{ old('descripcion', $categoria->descripcion) }}</textarea>
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            name="estado"
+                            id="estado"
+                            value="1"
+                            {{ old('estado', $categoria->estado) ? 'checked' : '' }}
+                        >
+                        <label class="form-check-label" for="estado">
+                            Activa
+                        </label>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">Actualizar</button>
+                        <a href="{{ route('categorias.index') }}" class="btn btn-secondary">Cancelar</a>
+                    </div>
+                </form>
             </div>
-        @endif
-
-        <form action="{{ route('categorias.update', $categoria->id) }}" method="POST">
-            @csrf
-            @method('PUT')
-
-            <label for="nombre">Nombre</label>
-            <input
-                type="text"
-                name="nombre"
-                id="nombre"
-                value="{{ old('nombre', $categoria->nombre) }}"
-                maxlength="100"
-                required
-            >
-
-            <label for="descripcion">Descripción</label>
-            <textarea
-                name="descripcion"
-                id="descripcion"
-            >{{ old('descripcion', $categoria->descripcion) }}</textarea>
-
-            <div class="checkbox">
-                <label>
-                    <input
-                        type="checkbox"
-                        name="estado"
-                        value="1"
-                        {{ old('estado', $categoria->estado) ? 'checked' : '' }}
-                    >
-                    Activa
-                </label>
-            </div>
-
-            <div class="actions">
-                <button type="submit">Actualizar</button>
-                <a href="{{ route('categorias.index') }}" class="btn-secondary">Cancelar</a>
-            </div>
-        </form>
+        </div>
     </div>
-</body>
-</html>
+</x-app-layout>
