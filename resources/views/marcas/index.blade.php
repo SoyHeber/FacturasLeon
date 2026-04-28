@@ -49,11 +49,25 @@
                                             <a href="{{ route('marcas.edit', $marca->id) }}"
                                                 class="btn btn-warning btn-sm">Editar</a>
 
-                                            <form action="{{ route('marcas.destroy', $marca->id) }}" method="POST"
+                                            {{-- <form action="{{ route('marcas.destroy', $marca->id) }}" method="POST"
                                                 onsubmit="return confirm('¿Deseas eliminar esta marca?')">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                                            </form> --}}
+                                            <form action="{{ route('marcas.cambiar-estado', $marca->id) }}" method="POST">
+                                                @csrf
+                                                @method('PATCH')
+
+                                                @if ($marca->estado)
+                                                    <button type="submit" class="btn btn-secondary btn-sm">
+                                                        Inactivar
+                                                    </button>
+                                                @else
+                                                    <button type="submit" class="btn btn-success btn-sm">
+                                                        Activar
+                                                    </button>
+                                                @endif
                                             </form>
                                         </div>
                                     </td>

@@ -37,7 +37,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/categorias/{categoria}', [CategoriaController::class, 'show'])->name('categorias.show');
     Route::get('/categorias/{categoria}/edit', [CategoriaController::class, 'edit'])->name('categorias.edit');
     Route::put('/categorias/{categoria}', [CategoriaController::class, 'update'])->name('categorias.update');
-    Route::delete('/categorias/{categoria}', [CategoriaController::class, 'destroy'])->name('categorias.destroy');
+    /* Route::delete('/categorias/{categoria}', [CategoriaController::class, 'destroy'])->name('categorias.destroy'); */
+    Route::patch('/categorias/{categoria}/estado', [CategoriaController::class, 'cambiarEstado'])->name('categorias.cambiar-estado');
 
     Route::get('/marcas', [MarcaController::class, 'index'])->name('marcas.index');
     Route::get('/marcas/create', [MarcaController::class, 'create'])->name('marcas.create');
@@ -45,7 +46,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/marcas/{marca}', [MarcaController::class, 'show'])->name('marcas.show');
     Route::get('/marcas/{marca}/edit', [MarcaController::class, 'edit'])->name('marcas.edit');
     Route::put('/marcas/{marca}', [MarcaController::class, 'update'])->name('marcas.update');
-    Route::delete('/marcas/{marca}', [MarcaController::class, 'destroy'])->name('marcas.destroy');
+    /* Route::delete('/marcas/{marca}', [MarcaController::class, 'destroy'])->name('marcas.destroy'); */
+    Route::patch('/marcas/{marca}/estado', [MarcaController::class, 'cambiarEstado'])->name('marcas.cambiar-estado');
 });
 
 require __DIR__ . '/auth.php';

@@ -12,7 +12,7 @@ class CategoriaController extends Controller
         $categorias = Categoria::latest()->paginate(10);
         $minombre = 'heber Antonio';
 
-        return view('categorias.index', compact('categorias','minombre'));
+        return view('categorias.index', compact('categorias', 'minombre'));
     }
 
     public function create()
@@ -68,12 +68,23 @@ class CategoriaController extends Controller
             ->with('success', 'Categoría actualizada correctamente.');
     }
 
-    public function destroy(Categoria $categoria)
+/*     public function destroy(Categoria $categoria)
     {
         $categoria->delete();
 
         return redirect()
             ->route('categorias.index')
             ->with('success', 'Categoría eliminada correctamente.');
+    } */
+
+    public function cambiarEstado(Categoria $categoria)
+    {
+        $categoria->update([
+            'estado' => !$categoria->estado
+        ]);
+
+        return redirect()
+            ->route('categorias.index')
+            ->with('success', 'Estado de la categoría actualizado correctamente.');
     }
 }

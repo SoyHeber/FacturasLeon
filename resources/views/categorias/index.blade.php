@@ -43,13 +43,31 @@
                                     </td>
                                     <td>{{ $categoria->created_at?->format('d/m/Y H:i') }}</td>
                                     <td class="d-flex gap-2">
-                                        <a href="{{ route('categorias.show', $categoria->id) }}" class="btn btn-info btn-sm text-white">Ver</a>
-                                        <a href="{{ route('categorias.edit', $categoria->id) }}" class="btn btn-warning btn-sm">Editar</a>
-                                        <form action="{{ route('categorias.destroy', $categoria->id) }}" method="POST" onsubmit="return confirm('¿Deseas eliminar esta categoría?')">
+                                        <a href="{{ route('categorias.show', $categoria->id) }}"
+                                            class="btn btn-info btn-sm text-white">Ver</a>
+                                        <a href="{{ route('categorias.edit', $categoria->id) }}"
+                                            class="btn btn-warning btn-sm">Editar</a>
+                                        {{-- <form action="{{ route('categorias.destroy', $categoria->id) }}" method="POST" onsubmit="return confirm('¿Deseas eliminar esta categoría?')">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                                        </form> --}}
+                                        <form action="{{ route('categorias.cambiar-estado', $categoria->id) }}"
+                                            method="POST">
+                                            @csrf
+                                            @method('PATCH')
+
+                                            @if ($categoria->estado)
+                                                <button type="submit" class="btn btn-secondary btn-sm">
+                                                    Inactivar
+                                                </button>
+                                            @else
+                                                <button type="submit" class="btn btn-success btn-sm">
+                                                    Activar
+                                                </button>
+                                            @endif
                                         </form>
+
                                     </td>
                                 </tr>
                             @endforeach

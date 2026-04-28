@@ -42,13 +42,28 @@
 
                 <div class="d-flex gap-2">
                     <a href="{{ route('categorias.index') }}" class="btn btn-secondary">Volver</a>
-                    <a href="{{ route('categorias.edit', $categoria->id) }}" class="btn btn-warning text-dark">Editar</a>
+                    <a href="{{ route('categorias.edit', $categoria->id) }}"
+                        class="btn btn-warning text-dark">Editar</a>
 
-                    <form action="{{ route('categorias.destroy', $categoria->id) }}" method="POST" onsubmit="return confirm('¿Deseas eliminar esta categoría?')">
+                    {{-- <form action="{{ route('categorias.destroy', $categoria->id) }}" method="POST"
+                        onsubmit="return confirm('¿Deseas eliminar esta categoría?')">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="btn btn-danger">Eliminar</button>
+                    </form> --}}
+
+                    <form action="{{ route('categorias.cambiar-estado', $categoria->id) }}" method="POST"
+                        onsubmit="return confirm('¿Deseas cambiar el estado de esta categoría?')">
+                        @csrf
+                        @method('PATCH')
+
+                        @if ($categoria->estado)
+                            <button type="submit" class="btn btn-secondary">Inactivar</button>
+                        @else
+                            <button type="submit" class="btn btn-success">Activar</button>
+                        @endif
                     </form>
+
                 </div>
             </div>
         </div>

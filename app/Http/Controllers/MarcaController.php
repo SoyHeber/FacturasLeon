@@ -67,12 +67,23 @@ class MarcaController extends Controller
             ->with('success', 'Marca actualizada correctamente.');
     }
 
-    public function destroy(Marca $marca)
+/*     public function destroy(Marca $marca)
     {
         $marca->delete();
 
         return redirect()
             ->route('marcas.index')
             ->with('success', 'Marca eliminada correctamente.');
+    } */
+
+    public function cambiarEstado(Marca $marca)
+    {
+        $marca->update([
+            'estado' => !$marca->estado
+        ]);
+
+        return redirect()
+            ->route('marcas.index')
+            ->with('success', 'Estado de la marca actualizado correctamente.');
     }
 }
