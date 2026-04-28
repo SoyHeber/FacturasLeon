@@ -3,6 +3,8 @@
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CategoriaController;
+use App\Http\Controllers\MarcaController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -37,6 +39,13 @@ Route::middleware('auth')->group(function () {
     Route::put('/categorias/{categoria}', [CategoriaController::class, 'update'])->name('categorias.update');
     Route::delete('/categorias/{categoria}', [CategoriaController::class, 'destroy'])->name('categorias.destroy');
 
+    Route::get('/marcas', [MarcaController::class, 'index'])->name('marcas.index');
+    Route::get('/marcas/create', [MarcaController::class, 'create'])->name('marcas.create');
+    Route::post('/marcas', [MarcaController::class, 'store'])->name('marcas.store');
+    Route::get('/marcas/{marca}', [MarcaController::class, 'show'])->name('marcas.show');
+    Route::get('/marcas/{marca}/edit', [MarcaController::class, 'edit'])->name('marcas.edit');
+    Route::put('/marcas/{marca}', [MarcaController::class, 'update'])->name('marcas.update');
+    Route::delete('/marcas/{marca}', [MarcaController::class, 'destroy'])->name('marcas.destroy');
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
