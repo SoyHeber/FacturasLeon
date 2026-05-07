@@ -44,6 +44,13 @@
                             Marcas
                         </a>
                     </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('paises.*') ? 'active' : '' }}"
+                            href="{{ route('paises.index') }}">
+                            Países
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>

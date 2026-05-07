@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CategoriaController;
 use App\Http\Controllers\MarcaController;
+use App\Http\Controllers\PaisController;
 
 
 /*
@@ -40,6 +41,7 @@ Route::middleware('auth')->group(function () {
     /* Route::delete('/categorias/{categoria}', [CategoriaController::class, 'destroy'])->name('categorias.destroy'); */
     Route::patch('/categorias/{categoria}/estado', [CategoriaController::class, 'cambiarEstado'])->name('categorias.cambiar-estado');
 
+    /*Rutas de Marcas*/
     Route::get('/marcas', [MarcaController::class, 'index'])->name('marcas.index');
     Route::get('/marcas/create', [MarcaController::class, 'create'])->name('marcas.create');
     Route::post('/marcas', [MarcaController::class, 'store'])->name('marcas.store');
@@ -48,6 +50,16 @@ Route::middleware('auth')->group(function () {
     Route::put('/marcas/{marca}', [MarcaController::class, 'update'])->name('marcas.update');
     /* Route::delete('/marcas/{marca}', [MarcaController::class, 'destroy'])->name('marcas.destroy'); */
     Route::patch('/marcas/{marca}/estado', [MarcaController::class, 'cambiarEstado'])->name('marcas.cambiar-estado');
+
+    /*Rutas para Paises*/
+
+    Route::get('/paises', [PaisController::class, 'index'])->name('paises.index');
+    Route::get('/paises/create', [PaisController::class, 'create'])->name('paises.create');
+    Route::post('/paises', [PaisController::class, 'store'])->name('paises.store');
+    Route::get('/paises/{pais}', [PaisController::class, 'show'])->name('paises.show');
+    Route::get('/paises/{pais}/edit', [PaisController::class, 'edit'])->name('paises.edit');
+    Route::put('/paises/{pais}', [PaisController::class, 'update'])->name('paises.update');
+    Route::patch('/paises/{pais}/estado', [PaisController::class, 'cambiarEstado'])->name('paises.cambiar-estado');
 });
 
 require __DIR__ . '/auth.php';
