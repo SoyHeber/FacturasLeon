@@ -5,6 +5,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CategoriaController;
 use App\Http\Controllers\MarcaController;
 use App\Http\Controllers\PaisController;
+use App\Http\Controllers\DepartamentoController;
+
 
 
 /*
@@ -52,7 +54,6 @@ Route::middleware('auth')->group(function () {
     Route::patch('/marcas/{marca}/estado', [MarcaController::class, 'cambiarEstado'])->name('marcas.cambiar-estado');
 
     /*Rutas para Paises*/
-
     Route::get('/paises', [PaisController::class, 'index'])->name('paises.index');
     Route::get('/paises/create', [PaisController::class, 'create'])->name('paises.create');
     Route::post('/paises', [PaisController::class, 'store'])->name('paises.store');
@@ -60,6 +61,16 @@ Route::middleware('auth')->group(function () {
     Route::get('/paises/{pais}/edit', [PaisController::class, 'edit'])->name('paises.edit');
     Route::put('/paises/{pais}', [PaisController::class, 'update'])->name('paises.update');
     Route::patch('/paises/{pais}/estado', [PaisController::class, 'cambiarEstado'])->name('paises.cambiar-estado');
+
+    /*Rutas para Departamentos*/
+
+    Route::get('/departamentos', [DepartamentoController::class, 'index'])->name('departamentos.index');
+    Route::get('/departamentos/create', [DepartamentoController::class, 'create'])->name('departamentos.create');
+    Route::post('/departamentos', [DepartamentoController::class, 'store'])->name('departamentos.store');
+    Route::get('/departamentos/{departamento}', [DepartamentoController::class, 'show'])->name('departamentos.show');
+    Route::get('/departamentos/{departamento}/edit', [DepartamentoController::class, 'edit'])->name('departamentos.edit');
+    Route::put('/departamentos/{departamento}', [DepartamentoController::class, 'update'])->name('departamentos.update');
+    Route::patch('/departamentos/{departamento}/estado', [DepartamentoController::class, 'cambiarEstado'])->name('departamentos.cambiar-estado');
 });
 
 require __DIR__ . '/auth.php';

@@ -51,6 +51,13 @@
                             Países
                         </a>
                     </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('departamentos.*') ? 'active' : '' }}"
+                            href="{{ route('departamentos.index') }}">
+                            Departamentos
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>

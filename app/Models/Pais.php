@@ -17,8 +17,8 @@ class Pais extends Model
         'estado',
     ];
 
-    /*public function departamentos()
+    public function departamentos()
     {
         return $this->hasMany(Departamento::class);
-    }*/
+    }
 }
