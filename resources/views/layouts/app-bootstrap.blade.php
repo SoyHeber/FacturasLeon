@@ -58,6 +58,13 @@
                             Departamentos
                         </a>
                     </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('municipios.*') ? 'active' : '' }}"
+                            href="{{ route('municipios.index') }}">
+                            Municipios
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>

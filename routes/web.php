@@ -6,8 +6,7 @@ use App\Http\Controllers\CategoriaController;
 use App\Http\Controllers\MarcaController;
 use App\Http\Controllers\PaisController;
 use App\Http\Controllers\DepartamentoController;
-
-
+use App\Http\Controllers\MunicipioController;
 
 /*
 |--------------------------------------------------------------------------
@@ -63,7 +62,6 @@ Route::middleware('auth')->group(function () {
     Route::patch('/paises/{pais}/estado', [PaisController::class, 'cambiarEstado'])->name('paises.cambiar-estado');
 
     /*Rutas para Departamentos*/
-
     Route::get('/departamentos', [DepartamentoController::class, 'index'])->name('departamentos.index');
     Route::get('/departamentos/create', [DepartamentoController::class, 'create'])->name('departamentos.create');
     Route::post('/departamentos', [DepartamentoController::class, 'store'])->name('departamentos.store');
@@ -71,6 +69,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/departamentos/{departamento}/edit', [DepartamentoController::class, 'edit'])->name('departamentos.edit');
     Route::put('/departamentos/{departamento}', [DepartamentoController::class, 'update'])->name('departamentos.update');
     Route::patch('/departamentos/{departamento}/estado', [DepartamentoController::class, 'cambiarEstado'])->name('departamentos.cambiar-estado');
+
+    /*Rutas para Municipios*/
+    Route::get('/municipios', [MunicipioController::class, 'index'])->name('municipios.index');
+    Route::get('/municipios/create', [MunicipioController::class, 'create'])->name('municipios.create');
+    Route::post('/municipios', [MunicipioController::class, 'store'])->name('municipios.store');
+    Route::get('/municipios/{municipio}', [MunicipioController::class, 'show'])->name('municipios.show');
+    Route::get('/municipios/{municipio}/edit', [MunicipioController::class, 'edit'])->name('municipios.edit');
+    Route::put('/municipios/{municipio}', [MunicipioController::class, 'update'])->name('municipios.update');
+    Route::patch('/municipios/{municipio}/estado', [MunicipioController::class, 'cambiarEstado'])->name('municipios.cambiar-estado');
 });
 
 require __DIR__ . '/auth.php';
