@@ -7,6 +7,7 @@ use App\Http\Controllers\MarcaController;
 use App\Http\Controllers\PaisController;
 use App\Http\Controllers\DepartamentoController;
 use App\Http\Controllers\MunicipioController;
+use App\Http\Controllers\MetodoPagoController;
 
 /*
 |--------------------------------------------------------------------------
@@ -78,6 +79,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/municipios/{municipio}/edit', [MunicipioController::class, 'edit'])->name('municipios.edit');
     Route::put('/municipios/{municipio}', [MunicipioController::class, 'update'])->name('municipios.update');
     Route::patch('/municipios/{municipio}/estado', [MunicipioController::class, 'cambiarEstado'])->name('municipios.cambiar-estado');
+
+    /*Rutas para Metodos_Pago*/
+    Route::get('/metodos-pago', [MetodoPagoController::class, 'index'])->name('metodos_pago.index');
+    Route::get('/metodos-pago/create', [MetodoPagoController::class, 'create'])->name('metodos_pago.create');
+    Route::post('/metodos-pago', [MetodoPagoController::class, 'store'])->name('metodos_pago.store');
+    Route::get('/metodos-pago/{metodoPago}', [MetodoPagoController::class, 'show'])->name('metodos_pago.show');
+    Route::get('/metodos-pago/{metodoPago}/edit', [MetodoPagoController::class, 'edit'])->name('metodos_pago.edit');
+    Route::put('/metodos-pago/{metodoPago}', [MetodoPagoController::class, 'update'])->name('metodos_pago.update');
+    Route::patch('/metodos-pago/{metodoPago}/estado', [MetodoPagoController::class, 'cambiarEstado'])->name('metodos_pago.cambiar-estado');
 });
 
 require __DIR__ . '/auth.php';

@@ -65,6 +65,13 @@
                             Municipios
                         </a>
                     </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('metodos_pago.*') ? 'active' : '' }}"
+                            href="{{ route('metodos_pago.index') }}">
+                            Métodos de Pago
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>
