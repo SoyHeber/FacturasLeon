@@ -8,6 +8,7 @@ use App\Http\Controllers\PaisController;
 use App\Http\Controllers\DepartamentoController;
 use App\Http\Controllers\MunicipioController;
 use App\Http\Controllers\MetodoPagoController;
+use App\Http\Controllers\TipoIdentificacionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -88,6 +89,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/metodos-pago/{metodoPago}/edit', [MetodoPagoController::class, 'edit'])->name('metodos_pago.edit');
     Route::put('/metodos-pago/{metodoPago}', [MetodoPagoController::class, 'update'])->name('metodos_pago.update');
     Route::patch('/metodos-pago/{metodoPago}/estado', [MetodoPagoController::class, 'cambiarEstado'])->name('metodos_pago.cambiar-estado');
+
+    /*Rutas para Tipos_Identificacion*/
+    Route::get('/tipos-identificacion', [TipoIdentificacionController::class, 'index'])->name('tipos_identificacion.index');
+    Route::get('/tipos-identificacion/create', [TipoIdentificacionController::class, 'create'])->name('tipos_identificacion.create');
+    Route::post('/tipos-identificacion', [TipoIdentificacionController::class, 'store'])->name('tipos_identificacion.store');
+    Route::get('/tipos-identificacion/{tipoIdentificacion}', [TipoIdentificacionController::class, 'show'])->name('tipos_identificacion.show');
+    Route::get('/tipos-identificacion/{tipoIdentificacion}/edit', [TipoIdentificacionController::class, 'edit'])->name('tipos_identificacion.edit');
+    Route::put('/tipos-identificacion/{tipoIdentificacion}', [TipoIdentificacionController::class, 'update'])->name('tipos_identificacion.update');
+    Route::patch('/tipos-identificacion/{tipoIdentificacion}/estado', [TipoIdentificacionController::class, 'cambiarEstado'])->name('tipos_identificacion.cambiar-estado');
 });
 
 require __DIR__ . '/auth.php';

@@ -72,6 +72,12 @@
                             Métodos de Pago
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('tipos_identificacion.*') ? 'active' : '' }}"
+                            href="{{ route('tipos_identificacion.index') }}">
+                            Tipos de Identificación
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>
