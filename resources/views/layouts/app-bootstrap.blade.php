@@ -67,21 +67,30 @@
                     </li>
 
                     <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('direcciones.*') ? 'active' : '' }}"
+                            href="{{ route('direcciones.index') }}">
+                            Direcciones
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('metodos_pago.*') ? 'active' : '' }}"
                             href="{{ route('metodos_pago.index') }}">
                             Métodos de Pago
                         </a>
                     </li>
+
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('tipos_identificacion.*') ? 'active' : '' }}"
                             href="{{ route('tipos_identificacion.index') }}">
                             Tipos de Identificación
                         </a>
                     </li>
+
                     <li class="nav-item">
-                        <a class="nav-link {{ request()->routeIs('direcciones.*') ? 'active' : '' }}"
-                            href="{{ route('direcciones.index') }}">
-                            Direcciones
+                        <a class="nav-link {{ request()->routeIs('proveedores.*') ? 'active' : '' }}"
+                            href="{{ route('proveedores.index') }}">
+                            Proveedores
                         </a>
                     </li>
                 </ul>

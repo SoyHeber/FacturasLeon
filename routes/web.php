@@ -10,6 +10,7 @@ use App\Http\Controllers\MunicipioController;
 use App\Http\Controllers\MetodoPagoController;
 use App\Http\Controllers\TipoIdentificacionController;
 use App\Http\Controllers\DireccionController;
+use App\Http\Controllers\ProveedorController;
 
 /*
 |--------------------------------------------------------------------------
@@ -108,6 +109,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/direcciones/{direccion}/edit', [DireccionController::class, 'edit'])->name('direcciones.edit');
     Route::put('/direcciones/{direccion}', [DireccionController::class, 'update'])->name('direcciones.update');
     Route::patch('/direcciones/{direccion}/estado', [DireccionController::class, 'cambiarEstado'])->name('direcciones.cambiar-estado');
+
+    /*Rutas para Proveedores */
+    Route::get('/proveedores', [ProveedorController::class, 'index'])->name('proveedores.index');
+    Route::get('/proveedores/create', [ProveedorController::class, 'create'])->name('proveedores.create');
+    Route::post('/proveedores', [ProveedorController::class, 'store'])->name('proveedores.store');
+    Route::get('/proveedores/{proveedor}', [ProveedorController::class, 'show'])->name('proveedores.show');
+    Route::get('/proveedores/{proveedor}/edit', [ProveedorController::class, 'edit'])->name('proveedores.edit');
+    Route::put('/proveedores/{proveedor}', [ProveedorController::class, 'update'])->name('proveedores.update');
+    Route::patch('/proveedores/{proveedor}/estado', [ProveedorController::class, 'cambiarEstado'])->name('proveedores.cambiar-estado');
 });
 
 require __DIR__ . '/auth.php';
