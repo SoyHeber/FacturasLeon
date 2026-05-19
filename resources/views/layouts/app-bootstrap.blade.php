@@ -78,6 +78,12 @@
                             Tipos de Identificación
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('direcciones.*') ? 'active' : '' }}"
+                            href="{{ route('direcciones.index') }}">
+                            Direcciones
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>
