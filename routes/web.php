@@ -11,6 +11,7 @@ use App\Http\Controllers\MetodoPagoController;
 use App\Http\Controllers\TipoIdentificacionController;
 use App\Http\Controllers\DireccionController;
 use App\Http\Controllers\ProveedorController;
+use App\Http\Controllers\ClienteController;
 
 /*
 |--------------------------------------------------------------------------
@@ -110,7 +111,7 @@ Route::middleware('auth')->group(function () {
     Route::put('/direcciones/{direccion}', [DireccionController::class, 'update'])->name('direcciones.update');
     Route::patch('/direcciones/{direccion}/estado', [DireccionController::class, 'cambiarEstado'])->name('direcciones.cambiar-estado');
 
-    /*Rutas para Proveedores */
+    /*Rutas para Proveedores*/
     Route::get('/proveedores', [ProveedorController::class, 'index'])->name('proveedores.index');
     Route::get('/proveedores/create', [ProveedorController::class, 'create'])->name('proveedores.create');
     Route::post('/proveedores', [ProveedorController::class, 'store'])->name('proveedores.store');
@@ -118,6 +119,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/proveedores/{proveedor}/edit', [ProveedorController::class, 'edit'])->name('proveedores.edit');
     Route::put('/proveedores/{proveedor}', [ProveedorController::class, 'update'])->name('proveedores.update');
     Route::patch('/proveedores/{proveedor}/estado', [ProveedorController::class, 'cambiarEstado'])->name('proveedores.cambiar-estado');
+
+    /*Rutas para Clientes*/
+    Route::get('/clientes', [ClienteController::class, 'index'])->name('clientes.index');
+    Route::get('/clientes/create', [ClienteController::class, 'create'])->name('clientes.create');
+    Route::post('/clientes', [ClienteController::class, 'store'])->name('clientes.store');
+    Route::get('/clientes/{cliente}', [ClienteController::class, 'show'])->name('clientes.show');
+    Route::get('/clientes/{cliente}/edit', [ClienteController::class, 'edit'])->name('clientes.edit');
+    Route::put('/clientes/{cliente}', [ClienteController::class, 'update'])->name('clientes.update');
+    Route::patch('/clientes/{cliente}/estado', [ClienteController::class, 'cambiarEstado'])->name('clientes.cambiar-estado');
 });
 
 require __DIR__ . '/auth.php';

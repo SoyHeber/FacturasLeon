@@ -93,6 +93,13 @@
                             Proveedores
                         </a>
                     </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('clientes.*') ? 'active' : '' }}"
+                            href="{{ route('clientes.index') }}">
+                            Clientes
+                        </a>
+                    </li>
                 </ul>
             </div>
         </div>
