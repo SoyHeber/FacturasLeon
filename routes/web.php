@@ -101,13 +101,13 @@ Route::middleware('auth')->group(function () {
     Route::patch('/tipos-identificacion/{tipoIdentificacion}/estado', [TipoIdentificacionController::class, 'cambiarEstado'])->name('tipos_identificacion.cambiar-estado');
 
     /*Rutas para Direcciones*/
-Route::get('/direcciones', [DireccionController::class, 'index'])->name('direcciones.index');
-Route::get('/direcciones/create', [DireccionController::class, 'create'])->name('direcciones.create');
-Route::post('/direcciones', [DireccionController::class, 'store'])->name('direcciones.store');
-Route::get('/direcciones/{direccion}', [DireccionController::class, 'show'])->name('direcciones.show');
-Route::get('/direcciones/{direccion}/edit', [DireccionController::class, 'edit'])->name('direcciones.edit');
-Route::put('/direcciones/{direccion}', [DireccionController::class, 'update'])->name('direcciones.update');
-Route::patch('/direcciones/{direccion}/estado', [DireccionController::class, 'cambiarEstado'])->name('direcciones.cambiar-estado');
+    Route::get('/direcciones', [DireccionController::class, 'index'])->name('direcciones.index');
+    Route::get('/direcciones/create', [DireccionController::class, 'create'])->name('direcciones.create');
+    Route::post('/direcciones', [DireccionController::class, 'store'])->name('direcciones.store');
+    Route::get('/direcciones/{direccion}', [DireccionController::class, 'show'])->name('direcciones.show');
+    Route::get('/direcciones/{direccion}/edit', [DireccionController::class, 'edit'])->name('direcciones.edit');
+    Route::put('/direcciones/{direccion}', [DireccionController::class, 'update'])->name('direcciones.update');
+    Route::patch('/direcciones/{direccion}/estado', [DireccionController::class, 'cambiarEstado'])->name('direcciones.cambiar-estado');
 });
 
 require __DIR__ . '/auth.php';
