@@ -299,17 +299,9 @@
                                         @
                                     </span>
 
-                                    <input
-                                        id="email"
-                                        type="email"
-                                        name="email"
-                                        value="{{ old('email') }}"
-                                        required
-                                        autofocus
-                                        autocomplete="username"
-                                        placeholder="correo@ejemplo.com"
-                                        class="form-control @error('email') is-invalid @enderror"
-                                    >
+                                    <input id="email" type="email" name="email" value="{{ old('email') }}"
+                                        required autofocus autocomplete="username" placeholder="correo@ejemplo.com"
+                                        class="form-control @error('email') is-invalid @enderror">
                                 </div>
 
                                 @error('email')
@@ -330,22 +322,12 @@
                                         🔒
                                     </span>
 
-                                    <input
-                                        id="password"
-                                        type="password"
-                                        name="password"
-                                        required
-                                        autocomplete="current-password"
-                                        placeholder="Ingresa tu contraseña"
-                                        class="form-control @error('password') is-invalid @enderror"
-                                    >
+                                    <input id="password" type="password" name="password" required
+                                        autocomplete="current-password" placeholder="Ingresa tu contraseña"
+                                        class="form-control @error('password') is-invalid @enderror">
 
-                                    <button
-                                        class="btn btn-outline-secondary"
-                                        type="button"
-                                        onclick="togglePassword()"
-                                        style="border-radius: 0 16px 16px 0;"
-                                    >
+                                    <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()"
+                                        style="border-radius: 0 16px 16px 0;">
                                         👁
                                     </button>
                                 </div>
@@ -360,12 +342,7 @@
                             <!-- Recordarme -->
                             <div class="d-flex justify-content-between align-items-center mb-4">
                                 <div class="form-check">
-                                    <input
-                                        id="remember_me"
-                                        type="checkbox"
-                                        name="remember"
-                                        class="form-check-input"
-                                    >
+                                    <input id="remember_me" type="checkbox" name="remember" class="form-check-input">
 
                                     <label class="form-check-label text-muted" for="remember_me">
                                         Recordarme
@@ -382,6 +359,19 @@
                             <button type="submit" class="btn btn-gold w-100">
                                 Iniciar sesión
                             </button>
+
+                            @if (Route::has('register'))
+                                <div class="text-center mt-4">
+                                    <p class="text-muted mb-2">
+                                        ¿No tienes una cuenta?
+                                    </p>
+
+                                    <a href="{{ route('register') }}" class="btn btn-outline-dark w-100"
+                                        style="border-radius: 16px; padding: 12px 18px; font-weight: 700;">
+                                        Crear nuevo usuario
+                                    </a>
+                                </div>
+                            @endif
                         </form>
 
                         <p class="text-center text-muted small mt-5 mb-0">

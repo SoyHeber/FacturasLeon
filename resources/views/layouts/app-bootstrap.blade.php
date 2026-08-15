@@ -360,20 +360,22 @@
                     ☰
                 </button>
 
-                <div class="topbar-user">
-                    <div class="text-end d-none d-sm-block">
-                        <p class="mb-0 fw-bold text-dark">
-                            Administrador
-                        </p>
-                        <small class="text-muted">
-                            Sesión activa
-                        </small>
-                    </div>
+                @auth
+                    <div class="topbar-user">
+                        <div class="text-end d-none d-sm-block">
+                            <p class="mb-0 fw-bold text-dark">
+                                {{ Auth::user()->name }}
+                            </p>
+                            <small class="text-muted">
+                                {{ Auth::user()->email }}
+                            </small>
+                        </div>
 
-                    <div class="user-avatar">
-                        AD
+                        <div class="user-avatar">
+                            {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
+                        </div>
                     </div>
-                </div>
+                @endauth
             </header>
 
             @isset($header)
