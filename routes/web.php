@@ -17,6 +17,8 @@ use App\Http\Controllers\InventarioController;
 use App\Models\Categoria;
 use App\Models\Marca;
 use App\Models\Producto;
+use App\Http\Controllers\UserController;
+
 
 
 /*
@@ -160,6 +162,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/inventarios/{inventario}/edit', [InventarioController::class, 'edit'])->name('inventarios.edit');
     Route::put('/inventarios/{inventario}', [InventarioController::class, 'update'])->name('inventarios.update');
     Route::patch('/inventarios/{inventario}/estado', [InventarioController::class, 'cambiarEstado'])->name('inventarios.cambiar-estado');
+
+    /*Rutas para Usuarios*/
+    Route::get('/users', [UserController::class, 'index'])->name('users.index');
+    Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
+    Route::post('/users', [UserController::class, 'store'])->name('users.store');
+    Route::get('/users/{user}', [UserController::class, 'show'])->name('users.show');
+    Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
+    Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
+    Route::patch('/users/{user}/estado', [UserController::class, 'cambiarEstado'])->name('users.cambiar-estado');
 });
 
 require __DIR__ . '/auth.php';
