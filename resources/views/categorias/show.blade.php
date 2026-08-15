@@ -1,71 +1,136 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="h4 mb-0 text-dark">Detalle de Categoría</h2>
-    </x-slot>
+@extends('layouts.app-bootstrap')
 
-    <div class="container py-4">
-        <div class="card shadow-sm">
-            <div class="card-body">
-                <div class="mb-3">
-                    <h5 class="mb-1">ID</h5>
-                    <p class="mb-0">{{ $categoria->id }}</p>
-                </div>
+@section('content')
+    <div class="module-header">
+        <div>
+            <h1 class="module-title">Detalle de categoría</h1>
+            <p class="module-subtitle">
+                Consulta la información registrada para esta categoría.
+            </p>
+        </div>
 
-                <div class="mb-3">
-                    <h5 class="mb-1">Nombre</h5>
-                    <p class="mb-0">{{ $categoria->nombre }}</p>
-                </div>
+        <div class="d-flex gap-2">
+            <a href="{{ route('categorias.index') }}" class="btn btn-outline-secondary rounded-3 fw-bold">
+                ← Volver
+            </a>
 
-                <div class="mb-3">
-                    <h5 class="mb-1">Descripción</h5>
-                    <p class="mb-0">{{ $categoria->descripcion ?: 'Sin descripción' }}</p>
-                </div>
+            <a href="{{ route('categorias.edit', $categoria->id) }}" class="btn-gold">
+                Editar
+            </a>
+        </div>
+    </div>
 
-                <div class="mb-3">
-                    <h5 class="mb-1">Estado</h5>
-                    @if ($categoria->estado)
-                        <span class="badge bg-success">Activa</span>
-                    @else
-                        <span class="badge bg-secondary">Inactiva</span>
-                    @endif
-                </div>
+    <div class="module-card">
+        <div class="module-card-body">
+            <div class="row g-4">
 
-                <div class="mb-3">
-                    <h5 class="mb-1">Fecha de creación</h5>
-                    <p class="mb-0">{{ $categoria->created_at?->format('d/m/Y H:i') }}</p>
-                </div>
+                <div class="col-md-4">
+                    <div class="p-4 rounded-4 h-100" style="background: #f9fafb; border: 1px solid #e5e7eb;">
+                        <div class="mb-3" style="font-size: 42px;">
+                            📂
+                        </div>
 
-                <div class="mb-4">
-                    <h5 class="mb-1">Última actualización</h5>
-                    <p class="mb-0">{{ $categoria->updated_at?->format('d/m/Y H:i') }}</p>
-                </div>
+                        <p class="text-muted mb-1">
+                            Categoría
+                        </p>
 
-                <div class="d-flex gap-2">
-                    <a href="{{ route('categorias.index') }}" class="btn btn-secondary">Volver</a>
-                    <a href="{{ route('categorias.edit', $categoria->id) }}"
-                        class="btn btn-warning text-dark">Editar</a>
-
-                    {{-- <form action="{{ route('categorias.destroy', $categoria->id) }}" method="POST"
-                        onsubmit="return confirm('¿Deseas eliminar esta categoría?')">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn btn-danger">Eliminar</button>
-                    </form> --}}
-
-                    <form action="{{ route('categorias.cambiar-estado', $categoria->id) }}" method="POST"
-                        onsubmit="return confirm('¿Deseas cambiar el estado de esta categoría?')">
-                        @csrf
-                        @method('PATCH')
+                        <h3 class="fw-bold text-dark mb-3">
+                            {{ $categoria->nombre }}
+                        </h3>
 
                         @if ($categoria->estado)
-                            <button type="submit" class="btn btn-secondary">Inactivar</button>
+                            <span class="badge-active">Activa</span>
                         @else
-                            <button type="submit" class="btn btn-success">Activar</button>
+                            <span class="badge-inactive">Inactiva</span>
                         @endif
-                    </form>
-
+                    </div>
                 </div>
+
+                <div class="col-md-8">
+                    <div class="row g-3">
+
+                        <div class="col-md-6">
+                            <div class="p-3 rounded-4" style="background: #ffffff; border: 1px solid #e5e7eb;">
+                                <p class="text-muted mb-1 small fw-bold">
+                                    ID
+                                </p>
+                                <p class="mb-0 fw-semibold">
+                                    #{{ $categoria->id }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="p-3 rounded-4" style="background: #ffffff; border: 1px solid #e5e7eb;">
+                                <p class="text-muted mb-1 small fw-bold">
+                                    Estado
+                                </p>
+
+                                @if ($categoria->estado)
+                                    <span class="badge-active">Activa</span>
+                                @else
+                                    <span class="badge-inactive">Inactiva</span>
+                                @endif
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <div class="p-3 rounded-4" style="background: #ffffff; border: 1px solid #e5e7eb;">
+                                <p class="text-muted mb-1 small fw-bold">
+                                    Descripción
+                                </p>
+
+                                <p class="mb-0">
+                                    {{ $categoria->descripcion ?: 'Sin descripción registrada.' }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="p-3 rounded-4" style="background: #ffffff; border: 1px solid #e5e7eb;">
+                                <p class="text-muted mb-1 small fw-bold">
+                                    Fecha de creación
+                                </p>
+
+                                <p class="mb-0">
+                                    {{ $categoria->created_at?->format('d/m/Y H:i') ?? 'No disponible' }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="p-3 rounded-4" style="background: #ffffff; border: 1px solid #e5e7eb;">
+                                <p class="text-muted mb-1 small fw-bold">
+                                    Última actualización
+                                </p>
+
+                                <p class="mb-0">
+                                    {{ $categoria->updated_at?->format('d/m/Y H:i') ?? 'No disponible' }}
+                                </p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 mt-4">
+                <form action="{{ route('categorias.cambiar-estado', $categoria->id) }}" method="POST">
+                    @csrf
+                    @method('PATCH')
+
+                    @if ($categoria->estado)
+                        <button type="submit" class="btn btn-outline-secondary rounded-3 fw-bold">
+                            Inactivar categoría
+                        </button>
+                    @else
+                        <button type="submit" class="btn btn-outline-success rounded-3 fw-bold">
+                            Activar categoría
+                        </button>
+                    @endif
+                </form>
             </div>
         </div>
     </div>
-</x-app-layout>
+@endsection

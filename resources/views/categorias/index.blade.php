@@ -1,73 +1,98 @@
 @extends('layouts.app-bootstrap')
 
 @section('content')
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h1 class="h3 mb-0">Categorías</h1>
-        <a href="{{ route('categorias.create') }}" class="btn btn-primary">Nueva categoría</a>
+    <div class="module-header">
+        <div>
+            <h1 class="module-title">Categorías</h1>
+            <p class="module-subtitle">
+                Administra las categorías utilizadas para clasificar los productos de la joyería.
+            </p>
+        </div>
+
+        <a href="{{ route('categorias.create') }}" class="btn-gold">
+            + Nueva categoría
+        </a>
     </div>
 
     @if (session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <div class="alert alert-success border-0 rounded-4 shadow-sm mb-4" role="alert">
             {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
 
-    <div class="card shadow-sm">
-        <div class="card-body">
+    <div class="module-card">
+        <div class="module-card-body">
             @if ($categorias->count())
                 <div class="table-responsive">
-                    <table class="table table-bordered table-hover align-middle">
-                        <thead class="table-dark">
+                    <table class="table table-modern align-middle">
+                        <thead>
                             <tr>
-                                <th>ID</th>
+                                <th style="width: 80px;">ID</th>
                                 <th>Nombre</th>
                                 <th>Descripción</th>
-                                <th>Estado</th>
-                                <th>Fecha creación</th>
-                                <th>Acciones</th>
+                                <th style="width: 140px;">Estado</th>
+                                <th style="width: 180px;">Fecha creación</th>
+                                <th style="width: 260px;">Acciones</th>
                             </tr>
                         </thead>
+
                         <tbody>
                             @foreach ($categorias as $categoria)
                                 <tr>
-                                    <td>{{ $categoria->id }}</td>
-                                    <td>{{ $categoria->nombre }}</td>
-                                    <td>{{ $categoria->descripcion ?: 'Sin descripción' }}</td>
+                                    <td class="fw-bold text-muted">
+                                        #{{ $categoria->id }}
+                                    </td>
+
+                                    <td class="fw-semibold">
+                                        {{ $categoria->nombre }}
+                                    </td>
+
+                                    <td class="text-muted">
+                                        {{ $categoria->descripcion ?: 'Sin descripción' }}
+                                    </td>
+
                                     <td>
                                         @if ($categoria->estado)
-                                            <span class="badge bg-success">Activa</span>
+                                            <span class="badge-active">Activa</span>
                                         @else
-                                            <span class="badge bg-secondary">Inactiva</span>
+                                            <span class="badge-inactive">Inactiva</span>
                                         @endif
                                     </td>
-                                    <td>{{ $categoria->created_at?->format('d/m/Y H:i') }}</td>
-                                    <td class="d-flex gap-2">
-                                        <a href="{{ route('categorias.show', $categoria->id) }}"
-                                            class="btn btn-info btn-sm text-white">Ver</a>
-                                        <a href="{{ route('categorias.edit', $categoria->id) }}"
-                                            class="btn btn-warning btn-sm">Editar</a>
-                                        {{-- <form action="{{ route('categorias.destroy', $categoria->id) }}" method="POST" onsubmit="return confirm('¿Deseas eliminar esta categoría?')">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
-                                        </form> --}}
-                                        <form action="{{ route('categorias.cambiar-estado', $categoria->id) }}"
-                                            method="POST">
-                                            @csrf
-                                            @method('PATCH')
 
-                                            @if ($categoria->estado)
-                                                <button type="submit" class="btn btn-secondary btn-sm">
-                                                    Inactivar
-                                                </button>
-                                            @else
-                                                <button type="submit" class="btn btn-success btn-sm">
-                                                    Activar
-                                                </button>
-                                            @endif
-                                        </form>
+                                    <td class="text-muted">
+                                        {{ $categoria->created_at?->format('d/m/Y H:i') }}
+                                    </td>
 
+                                    <td>
+                                        <div class="d-flex flex-wrap gap-2">
+                                            <a href="{{ route('categorias.show', $categoria->id) }}"
+                                               class="btn btn-sm btn-outline-info rounded-3 fw-bold">
+                                                Ver
+                                            </a>
+
+                                            <a href="{{ route('categorias.edit', $categoria->id) }}"
+                                               class="btn btn-sm btn-outline-warning rounded-3 fw-bold">
+                                                Editar
+                                            </a>
+
+                                            <form action="{{ route('categorias.cambiar-estado', $categoria->id) }}"
+                                                  method="POST">
+                                                @csrf
+                                                @method('PATCH')
+
+                                                @if ($categoria->estado)
+                                                    <button type="submit"
+                                                            class="btn btn-sm btn-outline-secondary rounded-3 fw-bold">
+                                                        Inactivar
+                                                    </button>
+                                                @else
+                                                    <button type="submit"
+                                                            class="btn btn-sm btn-outline-success rounded-3 fw-bold">
+                                                        Activar
+                                                    </button>
+                                                @endif
+                                            </form>
+                                        </div>
                                     </td>
                                 </tr>
                             @endforeach
@@ -75,10 +100,26 @@
                     </table>
                 </div>
 
-                {{ $categorias->links() }}
+                <div class="mt-4">
+                    {{ $categorias->links() }}
+                </div>
             @else
-                <div class="alert alert-secondary mb-0">
-                    No hay categorías registradas.
+                <div class="text-center py-5">
+                    <div class="mb-3" style="font-size: 42px;">
+                        📂
+                    </div>
+
+                    <h5 class="fw-bold text-dark">
+                        No hay categorías registradas
+                    </h5>
+
+                    <p class="text-muted mb-4">
+                        Crea tu primera categoría para comenzar a clasificar tus productos.
+                    </p>
+
+                    <a href="{{ route('categorias.create') }}" class="btn-gold">
+                        + Crear categoría
+                    </a>
                 </div>
             @endif
         </div>
