@@ -24,6 +24,7 @@
 
             <div class="collapse navbar-collapse" id="navbarMain">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}"
                             href="{{ route('dashboard') }}">
@@ -42,6 +43,13 @@
                         <a class="nav-link {{ request()->routeIs('marcas.*') ? 'active' : '' }}"
                             href="{{ route('marcas.index') }}">
                             Marcas
+                        </a>
+                    </li>
+
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('productos.*') ? 'active' : '' }}"
+                            href="{{ route('productos.index') }}">
+                            Productos
                         </a>
                     </li>
 
