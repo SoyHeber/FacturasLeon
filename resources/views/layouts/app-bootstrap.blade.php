@@ -52,6 +52,13 @@
                             Productos
                         </a>
                     </li>
+                    
+                    <li class="nav-item">
+                        <a class="nav-link {{ request()->routeIs('inventarios.*') ? 'active' : '' }}"
+                            href="{{ route('inventarios.index') }}">
+                            Inventarios
+                        </a>
+                    </li>
 
                     <li class="nav-item">
                         <a class="nav-link {{ request()->routeIs('paises.*') ? 'active' : '' }}"

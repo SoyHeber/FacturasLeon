@@ -35,8 +35,8 @@ class Producto extends Model
         return $this->belongsTo(Marca::class);
     }
 
-    /*     public function inventarios()
+    public function inventarios()
     {
-        return $this->hasMany(Inventario::class);
-    } */
+    return $this->hasMany(Inventario::class);
+    }
 }

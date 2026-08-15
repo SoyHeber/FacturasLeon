@@ -13,6 +13,8 @@ use App\Http\Controllers\DireccionController;
 use App\Http\Controllers\ProveedorController;
 use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\ProductoController;
+use App\Http\Controllers\InventarioController;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -138,6 +140,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/productos/{producto}/edit', [ProductoController::class, 'edit'])->name('productos.edit');
     Route::put('/productos/{producto}', [ProductoController::class, 'update'])->name('productos.update');
     Route::patch('/productos/{producto}/estado', [ProductoController::class, 'cambiarEstado'])->name('productos.cambiar-estado');
+
+    /*Rutas para Inventarios*/
+    Route::get('/inventarios', [InventarioController::class, 'index'])->name('inventarios.index');
+    Route::get('/inventarios/create', [InventarioController::class, 'create'])->name('inventarios.create');
+    Route::post('/inventarios', [InventarioController::class, 'store'])->name('inventarios.store');
+    Route::get('/inventarios/{inventario}', [InventarioController::class, 'show'])->name('inventarios.show');
+    Route::get('/inventarios/{inventario}/edit', [InventarioController::class, 'edit'])->name('inventarios.edit');
+    Route::put('/inventarios/{inventario}', [InventarioController::class, 'update'])->name('inventarios.update');
+    Route::patch('/inventarios/{inventario}/estado', [InventarioController::class, 'cambiarEstado'])->name('inventarios.cambiar-estado');
 });
 
 require __DIR__ . '/auth.php';
