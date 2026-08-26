@@ -1,127 +1,231 @@
 @extends('layouts.app-bootstrap')
 
 @section('content')
-    <div class="module-header">
+    <div class="d-flex justify-content-between align-items-start mb-4">
+
         <div>
-            <h1 class="module-title">Categorías</h1>
-            <p class="module-subtitle">
+            <h1 class="fw-bold mb-1">
+                Categorías
+            </h1>
+
+            <p class="text-muted mb-0">
                 Administra las categorías utilizadas para clasificar los productos de la joyería.
             </p>
         </div>
 
-        <a href="{{ route('categorias.create') }}" class="btn-gold">
+        <a href="{{ route('categorias.create') }}" class="btn btn-warning fw-bold px-4 py-2">
             + Nueva categoría
         </a>
+
     </div>
 
+
     @if (session('success'))
-        <div class="alert alert-success border-0 rounded-4 shadow-sm mb-4" role="alert">
+        <div class="alert alert-success alert-dismissible fade show">
             {{ session('success') }}
+
+            <button type="button" class="btn-close" data-bs-dismiss="alert">
+            </button>
         </div>
     @endif
 
-    <div class="module-card">
-        <div class="module-card-body">
-            @if ($categorias->count())
+
+    <div class="card shadow-sm border-0 rounded-4">
+
+        <div class="card-body p-4">
+
+            <form method="GET" action="{{ route('categorias.index') }}">
+
                 <div class="table-responsive">
-                    <table class="table table-modern align-middle">
+
+                    <table class="table align-middle mb-0">
+
                         <thead>
-                            <tr>
-                                <th style="width: 80px;">ID</th>
+
+                            {{-- Títulos --}}
+                            <tr class="table-dark">
+
+                                <th>ID</th>
+
                                 <th>Nombre</th>
+
                                 <th>Descripción</th>
-                                <th style="width: 140px;">Estado</th>
-                                <th style="width: 180px;">Fecha creación</th>
-                                <th style="width: 260px;">Acciones</th>
+
+                                <th>Estado</th>
+
+                                <th>Fecha creación</th>
+
+                                <th>Acciones</th>
+
                             </tr>
+
+
+                            {{-- Filtros --}}
+                            <tr>
+
+                                <th>
+                                    <input type="number" name="id" value="{{ request('id') }}"
+                                        class="form-control form-control-sm" placeholder="ID">
+                                </th>
+
+                                <th>
+                                    <input type="text" name="nombre" value="{{ request('nombre') }}"
+                                        class="form-control form-control-sm" placeholder="Filtrar nombre">
+                                </th>
+
+                                <th>
+                                    <input type="text" name="descripcion" value="{{ request('descripcion') }}"
+                                        class="form-control form-control-sm" placeholder="Filtrar descripción">
+                                </th>
+
+                                <th>
+                                    <select name="estado" class="form-select form-select-sm">
+
+                                        <option value="">
+                                            Todos
+                                        </option>
+
+                                        <option value="1" {{ request('estado') === '1' ? 'selected' : '' }}>
+                                            Activa
+                                        </option>
+
+                                        <option value="0" {{ request('estado') === '0' ? 'selected' : '' }}>
+                                            Inactiva
+                                        </option>
+
+                                    </select>
+                                </th>
+
+                                <th>
+                                    <input type="date" name="fecha" value="{{ request('fecha') }}"
+                                        class="form-control form-control-sm">
+                                </th>
+
+                                {{-- Acciones no tiene filtro --}}
+                                <th>
+
+                                    <div class="d-flex gap-2">
+
+                                        <button type="submit" class="btn btn-dark btn-sm">
+                                            Filtrar
+                                        </button>
+
+                                        <a href="{{ route('categorias.index') }}" class="btn btn-outline-secondary btn-sm">
+                                            Limpiar
+                                        </a>
+
+                                    </div>
+
+                                </th>
+
+                            </tr>
+
                         </thead>
 
+
                         <tbody>
-                            @foreach ($categorias as $categoria)
+
+                            @forelse ($categorias as $categoria)
                                 <tr>
-                                    <td class="fw-bold text-muted">
+
+                                    <td class="fw-semibold">
                                         #{{ $categoria->id }}
                                     </td>
 
-                                    <td class="fw-semibold">
+                                    <td class="fw-bold">
                                         {{ $categoria->nombre }}
                                     </td>
 
-                                    <td class="text-muted">
+                                    <td>
                                         {{ $categoria->descripcion ?: 'Sin descripción' }}
                                     </td>
 
                                     <td>
+
                                         @if ($categoria->estado)
-                                            <span class="badge-active">Activa</span>
+                                            <span class="badge rounded-pill bg-success-subtle text-success px-3 py-2">
+                                                Activa
+                                            </span>
                                         @else
-                                            <span class="badge-inactive">Inactiva</span>
+                                            <span class="badge rounded-pill bg-danger-subtle text-danger px-3 py-2">
+                                                Inactiva
+                                            </span>
                                         @endif
+
                                     </td>
 
-                                    <td class="text-muted">
+                                    <td>
                                         {{ $categoria->created_at?->format('d/m/Y H:i') }}
                                     </td>
 
                                     <td>
-                                        <div class="d-flex flex-wrap gap-2">
+
+                                        <div class="d-flex gap-2">
+
                                             <a href="{{ route('categorias.show', $categoria->id) }}"
-                                               class="btn btn-sm btn-outline-info rounded-3 fw-bold">
+                                                class="btn btn-outline-info btn-sm">
                                                 Ver
                                             </a>
 
                                             <a href="{{ route('categorias.edit', $categoria->id) }}"
-                                               class="btn btn-sm btn-outline-warning rounded-3 fw-bold">
+                                                class="btn btn-outline-warning btn-sm">
                                                 Editar
                                             </a>
 
-                                            <form action="{{ route('categorias.cambiar-estado', $categoria->id) }}"
-                                                  method="POST">
+
+                                            <form method="POST"
+                                                action="{{ route('categorias.cambiar-estado', $categoria->id) }}">
+
                                                 @csrf
                                                 @method('PATCH')
 
                                                 @if ($categoria->estado)
-                                                    <button type="submit"
-                                                            class="btn btn-sm btn-outline-secondary rounded-3 fw-bold">
+                                                    <button type="submit" class="btn btn-outline-secondary btn-sm">
                                                         Inactivar
                                                     </button>
                                                 @else
-                                                    <button type="submit"
-                                                            class="btn btn-sm btn-outline-success rounded-3 fw-bold">
+                                                    <button type="submit" class="btn btn-outline-success btn-sm">
                                                         Activar
                                                     </button>
                                                 @endif
+
                                             </form>
+
                                         </div>
+
                                     </td>
+
                                 </tr>
-                            @endforeach
+
+                            @empty
+
+                                <tr>
+
+                                    <td colspan="6" class="text-center text-muted py-4">
+
+                                        No se encontraron categorías.
+
+                                    </td>
+
+                                </tr>
+                            @endforelse
+
                         </tbody>
+
                     </table>
+
                 </div>
+
 
                 <div class="mt-4">
+
                     {{ $categorias->links() }}
+
                 </div>
-            @else
-                <div class="text-center py-5">
-                    <div class="mb-3" style="font-size: 42px;">
-                        📂
-                    </div>
 
-                    <h5 class="fw-bold text-dark">
-                        No hay categorías registradas
-                    </h5>
+            </form>
 
-                    <p class="text-muted mb-4">
-                        Crea tu primera categoría para comenzar a clasificar tus productos.
-                    </p>
-
-                    <a href="{{ route('categorias.create') }}" class="btn-gold">
-                        + Crear categoría
-                    </a>
-                </div>
-            @endif
         </div>
+
     </div>
 @endsection

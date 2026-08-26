@@ -7,12 +7,41 @@ use Illuminate\Http\Request;
 
 class CategoriaController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $categorias = Categoria::latest()->paginate(10);
-        $minombre = 'heber Antonio';
+        $query = Categoria::query();
 
-        return view('categorias.index', compact('categorias', 'minombre'));
+        // Filtro por ID
+        if ($request->filled('id')) {
+            $query->where('id', $request->id);
+        }
+
+        // Filtro por nombre
+        if ($request->filled('nombre')) {
+            $query->where('nombre', 'like', '%' . $request->nombre . '%');
+        }
+
+        // Filtro por descripción
+        if ($request->filled('descripcion')) {
+            $query->where('descripcion', 'like', '%' . $request->descripcion . '%');
+        }
+
+        // Filtro por estado
+        if ($request->filled('estado')) {
+            $query->where('estado', $request->estado);
+        }
+
+        // Filtro por fecha de creación
+        if ($request->filled('fecha')) {
+            $query->whereDate('created_at', $request->fecha);
+        }
+
+        $categorias = $query
+            ->orderBy('id', 'desc')
+            ->paginate(10)
+            ->withQueryString();
+
+        return view('categorias.index', compact('categorias'));
     }
 
     public function create()
@@ -68,7 +97,7 @@ class CategoriaController extends Controller
             ->with('success', 'Categoría actualizada correctamente.');
     }
 
-/*     public function destroy(Categoria $categoria)
+    /*     public function destroy(Categoria $categoria)
     {
         $categoria->delete();
 
