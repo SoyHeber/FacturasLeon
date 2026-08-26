@@ -2,78 +2,196 @@
 
 @section('content')
     <div class="row justify-content-center">
+
         <div class="col-md-9">
+
             <div class="card shadow-sm">
+
                 <div class="card-header">
-                    <h1 class="h4 mb-0">Detalle de Cliente</h1>
+                    <h1 class="h4 mb-0">
+                        Detalle de Cliente
+                    </h1>
                 </div>
+
                 <div class="card-body">
+
                     <div class="mb-3">
                         <h5 class="mb-1">ID</h5>
-                        <p class="mb-0">{{ $cliente->id }}</p>
+                        <p class="mb-0">
+                            {{ $cliente->id }}
+                        </p>
                     </div>
 
                     <div class="mb-3">
-                        <h5 class="mb-1">Nombre</h5>
-                        <p class="mb-0">{{ $cliente->nombre }}</p>
+                        <h5 class="mb-1">Tipo de Cliente</h5>
+
+                        @if ($cliente->persona)
+                            <span class="badge bg-primary">
+                                Persona Individual
+                            </span>
+                        @elseif ($cliente->sociedad)
+                            <span class="badge bg-info text-dark">
+                                Sociedad Anónima / Empresa
+                            </span>
+                        @else
+                            <span class="badge bg-danger">
+                                Sin clasificación
+                            </span>
+                        @endif
+                    </div>
+
+                    @if ($cliente->persona)
+                        <div class="mb-3">
+                            <h5 class="mb-1">Primer Nombre</h5>
+                            <p class="mb-0">
+                                {{ $cliente->persona->nombre1 }}
+                            </p>
+                        </div>
+
+                        <div class="mb-3">
+                            <h5 class="mb-1">Segundo Nombre</h5>
+                            <p class="mb-0">
+                                {{ $cliente->persona->nombre2 ?: 'No registrado' }}
+                            </p>
+                        </div>
+
+                        <div class="mb-3">
+                            <h5 class="mb-1">Tercer Nombre</h5>
+                            <p class="mb-0">
+                                {{ $cliente->persona->nombre3 ?: 'No registrado' }}
+                            </p>
+                        </div>
+
+                        <div class="mb-3">
+                            <h5 class="mb-1">Primer Apellido</h5>
+                            <p class="mb-0">
+                                {{ $cliente->persona->apellido1 }}
+                            </p>
+                        </div>
+
+                        <div class="mb-3">
+                            <h5 class="mb-1">Segundo Apellido</h5>
+                            <p class="mb-0">
+                                {{ $cliente->persona->apellido2 ?: 'No registrado' }}
+                            </p>
+                        </div>
+
+                        <div class="mb-3">
+                            <h5 class="mb-1">Apellido de Casada</h5>
+                            <p class="mb-0">
+                                {{ $cliente->persona->apellido_casada ?: 'No registrado' }}
+                            </p>
+                        </div>
+                    @elseif ($cliente->sociedad)
+                        <div class="mb-3">
+                            <h5 class="mb-1">Nombre / Razón Social</h5>
+                            <p class="mb-0">
+                                {{ $cliente->sociedad->nombre }}
+                            </p>
+                        </div>
+                    @endif
+
+                    <div class="mb-3">
+                        <h5 class="mb-1">
+                            Tipo de Identificación
+                        </h5>
+
+                        <p class="mb-0">
+                            {{ $cliente->tipoIdentificacion->nombre ?? 'Sin tipo' }}
+                        </p>
                     </div>
 
                     <div class="mb-3">
-                        <h5 class="mb-1">Tipo de Identificación</h5>
-                        <p class="mb-0">{{ $cliente->tipoIdentificacion->nombre ?? 'Sin tipo' }}</p>
-                    </div>
+                        <h5 class="mb-1">
+                            Número de Identificación
+                        </h5>
 
-                    <div class="mb-3">
-                        <h5 class="mb-1">Número de Identificación</h5>
-                        <p class="mb-0">{{ $cliente->numero_identificacion }}</p>
+                        <p class="mb-0">
+                            {{ $cliente->numero_identificacion }}
+                        </p>
                     </div>
 
                     <div class="mb-3">
                         <h5 class="mb-1">Dirección</h5>
+
                         @if ($cliente->direccion)
-                            <p class="mb-0">{{ $cliente->direccion->direccion }}</p>
+                            <p class="mb-0">
+                                {{ $cliente->direccion->direccion }}
+                            </p>
+
                             <small class="text-muted">
-                                {{ $cliente->direccion->municipio->nombre ?? 'Sin municipio' }} -
-                                {{ $cliente->direccion->municipio->departamento->nombre ?? 'Sin departamento' }} -
+                                {{ $cliente->direccion->municipio->nombre ?? 'Sin municipio' }}
+                                -
+                                {{ $cliente->direccion->municipio->departamento->nombre ?? 'Sin departamento' }}
+                                -
                                 {{ $cliente->direccion->municipio->departamento->pais->nombre ?? 'Sin país' }}
                             </small>
                         @else
-                            <p class="mb-0">Sin dirección</p>
+                            <p class="mb-0">
+                                Sin dirección
+                            </p>
                         @endif
                     </div>
 
                     <div class="mb-3">
                         <h5 class="mb-1">Teléfono</h5>
-                        <p class="mb-0">{{ $cliente->telefono ?: 'Sin teléfono' }}</p>
+
+                        <p class="mb-0">
+                            {{ $cliente->telefono ?: 'Sin teléfono' }}
+                        </p>
                     </div>
 
                     <div class="mb-3">
                         <h5 class="mb-1">Correo</h5>
-                        <p class="mb-0">{{ $cliente->correo ?: 'Sin correo' }}</p>
+
+                        <p class="mb-0">
+                            {{ $cliente->correo ?: 'Sin correo' }}
+                        </p>
                     </div>
 
                     <div class="mb-3">
                         <h5 class="mb-1">Estado</h5>
+
                         @if ($cliente->estado)
-                            <span class="badge bg-success">Activo</span>
+                            <span class="badge bg-success">
+                                Activo
+                            </span>
                         @else
-                            <span class="badge bg-secondary">Inactivo</span>
+                            <span class="badge bg-secondary">
+                                Inactivo
+                            </span>
                         @endif
                     </div>
 
                     <div class="mb-3">
-                        <h5 class="mb-1">Fecha de creación</h5>
-                        <p class="mb-0">{{ $cliente->created_at?->format('d/m/Y H:i') }}</p>
+                        <h5 class="mb-1">
+                            Fecha de creación
+                        </h5>
+
+                        <p class="mb-0">
+                            {{ $cliente->created_at?->format('d/m/Y H:i') }}
+                        </p>
                     </div>
 
                     <div class="mb-4">
-                        <h5 class="mb-1">Última actualización</h5>
-                        <p class="mb-0">{{ $cliente->updated_at?->format('d/m/Y H:i') }}</p>
+                        <h5 class="mb-1">
+                            Última actualización
+                        </h5>
+
+                        <p class="mb-0">
+                            {{ $cliente->updated_at?->format('d/m/Y H:i') }}
+                        </p>
                     </div>
 
                     <div class="d-flex gap-2">
-                        <a href="{{ route('clientes.index') }}" class="btn btn-secondary">Volver</a>
-                        <a href="{{ route('clientes.edit', $cliente->id) }}" class="btn btn-warning">Editar</a>
+
+                        <a href="{{ route('clientes.index') }}" class="btn btn-secondary">
+                            Volver
+                        </a>
+
+                        <a href="{{ route('clientes.edit', $cliente->id) }}" class="btn btn-warning">
+                            Editar
+                        </a>
 
                         <form action="{{ route('clientes.cambiar-estado', $cliente->id) }}" method="POST"
                             onsubmit="return confirm('¿Deseas cambiar el estado de este cliente?')">
@@ -81,14 +199,22 @@
                             @method('PATCH')
 
                             @if ($cliente->estado)
-                                <button type="submit" class="btn btn-secondary">Inactivar</button>
+                                <button type="submit" class="btn btn-secondary">
+                                    Inactivar
+                                </button>
                             @else
-                                <button type="submit" class="btn btn-success">Activar</button>
+                                <button type="submit" class="btn btn-success">
+                                    Activar
+                                </button>
                             @endif
+
                         </form>
+
                     </div>
+
                 </div>
             </div>
+
         </div>
     </div>
 @endsection

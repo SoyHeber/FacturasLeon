@@ -12,7 +12,6 @@ class Cliente extends Model
     protected $table = 'clientes';
 
     protected $fillable = [
-        'nombre',
         'tipo_identificacion_id',
         'numero_identificacion',
         'direccion_id',
@@ -31,7 +30,17 @@ class Cliente extends Model
         return $this->belongsTo(Direccion::class);
     }
 
-/*     public function facturas()
+    public function persona()
+    {
+        return $this->hasOne(Persona::class);
+    }
+
+    public function sociedad()
+    {
+        return $this->hasOne(Sociedad::class);
+    }
+
+    /*     public function facturas()
     {
         return $this->hasMany(Factura::class);
     } */
