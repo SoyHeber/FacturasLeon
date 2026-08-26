@@ -32,8 +32,8 @@ class Inventario extends Model
         return $this->belongsTo(Producto::class);
     }
 
-/*     public function movimientos()
+    public function movimientos()
     {
         return $this->hasMany(MovimientoInventario::class);
-    } */
+    }
 }

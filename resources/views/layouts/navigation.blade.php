@@ -109,6 +109,12 @@
             Inventarios
         </a>
 
+        <a href="{{ route('movimientos_inventario.index') }}"
+            class="sidebar-link {{ request()->routeIs('movimientos_inventario.*') ? 'active' : '' }}">
+            <span class="sidebar-icon">🔄</span>
+            Movimientos Inventario
+        </a>
+
         <a href="{{ route('direcciones.index') }}"
             class="sidebar-link {{ request()->routeIs('direcciones.*') ? 'active' : '' }}">
 

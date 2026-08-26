@@ -18,8 +18,7 @@ use App\Models\Categoria;
 use App\Models\Marca;
 use App\Models\Producto;
 use App\Http\Controllers\UserController;
-
-
+use App\Http\Controllers\MovimientoInventarioController;
 
 /*
 |--------------------------------------------------------------------------
@@ -171,6 +170,14 @@ Route::middleware('auth')->group(function () {
     Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
     Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
     Route::patch('/users/{user}/estado', [UserController::class, 'cambiarEstado'])->name('users.cambiar-estado');
+
+    Route::get('/movimientos-inventario', [MovimientoInventarioController::class, 'index'])->name('movimientos_inventario.index');
+    Route::get('/movimientos-inventario/create', [MovimientoInventarioController::class, 'create'])->name('movimientos_inventario.create');
+    Route::post('/movimientos-inventario', [MovimientoInventarioController::class, 'store'])->name('movimientos_inventario.store');
+    Route::get('/movimientos-inventario/{movimientoInventario}', [MovimientoInventarioController::class, 'show'])->name('movimientos_inventario.show');
+    Route::get('/movimientos-inventario/{movimientoInventario}/edit', [MovimientoInventarioController::class, 'edit'])->name('movimientos_inventario.edit');
+    Route::put('/movimientos-inventario/{movimientoInventario}', [MovimientoInventarioController::class, 'update'])->name('movimientos_inventario.update');
+    Route::patch('/movimientos-inventario/{movimientoInventario}/estado', [MovimientoInventarioController::class, 'cambiarEstado'])->name('movimientos_inventario.cambiar-estado');
 });
 
 require __DIR__ . '/auth.php';
