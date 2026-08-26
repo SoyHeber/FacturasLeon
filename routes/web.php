@@ -19,6 +19,7 @@ use App\Models\Marca;
 use App\Models\Producto;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\MovimientoInventarioController;
+use App\Http\Controllers\CompraController;
 
 /*
 |--------------------------------------------------------------------------
@@ -171,6 +172,7 @@ Route::middleware('auth')->group(function () {
     Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
     Route::patch('/users/{user}/estado', [UserController::class, 'cambiarEstado'])->name('users.cambiar-estado');
 
+    /*Rutas para Movimientos de Inventario*/
     Route::get('/movimientos-inventario', [MovimientoInventarioController::class, 'index'])->name('movimientos_inventario.index');
     Route::get('/movimientos-inventario/create', [MovimientoInventarioController::class, 'create'])->name('movimientos_inventario.create');
     Route::post('/movimientos-inventario', [MovimientoInventarioController::class, 'store'])->name('movimientos_inventario.store');
@@ -178,6 +180,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/movimientos-inventario/{movimientoInventario}/edit', [MovimientoInventarioController::class, 'edit'])->name('movimientos_inventario.edit');
     Route::put('/movimientos-inventario/{movimientoInventario}', [MovimientoInventarioController::class, 'update'])->name('movimientos_inventario.update');
     Route::patch('/movimientos-inventario/{movimientoInventario}/estado', [MovimientoInventarioController::class, 'cambiarEstado'])->name('movimientos_inventario.cambiar-estado');
+
+    /*Rutas para Compras*/
+    Route::get('/compras', [CompraController::class, 'index'])->name('compras.index');
+    Route::get('/compras/create', [CompraController::class, 'create'])->name('compras.create');
+    Route::post('/compras', [CompraController::class, 'store'])->name('compras.store');
+    Route::get('/compras/{compra}', [CompraController::class, 'show'])->name('compras.show');
+    Route::get('/compras/{compra}/edit', [CompraController::class, 'edit'])->name('compras.edit');
+    Route::put('/compras/{compra}', [CompraController::class, 'update'])->name('compras.update');
+    Route::patch('/compras/{compra}/estado', [CompraController::class, 'cambiarEstado'])->name('compras.cambiar-estado');
 });
 
 require __DIR__ . '/auth.php';

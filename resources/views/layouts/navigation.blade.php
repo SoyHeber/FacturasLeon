@@ -115,6 +115,12 @@
             Movimientos Inventario
         </a>
 
+        <a href="{{ route('compras.index') }}"
+            class="sidebar-link {{ request()->routeIs('compras.*') ? 'active' : '' }}">
+            <span class="sidebar-icon">🛒</span>
+            Compras
+        </a>
+
         <a href="{{ route('direcciones.index') }}"
             class="sidebar-link {{ request()->routeIs('direcciones.*') ? 'active' : '' }}">
 
