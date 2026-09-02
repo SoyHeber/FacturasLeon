@@ -20,6 +20,7 @@ use App\Models\Producto;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\MovimientoInventarioController;
 use App\Http\Controllers\CompraController;
+use App\Http\Controllers\InventarioCompraController;
 
 /*
 |--------------------------------------------------------------------------
@@ -189,6 +190,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/compras/{compra}/edit', [CompraController::class, 'edit'])->name('compras.edit');
     Route::put('/compras/{compra}', [CompraController::class, 'update'])->name('compras.update');
     Route::patch('/compras/{compra}/estado', [CompraController::class, 'cambiarEstado'])->name('compras.cambiar-estado');
+
+    /*Rutas para Inventarios de Compra*/
+    Route::get('/inventarios-compra', [InventarioCompraController::class, 'index'])->name('inventarios_compra.index');
+    Route::get('/inventarios-compra/create', [InventarioCompraController::class, 'create'])->name('inventarios_compra.create');
+    Route::post('/inventarios-compra', [InventarioCompraController::class, 'store'])->name('inventarios_compra.store');
+    Route::get('/inventarios-compra/{inventarioCompra}', [InventarioCompraController::class, 'show'])->name('inventarios_compra.show');
+    Route::get('/inventarios-compra/{inventarioCompra}/edit', [InventarioCompraController::class, 'edit'])->name('inventarios_compra.edit');
+    Route::put('/inventarios-compra/{inventarioCompra}', [InventarioCompraController::class, 'update'])->name('inventarios_compra.update');
+    Route::patch('/inventarios-compra/{inventarioCompra}/estado', [InventarioCompraController::class, 'cambiarEstado'])->name('inventarios_compra.cambiar-estado');
 });
 
 require __DIR__ . '/auth.php';

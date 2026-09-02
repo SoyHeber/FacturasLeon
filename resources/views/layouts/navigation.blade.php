@@ -121,6 +121,12 @@
             Compras
         </a>
 
+        <a href="{{ route('inventarios_compra.index') }}"
+            class="sidebar-link {{ request()->routeIs('inventarios_compra.*') ? 'active' : '' }}">
+            <span class="sidebar-icon">🧱</span>
+            Inventarios Compra
+        </a>
+
         <a href="{{ route('direcciones.index') }}"
             class="sidebar-link {{ request()->routeIs('direcciones.*') ? 'active' : '' }}">
 
