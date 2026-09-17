@@ -143,6 +143,12 @@
             Materiales Producto
         </a>
 
+        <a href="{{ route('producciones.index') }}"
+            class="sidebar-link {{ request()->routeIs('producciones.*') ? 'active' : '' }}">
+            <span class="sidebar-icon">🛠️</span>
+            Producciones
+        </a>
+
         <a href="{{ route('direcciones.index') }}"
             class="sidebar-link {{ request()->routeIs('direcciones.*') ? 'active' : '' }}">
 

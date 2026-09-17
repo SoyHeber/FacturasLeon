@@ -23,6 +23,7 @@ use App\Http\Controllers\CompraController;
 use App\Http\Controllers\InventarioCompraController;
 use App\Http\Controllers\DetalleCompraController;
 use App\Http\Controllers\MaterialProductoController;
+use App\Http\Controllers\ProduccionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -219,6 +220,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/materiales-producto/{materialProducto}/edit', [MaterialProductoController::class, 'edit'])->name('materiales_producto.edit');
     Route::put('/materiales-producto/{materialProducto}', [MaterialProductoController::class, 'update'])->name('materiales_producto.update');
     Route::patch('/materiales-producto/{materialProducto}/estado', [MaterialProductoController::class, 'cambiarEstado'])->name('materiales_producto.cambiar-estado');
+
+    /*Rutas para Producción*/
+    Route::get('/producciones', [ProduccionController::class, 'index'])->name('producciones.index');
+    Route::get('/producciones/create', [ProduccionController::class, 'create'])->name('producciones.create');
+    Route::post('/producciones', [ProduccionController::class, 'store'])->name('producciones.store');
+    Route::get('/producciones/{produccion}', [ProduccionController::class, 'show'])->name('producciones.show');
+    Route::get('/producciones/{produccion}/edit', [ProduccionController::class, 'edit'])->name('producciones.edit');
+    Route::put('/producciones/{produccion}', [ProduccionController::class, 'update'])->name('producciones.update');
+    Route::patch('/producciones/{produccion}/estado', [ProduccionController::class, 'cambiarEstado'])->name('producciones.cambiar-estado');
 });
 
 require __DIR__ . '/auth.php';
