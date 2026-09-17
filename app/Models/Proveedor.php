@@ -31,8 +31,8 @@ class Proveedor extends Model
         return $this->belongsTo(Direccion::class);
     }
 
-/*     public function compras()
+    public function compras()
     {
         return $this->hasMany(Compra::class);
-    } */
+    }
 }

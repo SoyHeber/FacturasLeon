@@ -29,18 +29,18 @@ class InventarioCompra extends Model
         'estado' => 'boolean',
     ];
 
-    // public function detallesCompra()
-    // {
-    //     return $this->hasMany(DetalleCompra::class);
-    // }
+    public function detallesCompra()
+    {
+        return $this->hasMany(DetalleCompra::class);
+    }
 
-    // public function materialesProducto()
-    // {
-    //     return $this->hasMany(MaterialProducto::class);
-    // }
+    public function materialesProducto()
+    {
+        return $this->hasMany(MaterialProducto::class);
+    }
 
-    // public function movimientos()
-    // {
-    //     return $this->hasMany(MovimientoInventarioCompra::class);
-    // }
+    public function movimientos()
+    {
+        return $this->hasMany(MovimientoInventarioCompra::class);
+    }
 }

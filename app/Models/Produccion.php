@@ -36,10 +36,10 @@ class Produccion extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
-    // public function movimientosInventarioCompra()
-    // {
-    //     return $this->hasMany(MovimientoInventarioCompra::class);
-    // }
+    public function movimientosInventarioCompra()
+    {
+        return $this->hasMany(MovimientoInventarioCompra::class);
+    }
 
     public function movimientosInventario()
     {

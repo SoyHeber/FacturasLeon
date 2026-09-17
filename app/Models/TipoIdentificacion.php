@@ -18,7 +18,7 @@ class TipoIdentificacion extends Model
         'estado',
     ];
 
-/*     public function clientes()
+    public function clientes()
     {
         return $this->hasMany(Cliente::class);
     }
@@ -26,5 +26,5 @@ class TipoIdentificacion extends Model
     public function proveedores()
     {
         return $this->hasMany(Proveedor::class);
-    } */
+    }
 }

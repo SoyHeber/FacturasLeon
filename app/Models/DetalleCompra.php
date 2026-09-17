@@ -54,8 +54,8 @@ class DetalleCompra extends Model
         return $this->belongsTo(InventarioCompra::class);
     }
 
-    // public function movimientosInventarioCompra()
-    // {
-    //     return $this->hasMany(MovimientoInventarioCompra::class);
-    // }
+    public function movimientosInventarioCompra()
+    {
+        return $this->hasMany(MovimientoInventarioCompra::class);
+    }
 }

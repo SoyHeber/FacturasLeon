@@ -101,11 +101,7 @@
 
         <a href="{{ route('inventarios.index') }}"
             class="sidebar-link {{ request()->routeIs('inventarios.*') ? 'active' : '' }}">
-
-            <span class="sidebar-icon">
-                📦
-            </span>
-
+            <span class="sidebar-icon">📦</span>
             Inventarios
         </a>
 
@@ -133,6 +129,13 @@
             Inventarios Compra
         </a>
 
+        <a href="{{ route('movimientos_inventario_compra.index') }}"
+            class="sidebar-link {{ request()->routeIs('movimientos_inventario_compra.*') ? 'active' : '' }}">
+            <span class="sidebar-icon">🔁</span>
+            Movimientos Inventario Compra
+        </a>
+
+        {{-- Producción --}}
         <div class="sidebar-section-title">
             Producción
         </div>
@@ -151,31 +154,19 @@
 
         <a href="{{ route('direcciones.index') }}"
             class="sidebar-link {{ request()->routeIs('direcciones.*') ? 'active' : '' }}">
-
-            <span class="sidebar-icon">
-                🏘️
-            </span>
-
+            <span class="sidebar-icon">🏘️</span>
             Direcciones
         </a>
 
         <a href="{{ route('metodos_pago.index') }}"
             class="sidebar-link {{ request()->routeIs('metodos_pago.*') ? 'active' : '' }}">
-
-            <span class="sidebar-icon">
-                💳
-            </span>
-
+            <span class="sidebar-icon">💳</span>
             Métodos de Pago
         </a>
 
         <a href="{{ route('tipos_identificacion.index') }}"
             class="sidebar-link {{ request()->routeIs('tipos_identificacion.*') ? 'active' : '' }}">
-
-            <span class="sidebar-icon">
-                🪪
-            </span>
-
+            <span class="sidebar-icon">🪪</span>
             Tipos de Identificación
         </a>
 

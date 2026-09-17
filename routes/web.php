@@ -24,6 +24,7 @@ use App\Http\Controllers\InventarioCompraController;
 use App\Http\Controllers\DetalleCompraController;
 use App\Http\Controllers\MaterialProductoController;
 use App\Http\Controllers\ProduccionController;
+use App\Http\Controllers\MovimientoInventarioCompraController;
 
 /*
 |--------------------------------------------------------------------------
@@ -229,6 +230,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/producciones/{produccion}/edit', [ProduccionController::class, 'edit'])->name('producciones.edit');
     Route::put('/producciones/{produccion}', [ProduccionController::class, 'update'])->name('producciones.update');
     Route::patch('/producciones/{produccion}/estado', [ProduccionController::class, 'cambiarEstado'])->name('producciones.cambiar-estado');
+
+    /*Rutas para Movimientos de Inventario de Compra*/
+    Route::get('/movimientos-inventario-compra', [MovimientoInventarioCompraController::class, 'index'])->name('movimientos_inventario_compra.index');
+    Route::get('/movimientos-inventario-compra/create', [MovimientoInventarioCompraController::class, 'create'])->name('movimientos_inventario_compra.create');
+    Route::post('/movimientos-inventario-compra', [MovimientoInventarioCompraController::class, 'store'])->name('movimientos_inventario_compra.store');
+    Route::get('/movimientos-inventario-compra/{movimientoInventarioCompra}', [MovimientoInventarioCompraController::class, 'show'])->name('movimientos_inventario_compra.show');
+    Route::get('/movimientos-inventario-compra/{movimientoInventarioCompra}/edit', [MovimientoInventarioCompraController::class, 'edit'])->name('movimientos_inventario_compra.edit');
+    Route::put('/movimientos-inventario-compra/{movimientoInventarioCompra}', [MovimientoInventarioCompraController::class, 'update'])->name('movimientos_inventario_compra.update');
+    Route::patch('/movimientos-inventario-compra/{movimientoInventarioCompra}/estado', [MovimientoInventarioCompraController::class, 'cambiarEstado'])->name('movimientos_inventario_compra.cambiar-estado');
 });
 
 require __DIR__ . '/auth.php';
