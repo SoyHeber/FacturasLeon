@@ -133,6 +133,16 @@
             Inventarios Compra
         </a>
 
+        <div class="sidebar-section-title">
+            Producción
+        </div>
+
+        <a href="{{ route('materiales_producto.index') }}"
+            class="sidebar-link {{ request()->routeIs('materiales_producto.*') ? 'active' : '' }}">
+            <span class="sidebar-icon">🧩</span>
+            Materiales Producto
+        </a>
+
         <a href="{{ route('direcciones.index') }}"
             class="sidebar-link {{ request()->routeIs('direcciones.*') ? 'active' : '' }}">
 

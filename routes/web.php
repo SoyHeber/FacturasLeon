@@ -22,6 +22,7 @@ use App\Http\Controllers\MovimientoInventarioController;
 use App\Http\Controllers\CompraController;
 use App\Http\Controllers\InventarioCompraController;
 use App\Http\Controllers\DetalleCompraController;
+use App\Http\Controllers\MaterialProductoController;
 
 /*
 |--------------------------------------------------------------------------
@@ -209,6 +210,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/detalles-compra/{detalleCompra}/edit', [DetalleCompraController::class, 'edit'])->name('detalles_compra.edit');
     Route::put('/detalles-compra/{detalleCompra}', [DetalleCompraController::class, 'update'])->name('detalles_compra.update');
     Route::patch('/detalles-compra/{detalleCompra}/estado', [DetalleCompraController::class, 'cambiarEstado'])->name('detalles_compra.cambiar-estado');
+
+    /*Rutas para Materiales de Producto*/
+    Route::get('/materiales-producto', [MaterialProductoController::class, 'index'])->name('materiales_producto.index');
+    Route::get('/materiales-producto/create', [MaterialProductoController::class, 'create'])->name('materiales_producto.create');
+    Route::post('/materiales-producto', [MaterialProductoController::class, 'store'])->name('materiales_producto.store');
+    Route::get('/materiales-producto/{materialProducto}', [MaterialProductoController::class, 'show'])->name('materiales_producto.show');
+    Route::get('/materiales-producto/{materialProducto}/edit', [MaterialProductoController::class, 'edit'])->name('materiales_producto.edit');
+    Route::put('/materiales-producto/{materialProducto}', [MaterialProductoController::class, 'update'])->name('materiales_producto.update');
+    Route::patch('/materiales-producto/{materialProducto}/estado', [MaterialProductoController::class, 'cambiarEstado'])->name('materiales_producto.cambiar-estado');
 });
 
 require __DIR__ . '/auth.php';
