@@ -15,217 +15,298 @@
 
     <nav class="sidebar-menu">
 
-        {{-- Principal --}}
-        <div class="sidebar-section-title">
-            Principal
+        {{-- PRINCIPAL --}}
+        <button class="sidebar-module-button" type="button" data-bs-toggle="collapse" data-bs-target="#menuPrincipal"
+            aria-expanded="{{ request()->routeIs('dashboard') ? 'true' : 'false' }}" aria-controls="menuPrincipal">
+
+            <span>
+                🏠 Principal
+            </span>
+
+            <span class="sidebar-arrow">
+                ▾
+            </span>
+
+        </button>
+
+        <div class="collapse {{ request()->routeIs('dashboard') ? 'show' : '' }}" id="menuPrincipal">
+
+            <a href="{{ route('dashboard') }}"
+                class="sidebar-link sidebar-sub-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+                Dashboard
+            </a>
+
         </div>
 
-        <a href="{{ route('dashboard') }}" class="sidebar-link {{ request()->routeIs('dashboard') ? 'active' : '' }}">
 
-            <span class="sidebar-icon">
-                🏠
+        {{-- CATÁLOGOS --}}
+        @php
+            $catalogosActivo =
+                request()->routeIs('categorias.*') ||
+                request()->routeIs('marcas.*') ||
+                request()->routeIs('productos.*') ||
+                request()->routeIs('paises.*') ||
+                request()->routeIs('departamentos.*') ||
+                request()->routeIs('municipios.*') ||
+                request()->routeIs('metodos_pago.*') ||
+                request()->routeIs('tipos_identificacion.*');
+        @endphp
+
+        <button class="sidebar-module-button" type="button" data-bs-toggle="collapse" data-bs-target="#menuCatalogos"
+            aria-expanded="{{ $catalogosActivo ? 'true' : 'false' }}" aria-controls="menuCatalogos">
+
+            <span>
+                📚 Catálogos
             </span>
 
-            Dashboard
-        </a>
+            <span class="sidebar-arrow">
+                ▾
+            </span>
 
+        </button>
 
-        {{-- Catálogos --}}
-        <div class="sidebar-section-title">
-            Catálogos
+        <div class="collapse {{ $catalogosActivo ? 'show' : '' }}" id="menuCatalogos">
+
+            <a href="{{ route('categorias.index') }}"
+                class="sidebar-link sidebar-sub-link {{ request()->routeIs('categorias.*') ? 'active' : '' }}">
+                📂 Categorías
+            </a>
+
+            <a href="{{ route('marcas.index') }}"
+                class="sidebar-link sidebar-sub-link {{ request()->routeIs('marcas.*') ? 'active' : '' }}">
+                🏷️ Marcas
+            </a>
+
+            <a href="{{ route('productos.index') }}"
+                class="sidebar-link sidebar-sub-link {{ request()->routeIs('productos.*') ? 'active' : '' }}">
+                💍 Productos
+            </a>
+
+            <a href="{{ route('paises.index') }}"
+                class="sidebar-link sidebar-sub-link {{ request()->routeIs('paises.*') ? 'active' : '' }}">
+                🌎 Países
+            </a>
+
+            <a href="{{ route('departamentos.index') }}"
+                class="sidebar-link sidebar-sub-link {{ request()->routeIs('departamentos.*') ? 'active' : '' }}">
+                🗺️ Departamentos
+            </a>
+
+            <a href="{{ route('municipios.index') }}"
+                class="sidebar-link sidebar-sub-link {{ request()->routeIs('municipios.*') ? 'active' : '' }}">
+                📍 Municipios
+            </a>
+
+            <a href="{{ route('metodos_pago.index') }}"
+                class="sidebar-link sidebar-sub-link {{ request()->routeIs('metodos_pago.*') ? 'active' : '' }}">
+                💳 Métodos de Pago
+            </a>
+
+            <a href="{{ route('tipos_identificacion.index') }}"
+                class="sidebar-link sidebar-sub-link {{ request()->routeIs('tipos_identificacion.*') ? 'active' : '' }}">
+                🪪 Tipos de Identificación
+            </a>
+
         </div>
 
-        <a href="{{ route('categorias.index') }}"
-            class="sidebar-link {{ request()->routeIs('categorias.*') ? 'active' : '' }}">
 
-            <span class="sidebar-icon">
-                📂
+        {{-- OPERACIONES --}}
+        @php
+            $operacionesActivo =
+                request()->routeIs('inventarios.*') ||
+                request()->routeIs('movimientos_inventario.*') ||
+                request()->routeIs('compras.*') ||
+                request()->routeIs('detalles_compra.*') ||
+                request()->routeIs('inventarios_compra.*') ||
+                request()->routeIs('movimientos_inventario_compra.*');
+        @endphp
+
+        <button class="sidebar-module-button" type="button" data-bs-toggle="collapse" data-bs-target="#menuOperaciones"
+            aria-expanded="{{ $operacionesActivo ? 'true' : 'false' }}" aria-controls="menuOperaciones">
+
+            <span>
+                ⚙️ Operaciones
             </span>
 
-            Categorías
-        </a>
-
-        <a href="{{ route('marcas.index') }}" class="sidebar-link {{ request()->routeIs('marcas.*') ? 'active' : '' }}">
-
-            <span class="sidebar-icon">
-                🏷️
+            <span class="sidebar-arrow">
+                ▾
             </span>
 
-            Marcas
-        </a>
+        </button>
 
-        <a href="{{ route('productos.index') }}"
-            class="sidebar-link {{ request()->routeIs('productos.*') ? 'active' : '' }}">
+        <div class="collapse {{ $operacionesActivo ? 'show' : '' }}" id="menuOperaciones">
 
-            <span class="sidebar-icon">
-                💍
-            </span>
+            <a href="{{ route('inventarios.index') }}"
+                class="sidebar-link sidebar-sub-link {{ request()->routeIs('inventarios.*') ? 'active' : '' }}">
+                📦 Inventarios
+            </a>
 
-            Productos
-        </a>
+            <a href="{{ route('movimientos_inventario.index') }}"
+                class="sidebar-link sidebar-sub-link {{ request()->routeIs('movimientos_inventario.*') ? 'active' : '' }}">
+                🔄 Movimientos Inventario
+            </a>
 
-        <a href="{{ route('paises.index') }}" class="sidebar-link {{ request()->routeIs('paises.*') ? 'active' : '' }}">
+            <a href="{{ route('compras.index') }}"
+                class="sidebar-link sidebar-sub-link {{ request()->routeIs('compras.*') ? 'active' : '' }}">
+                🛒 Compras
+            </a>
 
-            <span class="sidebar-icon">
-                🌎
-            </span>
+            <a href="{{ route('detalles_compra.index') }}"
+                class="sidebar-link sidebar-sub-link {{ request()->routeIs('detalles_compra.*') ? 'active' : '' }}">
+                📋 Detalles Compra
+            </a>
 
-            Países
-        </a>
+            <a href="{{ route('inventarios_compra.index') }}"
+                class="sidebar-link sidebar-sub-link {{ request()->routeIs('inventarios_compra.*') ? 'active' : '' }}">
+                🧱 Inventarios Compra
+            </a>
 
-        <a href="{{ route('departamentos.index') }}"
-            class="sidebar-link {{ request()->routeIs('departamentos.*') ? 'active' : '' }}">
+            <a href="{{ route('movimientos_inventario_compra.index') }}"
+                class="sidebar-link sidebar-sub-link {{ request()->routeIs('movimientos_inventario_compra.*') ? 'active' : '' }}">
+                🔁 Movimientos Inventario Compra
+            </a>
 
-            <span class="sidebar-icon">
-                🗺️
-            </span>
-
-            Departamentos
-        </a>
-
-        <a href="{{ route('municipios.index') }}"
-            class="sidebar-link {{ request()->routeIs('municipios.*') ? 'active' : '' }}">
-
-            <span class="sidebar-icon">
-                📍
-            </span>
-
-            Municipios
-        </a>
-
-
-        {{-- Operaciones --}}
-        <div class="sidebar-section-title">
-            Operaciones
         </div>
 
-        <a href="{{ route('inventarios.index') }}"
-            class="sidebar-link {{ request()->routeIs('inventarios.*') ? 'active' : '' }}">
-            <span class="sidebar-icon">📦</span>
-            Inventarios
-        </a>
 
-        <a href="{{ route('movimientos_inventario.index') }}"
-            class="sidebar-link {{ request()->routeIs('movimientos_inventario.*') ? 'active' : '' }}">
-            <span class="sidebar-icon">🔄</span>
-            Movimientos Inventario
-        </a>
+        {{-- PRODUCCIÓN --}}
+        @php
+            $produccionActivo = request()->routeIs('materiales_producto.*') || request()->routeIs('producciones.*');
+        @endphp
 
-        <a href="{{ route('compras.index') }}"
-            class="sidebar-link {{ request()->routeIs('compras.*') ? 'active' : '' }}">
-            <span class="sidebar-icon">🛒</span>
-            Compras
-        </a>
+        <button class="sidebar-module-button" type="button" data-bs-toggle="collapse" data-bs-target="#menuProduccion"
+            aria-expanded="{{ $produccionActivo ? 'true' : 'false' }}" aria-controls="menuProduccion">
 
-        <a href="{{ route('detalles_compra.index') }}"
-            class="sidebar-link {{ request()->routeIs('detalles_compra.*') ? 'active' : '' }}">
-            <span class="sidebar-icon">📋</span>
-            Detalles Compra
-        </a>
-
-        <a href="{{ route('inventarios_compra.index') }}"
-            class="sidebar-link {{ request()->routeIs('inventarios_compra.*') ? 'active' : '' }}">
-            <span class="sidebar-icon">🧱</span>
-            Inventarios Compra
-        </a>
-
-        <a href="{{ route('movimientos_inventario_compra.index') }}"
-            class="sidebar-link {{ request()->routeIs('movimientos_inventario_compra.*') ? 'active' : '' }}">
-            <span class="sidebar-icon">🔁</span>
-            Movimientos Inventario Compra
-        </a>
-
-        {{-- Producción --}}
-        <div class="sidebar-section-title">
-            Producción
-        </div>
-
-        <a href="{{ route('materiales_producto.index') }}"
-            class="sidebar-link {{ request()->routeIs('materiales_producto.*') ? 'active' : '' }}">
-            <span class="sidebar-icon">🧩</span>
-            Materiales Producto
-        </a>
-
-        <a href="{{ route('producciones.index') }}"
-            class="sidebar-link {{ request()->routeIs('producciones.*') ? 'active' : '' }}">
-            <span class="sidebar-icon">🛠️</span>
-            Producciones
-        </a>
-
-        <a href="{{ route('direcciones.index') }}"
-            class="sidebar-link {{ request()->routeIs('direcciones.*') ? 'active' : '' }}">
-            <span class="sidebar-icon">🏘️</span>
-            Direcciones
-        </a>
-
-        <a href="{{ route('metodos_pago.index') }}"
-            class="sidebar-link {{ request()->routeIs('metodos_pago.*') ? 'active' : '' }}">
-            <span class="sidebar-icon">💳</span>
-            Métodos de Pago
-        </a>
-
-        <a href="{{ route('tipos_identificacion.index') }}"
-            class="sidebar-link {{ request()->routeIs('tipos_identificacion.*') ? 'active' : '' }}">
-            <span class="sidebar-icon">🪪</span>
-            Tipos de Identificación
-        </a>
-
-
-        {{-- Personas --}}
-        <div class="sidebar-section-title">
-            Personas
-        </div>
-
-        <a href="{{ route('proveedores.index') }}"
-            class="sidebar-link {{ request()->routeIs('proveedores.*') ? 'active' : '' }}">
-
-            <span class="sidebar-icon">
-                🚚
+            <span>
+                🛠️ Producción
             </span>
 
-            Proveedores
-        </a>
-
-        <a href="{{ route('clientes.index') }}"
-            class="sidebar-link {{ request()->routeIs('clientes.*') ? 'active' : '' }}">
-
-            <span class="sidebar-icon">
-                👥
+            <span class="sidebar-arrow">
+                ▾
             </span>
 
-            Clientes
-        </a>
+        </button>
 
+        <div class="collapse {{ $produccionActivo ? 'show' : '' }}" id="menuProduccion">
 
-        {{-- Seguridad --}}
-        <div class="sidebar-section-title">
-            Seguridad
+            <a href="{{ route('materiales_producto.index') }}"
+                class="sidebar-link sidebar-sub-link {{ request()->routeIs('materiales_producto.*') ? 'active' : '' }}">
+                🧩 Materiales Producto
+            </a>
+
+            <a href="{{ route('producciones.index') }}"
+                class="sidebar-link sidebar-sub-link {{ request()->routeIs('producciones.*') ? 'active' : '' }}">
+                🏭 Producciones
+            </a>
+
         </div>
 
-        <a href="{{ route('users.index') }}" class="sidebar-link {{ request()->routeIs('users.*') ? 'active' : '' }}">
 
-            <span class="sidebar-icon">
-                👤
+        {{-- PERSONAS --}}
+        @php
+            $personasActivo =
+                request()->routeIs('proveedores.*') ||
+                request()->routeIs('clientes.*') ||
+                request()->routeIs('direcciones.*');
+        @endphp
+
+        <button class="sidebar-module-button" type="button" data-bs-toggle="collapse" data-bs-target="#menuPersonas"
+            aria-expanded="{{ $personasActivo ? 'true' : 'false' }}" aria-controls="menuPersonas">
+
+            <span>
+                👥 Personas
             </span>
 
-            Usuarios
-        </a>
+            <span class="sidebar-arrow">
+                ▾
+            </span>
 
-        <div class="sidebar-section-title">
-            Cuenta
+        </button>
+
+        <div class="collapse {{ $personasActivo ? 'show' : '' }}" id="menuPersonas">
+
+            <a href="{{ route('proveedores.index') }}"
+                class="sidebar-link sidebar-sub-link {{ request()->routeIs('proveedores.*') ? 'active' : '' }}">
+                🚚 Proveedores
+            </a>
+
+            <a href="{{ route('clientes.index') }}"
+                class="sidebar-link sidebar-sub-link {{ request()->routeIs('clientes.*') ? 'active' : '' }}">
+                👤 Clientes
+            </a>
+
+            <a href="{{ route('direcciones.index') }}"
+                class="sidebar-link sidebar-sub-link {{ request()->routeIs('direcciones.*') ? 'active' : '' }}">
+                🏘️ Direcciones
+            </a>
+
         </div>
 
-        <form method="POST" action="{{ route('logout') }}">
-            @csrf
 
-            <button type="submit" class="sidebar-link w-100 border-0 bg-transparent text-start">
-                <span class="sidebar-icon">
-                    🚪
-                </span>
+        {{-- SEGURIDAD --}}
+        @php
+            $seguridadActivo = request()->routeIs('users.*');
+        @endphp
 
-                Cerrar sesión
-            </button>
-        </form>
+        <button class="sidebar-module-button" type="button" data-bs-toggle="collapse" data-bs-target="#menuSeguridad"
+            aria-expanded="{{ $seguridadActivo ? 'true' : 'false' }}" aria-controls="menuSeguridad">
+
+            <span>
+                🔐 Seguridad
+            </span>
+
+            <span class="sidebar-arrow">
+                ▾
+            </span>
+
+        </button>
+
+        <div class="collapse {{ $seguridadActivo ? 'show' : '' }}" id="menuSeguridad">
+
+            <a href="{{ route('users.index') }}"
+                class="sidebar-link sidebar-sub-link {{ request()->routeIs('users.*') ? 'active' : '' }}">
+                👤 Usuarios
+            </a>
+
+        </div>
+
+
+        {{-- CUENTA --}}
+        @php
+            $cuentaActivo = request()->routeIs('profile.*');
+        @endphp
+
+        <button class="sidebar-module-button" type="button" data-bs-toggle="collapse" data-bs-target="#menuCuenta"
+            aria-expanded="{{ $cuentaActivo ? 'true' : 'false' }}" aria-controls="menuCuenta">
+
+            <span>
+                ⚙️ Cuenta
+            </span>
+
+            <span class="sidebar-arrow">
+                ▾
+            </span>
+
+        </button>
+
+        <div class="collapse {{ $cuentaActivo ? 'show' : '' }}" id="menuCuenta">
+
+            <a href="{{ route('profile.edit') }}"
+                class="sidebar-link sidebar-sub-link {{ request()->routeIs('profile.*') ? 'active' : '' }}">
+                👤 Cuenta
+            </a>
+
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+
+                <button type="submit" class="sidebar-link sidebar-sub-link w-100 border-0 bg-transparent text-start">
+
+                    🚪 Cerrar sesión
+                </button>
+
+            </form>
+
+        </div>
 
     </nav>
 
