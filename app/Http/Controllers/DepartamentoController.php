@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class DepartamentoController extends Controller
+
 {
     public function index()
     {

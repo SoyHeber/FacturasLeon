@@ -25,6 +25,10 @@ use App\Http\Controllers\DetalleCompraController;
 use App\Http\Controllers\MaterialProductoController;
 use App\Http\Controllers\ProduccionController;
 use App\Http\Controllers\MovimientoInventarioCompraController;
+use App\Http\Controllers\RolController;
+use App\Http\Controllers\ModuloController;
+use App\Http\Controllers\OpcionController;
+use App\Http\Controllers\AccionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -57,7 +61,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
 
+/*
+| Rutas protegidas por permisos: el nombre "prefijo.metodo" se valida contra
+| roles_opciones_acciones (ver App\Http\Middleware\VerificarPermiso).
+*/
+Route::middleware(['auth', 'permiso'])->group(function () {
     /*Rutas de Categorias*/
     Route::get('/categorias', [CategoriaController::class, 'index'])->name('categorias.index');
     Route::get('/categorias/create', [CategoriaController::class, 'create'])->name('categorias.create');
@@ -239,6 +249,44 @@ Route::middleware('auth')->group(function () {
     Route::get('/movimientos-inventario-compra/{movimientoInventarioCompra}/edit', [MovimientoInventarioCompraController::class, 'edit'])->name('movimientos_inventario_compra.edit');
     Route::put('/movimientos-inventario-compra/{movimientoInventarioCompra}', [MovimientoInventarioCompraController::class, 'update'])->name('movimientos_inventario_compra.update');
     Route::patch('/movimientos-inventario-compra/{movimientoInventarioCompra}/estado', [MovimientoInventarioCompraController::class, 'cambiarEstado'])->name('movimientos_inventario_compra.cambiar-estado');
+
+    /*Rutas para Roles*/
+    Route::get('/roles', [RolController::class, 'index'])->name('roles.index');
+    Route::get('/roles/create', [RolController::class, 'create'])->name('roles.create');
+    Route::post('/roles', [RolController::class, 'store'])->name('roles.store');
+    Route::get('/roles/{rol}', [RolController::class, 'show'])->name('roles.show');
+    Route::get('/roles/{rol}/edit', [RolController::class, 'edit'])->name('roles.edit');
+    Route::put('/roles/{rol}', [RolController::class, 'update'])->name('roles.update');
+    Route::patch('/roles/{rol}/estado', [RolController::class, 'cambiarEstado'])->name('roles.cambiar-estado');
+    Route::get('/roles/{rol}/permisos', [RolController::class, 'permisos'])->name('roles.permisos');
+    Route::put('/roles/{rol}/permisos', [RolController::class, 'guardarPermisos'])->name('roles.guardar-permisos');
+
+    /*Rutas para Modulos*/
+    Route::get('/modulos', [ModuloController::class, 'index'])->name('modulos.index');
+    Route::get('/modulos/create', [ModuloController::class, 'create'])->name('modulos.create');
+    Route::post('/modulos', [ModuloController::class, 'store'])->name('modulos.store');
+    Route::get('/modulos/{modulo}', [ModuloController::class, 'show'])->name('modulos.show');
+    Route::get('/modulos/{modulo}/edit', [ModuloController::class, 'edit'])->name('modulos.edit');
+    Route::put('/modulos/{modulo}', [ModuloController::class, 'update'])->name('modulos.update');
+    Route::patch('/modulos/{modulo}/estado', [ModuloController::class, 'cambiarEstado'])->name('modulos.cambiar-estado');
+
+    /*Rutas para Opciones*/
+    Route::get('/opciones', [OpcionController::class, 'index'])->name('opciones.index');
+    Route::get('/opciones/create', [OpcionController::class, 'create'])->name('opciones.create');
+    Route::post('/opciones', [OpcionController::class, 'store'])->name('opciones.store');
+    Route::get('/opciones/{opcion}', [OpcionController::class, 'show'])->name('opciones.show');
+    Route::get('/opciones/{opcion}/edit', [OpcionController::class, 'edit'])->name('opciones.edit');
+    Route::put('/opciones/{opcion}', [OpcionController::class, 'update'])->name('opciones.update');
+    Route::patch('/opciones/{opcion}/estado', [OpcionController::class, 'cambiarEstado'])->name('opciones.cambiar-estado');
+
+    /*Rutas para Acciones*/
+    Route::get('/acciones', [AccionController::class, 'index'])->name('acciones.index');
+    Route::get('/acciones/create', [AccionController::class, 'create'])->name('acciones.create');
+    Route::post('/acciones', [AccionController::class, 'store'])->name('acciones.store');
+    Route::get('/acciones/{accion}', [AccionController::class, 'show'])->name('acciones.show');
+    Route::get('/acciones/{accion}/edit', [AccionController::class, 'edit'])->name('acciones.edit');
+    Route::put('/acciones/{accion}', [AccionController::class, 'update'])->name('acciones.update');
+    Route::patch('/acciones/{accion}/estado', [AccionController::class, 'cambiarEstado'])->name('acciones.cambiar-estado');
 });
 
 require __DIR__ . '/auth.php';

@@ -29,6 +29,7 @@
                                 <th>ID</th>
                                 <th>Nombre</th>
                                 <th>Correo</th>
+                                <th>Roles</th>
                                 <th>Correo verificado</th>
                                 <th>Estado</th>
                                 <th>Fecha creación</th>
@@ -44,6 +45,10 @@
                                     <td>{{ $user->name }}</td>
 
                                     <td>{{ $user->email }}</td>
+
+                                    <td>
+                                        {{ $user->roles->pluck('nombre')->implode(', ') ?: 'Sin roles' }}
+                                    </td>
 
                                     <td>
                                         @if ($user->email_verified_at)
