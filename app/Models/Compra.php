@@ -59,8 +59,8 @@ class Compra extends Model
         return $this->belongsTo(User::class);
     }
 
-    // public function detalles()
-    // {
-    //     return $this->hasMany(DetalleCompra::class);
-    // }
+    public function detalles()
+    {
+        return $this->hasMany(DetalleCompra::class);
+    }
 }
