@@ -13,6 +13,7 @@ class DetalleCompra extends Model
 
     protected $fillable = [
         'compra_id',
+        'numero_linea',
         'inventario_compra_id',
         'cantidad',
         'precio_unitario',
@@ -29,10 +30,10 @@ class DetalleCompra extends Model
     ];
 
     protected $casts = [
+        'numero_linea' => 'integer',
         'cantidad' => 'decimal:4',
         'precio_unitario' => 'decimal:6',
         'porcentaje_descuento' => 'decimal:4',
-
         'importe_bruto' => 'decimal:2',
         'importe_descuento' => 'decimal:2',
         'importe_exento' => 'decimal:2',
@@ -40,7 +41,6 @@ class DetalleCompra extends Model
         'importe_neto' => 'decimal:2',
         'importe_iva' => 'decimal:2',
         'importe_total' => 'decimal:2',
-
         'estado' => 'boolean',
     ];
 

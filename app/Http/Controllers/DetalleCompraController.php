@@ -21,30 +21,25 @@ class DetalleCompraController extends Controller
         }
 
         if ($request->filled('compra_id')) {
-            $query->where(
-                'compra_id',
-                $request->compra_id
-            );
+            $query->where('compra_id', $request->compra_id);
+        }
+
+        if ($request->filled('numero_linea')) {
+            $query->where('numero_linea', $request->numero_linea);
         }
 
         if ($request->filled('inventario_compra')) {
-            $query->whereHas(
-                'inventarioCompra',
-                function ($q) use ($request) {
-                    $q->where(
-                        'nombre',
-                        'like',
-                        '%' . $request->inventario_compra . '%'
-                    );
-                }
-            );
+            $query->whereHas('inventarioCompra', function ($q) use ($request) {
+                $q->where(
+                    'nombre',
+                    'like',
+                    '%' . $request->inventario_compra . '%'
+                );
+            });
         }
 
         if ($request->filled('cantidad')) {
-            $query->where(
-                'cantidad',
-                $request->cantidad
-            );
+            $query->where('cantidad', $request->cantidad);
         }
 
         if ($request->filled('precio_unitario')) {
@@ -76,7 +71,8 @@ class DetalleCompraController extends Controller
         }
 
         $detallesCompra = $query
-            ->orderBy('id', 'desc')
+            ->orderBy('compra_id', 'desc')
+            ->orderBy('numero_linea')
             ->paginate(10)
             ->withQueryString();
 
@@ -193,9 +189,28 @@ class DetalleCompraController extends Controller
             ],
         ]);
 
+        /*
+        |--------------------------------------------------------------------------
+        | Calcular automáticamente numero_linea
+        |--------------------------------------------------------------------------
+        |
+        | Busca la última línea de la compra seleccionada.
+        | Si no existen detalles, comienza en 1.
+        |
+        */
+        $ultimaLinea = DetalleCompra::where(
+            'compra_id',
+            $validated['compra_id']
+        )->max('numero_linea');
+
+        $numeroLinea = ($ultimaLinea ?? 0) + 1;
+
         DetalleCompra::create([
             'compra_id' =>
             $validated['compra_id'],
+
+            'numero_linea' =>
+            $numeroLinea,
 
             'inventario_compra_id' =>
             $validated['inventario_compra_id'],
@@ -261,7 +276,10 @@ class DetalleCompraController extends Controller
     public function edit(DetalleCompra $detalleCompra)
     {
         $compras = Compra::where('estado', true)
-            ->orWhere('id', $detalleCompra->compra_id)
+            ->orWhere(
+                'id',
+                $detalleCompra->compra_id
+            )
             ->orderBy('fecha_emision', 'desc')
             ->get();
 
@@ -373,9 +391,35 @@ class DetalleCompraController extends Controller
             ],
         ]);
 
+        /*
+        |--------------------------------------------------------------------------
+        | Si cambia de compra
+        |--------------------------------------------------------------------------
+        |
+        | Si el detalle se mueve a otra compra, le asignamos
+        | automáticamente la siguiente línea disponible.
+        |
+        */
+        $numeroLinea = $detalleCompra->numero_linea;
+
+        if (
+            (int) $detalleCompra->compra_id !==
+            (int) $validated['compra_id']
+        ) {
+            $ultimaLinea = DetalleCompra::where(
+                'compra_id',
+                $validated['compra_id']
+            )->max('numero_linea');
+
+            $numeroLinea = ($ultimaLinea ?? 0) + 1;
+        }
+
         $detalleCompra->update([
             'compra_id' =>
             $validated['compra_id'],
+
+            'numero_linea' =>
+            $numeroLinea,
 
             'inventario_compra_id' =>
             $validated['inventario_compra_id'],
