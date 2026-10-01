@@ -10,11 +10,39 @@ use Illuminate\Support\Facades\DB;
 
 class RolController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $roles = Rol::withCount('usuarios')
+        $query = Rol::withCount('usuarios');
+
+        // Filtro por ID
+        if ($request->filled('id')) {
+            $query->where('id', $request->id);
+        }
+
+        // Filtro por nombre
+        if ($request->filled('nombre')) {
+            $query->where('nombre', 'like', '%' . $request->nombre . '%');
+        }
+
+        // Filtro por descripción
+        if ($request->filled('descripcion')) {
+            $query->where('descripcion', 'like', '%' . $request->descripcion . '%');
+        }
+
+        // Filtro por estado
+        if ($request->filled('estado')) {
+            $query->where('estado', $request->estado);
+        }
+
+        // Filtro por fecha de creación
+        if ($request->filled('fecha')) {
+            $query->whereDate('created_at', $request->fecha);
+        }
+
+        $roles = $query
             ->latest()
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString();
 
         return view('roles.index', compact('roles'));
     }

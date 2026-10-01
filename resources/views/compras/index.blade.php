@@ -12,9 +12,11 @@
             </p>
         </div>
 
-        <a href="{{ route('compras.create') }}" class="btn btn-warning fw-bold px-4 py-2">
-            + Nueva compra
-        </a>
+        @can('compras.crear')
+            <a href="{{ route('compras.create') }}" class="btn btn-warning fw-bold px-4 py-2">
+                + Nueva compra
+            </a>
+        @endcan
     </div>
 
     @if (session('success'))
@@ -30,184 +32,189 @@
 
         <div class="card-body p-4">
 
-            <form method="GET" action="{{ route('compras.index') }}">
+            <form id="filtros" method="GET" action="{{ route('compras.index') }}"></form>
 
-                <div class="table-responsive">
+            <div class="table-responsive">
 
-                    <table class="table align-middle mb-0">
+                <table class="table align-middle mb-0">
 
-                        <thead>
+                    <thead>
 
-                            <tr class="table-dark">
-                                <th>ID</th>
-                                <th>Proveedor</th>
-                                <th>Tipo DTE</th>
-                                <th>Serie</th>
-                                <th>Número</th>
-                                <th>Autorización / UUID</th>
-                                <th>Fecha emisión</th>
-                                <th>Moneda</th>
-                                <th>Total</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
-                            </tr>
+                        <tr class="table-dark">
+                            <th>ID</th>
+                            <th>Proveedor</th>
+                            <th>Tipo DTE</th>
+                            <th>Serie</th>
+                            <th>Número</th>
+                            <th>Autorización / UUID</th>
+                            <th>Fecha emisión</th>
+                            <th>Moneda</th>
+                            <th>Total</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
 
+                        <tr>
+
+                            <th>
+                                <input form="filtros" type="number" name="id" value="{{ request('id') }}"
+                                    class="form-control form-control-sm" placeholder="ID">
+                            </th>
+
+                            <th>
+                                <input form="filtros" type="text" name="proveedor" value="{{ request('proveedor') }}"
+                                    class="form-control form-control-sm" placeholder="Proveedor">
+                            </th>
+
+                            <th>
+                                <input form="filtros" type="text" name="tipo_dte" value="{{ request('tipo_dte') }}"
+                                    class="form-control form-control-sm" placeholder="Tipo DTE">
+                            </th>
+
+                            <th>
+                                <input form="filtros" type="text" name="serie" value="{{ request('serie') }}"
+                                    class="form-control form-control-sm" placeholder="Serie">
+                            </th>
+
+                            <th>
+                                <input form="filtros" type="number" name="numero" value="{{ request('numero') }}"
+                                    class="form-control form-control-sm" placeholder="Número">
+                            </th>
+
+                            <th>
+                                <input form="filtros" type="text" name="numero_autorizacion"
+                                    value="{{ request('numero_autorizacion') }}" class="form-control form-control-sm"
+                                    placeholder="UUID">
+                            </th>
+
+                            <th>
+                                <input form="filtros" type="date" name="fecha_emision" value="{{ request('fecha_emision') }}"
+                                    class="form-control form-control-sm">
+                            </th>
+
+                            <th>
+                                <input form="filtros" type="text" name="moneda" value="{{ request('moneda') }}"
+                                    class="form-control form-control-sm" placeholder="GTQ">
+                            </th>
+
+                            <th>
+                                <input form="filtros" type="number" step="0.01" name="importe_total"
+                                    value="{{ request('importe_total') }}" class="form-control form-control-sm"
+                                    placeholder="Total">
+                            </th>
+
+                            <th>
+                                <select form="filtros" name="estado" class="form-select form-select-sm">
+
+                                    <option value="">
+                                        Todos
+                                    </option>
+
+                                    <option value="1" {{ request('estado') === '1' ? 'selected' : '' }}>
+                                        Activo
+                                    </option>
+
+                                    <option value="0" {{ request('estado') === '0' ? 'selected' : '' }}>
+                                        Inactivo
+                                    </option>
+
+                                </select>
+                            </th>
+
+                            <th>
+                                <div class="d-flex gap-2">
+
+                                    <button type="submit" form="filtros" class="btn btn-dark btn-sm">
+                                        Filtrar
+                                    </button>
+
+                                    <a href="{{ route('compras.index') }}" class="btn btn-outline-secondary btn-sm">
+                                        Limpiar
+                                    </a>
+
+                                </div>
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        @forelse ($compras as $compra)
                             <tr>
 
-                                <th>
-                                    <input type="number" name="id" value="{{ request('id') }}"
-                                        class="form-control form-control-sm" placeholder="ID">
-                                </th>
+                                <td class="fw-semibold">
+                                    #{{ $compra->id }}
+                                </td>
 
-                                <th>
-                                    <input type="text" name="proveedor" value="{{ request('proveedor') }}"
-                                        class="form-control form-control-sm" placeholder="Proveedor">
-                                </th>
+                                <td>
+                                    {{ $compra->proveedor->nombre ?? 'Sin proveedor' }}
+                                </td>
 
-                                <th>
-                                    <input type="text" name="tipo_dte" value="{{ request('tipo_dte') }}"
-                                        class="form-control form-control-sm" placeholder="Tipo DTE">
-                                </th>
+                                <td>
+                                    <span class="badge bg-dark">
+                                        {{ $compra->tipo_dte }}
+                                    </span>
+                                </td>
 
-                                <th>
-                                    <input type="text" name="serie" value="{{ request('serie') }}"
-                                        class="form-control form-control-sm" placeholder="Serie">
-                                </th>
+                                <td>
+                                    {{ $compra->serie }}
+                                </td>
 
-                                <th>
-                                    <input type="number" name="numero" value="{{ request('numero') }}"
-                                        class="form-control form-control-sm" placeholder="Número">
-                                </th>
+                                <td>
+                                    {{ $compra->numero }}
+                                </td>
 
-                                <th>
-                                    <input type="text" name="numero_autorizacion"
-                                        value="{{ request('numero_autorizacion') }}" class="form-control form-control-sm"
-                                        placeholder="UUID">
-                                </th>
+                                <td>
+                                    <small>
+                                        {{ $compra->numero_autorizacion }}
+                                    </small>
+                                </td>
 
-                                <th>
-                                    <input type="date" name="fecha_emision" value="{{ request('fecha_emision') }}"
-                                        class="form-control form-control-sm">
-                                </th>
+                                <td>
+                                    {{ $compra->fecha_emision?->format('d/m/Y H:i') }}
+                                </td>
 
-                                <th>
-                                    <input type="text" name="moneda" value="{{ request('moneda') }}"
-                                        class="form-control form-control-sm" placeholder="GTQ">
-                                </th>
+                                <td>
+                                    {{ $compra->moneda }}
+                                </td>
 
-                                <th>
-                                    <input type="number" step="0.01" name="importe_total"
-                                        value="{{ request('importe_total') }}" class="form-control form-control-sm"
-                                        placeholder="Total">
-                                </th>
+                                <td class="fw-bold">
+                                    Q {{ number_format($compra->importe_total, 2) }}
+                                </td>
 
-                                <th>
-                                    <select name="estado" class="form-select form-select-sm">
-
-                                        <option value="">
-                                            Todos
-                                        </option>
-
-                                        <option value="1" {{ request('estado') === '1' ? 'selected' : '' }}>
+                                <td>
+                                    @if ($compra->estado)
+                                        <span class="badge rounded-pill bg-success-subtle text-success px-3 py-2">
                                             Activo
-                                        </option>
-
-                                        <option value="0" {{ request('estado') === '0' ? 'selected' : '' }}>
-                                            Inactivo
-                                        </option>
-
-                                    </select>
-                                </th>
-
-                                <th>
-                                    <div class="d-flex gap-2">
-
-                                        <button type="submit" class="btn btn-dark btn-sm">
-                                            Filtrar
-                                        </button>
-
-                                        <a href="{{ route('compras.index') }}" class="btn btn-outline-secondary btn-sm">
-                                            Limpiar
-                                        </a>
-
-                                    </div>
-                                </th>
-
-                            </tr>
-
-                        </thead>
-
-                        <tbody>
-
-                            @forelse ($compras as $compra)
-                                <tr>
-
-                                    <td class="fw-semibold">
-                                        #{{ $compra->id }}
-                                    </td>
-
-                                    <td>
-                                        {{ $compra->proveedor->nombre ?? 'Sin proveedor' }}
-                                    </td>
-
-                                    <td>
-                                        <span class="badge bg-dark">
-                                            {{ $compra->tipo_dte }}
                                         </span>
-                                    </td>
+                                    @else
+                                        <span class="badge rounded-pill bg-danger-subtle text-danger px-3 py-2">
+                                            Inactivo
+                                        </span>
+                                    @endif
+                                </td>
 
-                                    <td>
-                                        {{ $compra->serie }}
-                                    </td>
+                                <td>
 
-                                    <td>
-                                        {{ $compra->numero }}
-                                    </td>
+                                    <div class="d-flex gap-2 flex-wrap">
 
-                                    <td>
-                                        <small>
-                                            {{ $compra->numero_autorizacion }}
-                                        </small>
-                                    </td>
-
-                                    <td>
-                                        {{ $compra->fecha_emision?->format('d/m/Y H:i') }}
-                                    </td>
-
-                                    <td>
-                                        {{ $compra->moneda }}
-                                    </td>
-
-                                    <td class="fw-bold">
-                                        Q {{ number_format($compra->importe_total, 2) }}
-                                    </td>
-
-                                    <td>
-                                        @if ($compra->estado)
-                                            <span class="badge rounded-pill bg-success-subtle text-success px-3 py-2">
-                                                Activo
-                                            </span>
-                                        @else
-                                            <span class="badge rounded-pill bg-danger-subtle text-danger px-3 py-2">
-                                                Inactivo
-                                            </span>
-                                        @endif
-                                    </td>
-
-                                    <td>
-
-                                        <div class="d-flex gap-2 flex-wrap">
-
+                                        @can('compras.ver')
                                             <a href="{{ route('compras.show', $compra->id) }}"
                                                 class="btn btn-outline-info btn-sm">
                                                 Ver
                                             </a>
+                                        @endcan
 
+                                        @can('compras.modificar')
                                             <a href="{{ route('compras.edit', $compra->id) }}"
                                                 class="btn btn-outline-warning btn-sm">
                                                 Editar
                                             </a>
+                                        @endcan
 
+                                        @can('compras.eliminar')
                                             <form method="POST"
                                                 action="{{ route('compras.cambiar-estado', $compra->id) }}"
                                                 onsubmit="return confirm('¿Deseas cambiar el estado de esta compra?')">
@@ -226,33 +233,32 @@
                                                 @endif
 
                                             </form>
+                                        @endcan
 
-                                        </div>
+                                    </div>
 
-                                    </td>
+                                </td>
 
-                                </tr>
+                            </tr>
 
-                            @empty
+                        @empty
 
-                                <tr>
-                                    <td colspan="11" class="text-center text-muted py-4">
-                                        No se encontraron compras.
-                                    </td>
-                                </tr>
-                            @endforelse
+                            <tr>
+                                <td colspan="11" class="text-center text-muted py-4">
+                                    No se encontraron compras.
+                                </td>
+                            </tr>
+                        @endforelse
 
-                        </tbody>
+                    </tbody>
 
-                    </table>
+                </table>
 
-                </div>
+            </div>
 
-                <div class="mt-4">
-                    {{ $compras->links() }}
-                </div>
-
-            </form>
+            <div class="mt-4">
+                {{ $compras->links() }}
+            </div>
 
         </div>
 

@@ -152,27 +152,31 @@
                     Volver
                 </a>
 
-                <a href="{{ route('inventarios_compra.edit', $inventarioCompra->id) }}" class="btn btn-warning">
-                    Editar
-                </a>
+                @can('inventarios_compra.modificar')
+                    <a href="{{ route('inventarios_compra.edit', $inventarioCompra->id) }}" class="btn btn-warning">
+                        Editar
+                    </a>
+                @endcan
 
-                <form method="POST" action="{{ route('inventarios_compra.cambiar-estado', $inventarioCompra->id) }}"
-                    onsubmit="return confirm('¿Deseas cambiar el estado de este inventario?')">
+                @can('inventarios_compra.eliminar')
+                    <form method="POST" action="{{ route('inventarios_compra.cambiar-estado', $inventarioCompra->id) }}"
+                        onsubmit="return confirm('¿Deseas cambiar el estado de este inventario?')">
 
-                    @csrf
-                    @method('PATCH')
+                        @csrf
+                        @method('PATCH')
 
-                    @if ($inventarioCompra->estado)
-                        <button type="submit" class="btn btn-outline-secondary">
-                            Inactivar
-                        </button>
-                    @else
-                        <button type="submit" class="btn btn-outline-success">
-                            Activar
-                        </button>
-                    @endif
+                        @if ($inventarioCompra->estado)
+                            <button type="submit" class="btn btn-outline-secondary">
+                                Inactivar
+                            </button>
+                        @else
+                            <button type="submit" class="btn btn-outline-success">
+                                Activar
+                            </button>
+                        @endif
 
-                </form>
+                    </form>
+                @endcan
 
             </div>
 

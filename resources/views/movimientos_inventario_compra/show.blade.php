@@ -207,29 +207,33 @@
                     Volver
                 </a>
 
-                <a href="{{ route('movimientos_inventario_compra.edit', $movimientoInventarioCompra->id) }}"
-                    class="btn btn-warning">
-                    Editar
-                </a>
+                @can('movimientos_inventario_compra.modificar')
+                    <a href="{{ route('movimientos_inventario_compra.edit', $movimientoInventarioCompra->id) }}"
+                        class="btn btn-warning">
+                        Editar
+                    </a>
+                @endcan
 
-                <form method="POST"
-                    action="{{ route('movimientos_inventario_compra.cambiar-estado', $movimientoInventarioCompra->id) }}"
-                    onsubmit="return confirm('¿Deseas cambiar el estado de este movimiento?')">
+                @can('movimientos_inventario_compra.eliminar')
+                    <form method="POST"
+                        action="{{ route('movimientos_inventario_compra.cambiar-estado', $movimientoInventarioCompra->id) }}"
+                        onsubmit="return confirm('¿Deseas cambiar el estado de este movimiento?')">
 
-                    @csrf
-                    @method('PATCH')
+                        @csrf
+                        @method('PATCH')
 
-                    @if ($movimientoInventarioCompra->estado)
-                        <button type="submit" class="btn btn-outline-secondary">
-                            Inactivar
-                        </button>
-                    @else
-                        <button type="submit" class="btn btn-outline-success">
-                            Activar
-                        </button>
-                    @endif
+                        @if ($movimientoInventarioCompra->estado)
+                            <button type="submit" class="btn btn-outline-secondary">
+                                Inactivar
+                            </button>
+                        @else
+                            <button type="submit" class="btn btn-outline-success">
+                                Activar
+                            </button>
+                        @endif
 
-                </form>
+                    </form>
+                @endcan
 
             </div>
 

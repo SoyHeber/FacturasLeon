@@ -12,9 +12,11 @@
             </p>
         </div>
 
-        <a href="{{ route('inventarios_compra.create') }}" class="btn btn-warning fw-bold px-4 py-2">
-            + Nuevo inventario
-        </a>
+        @can('inventarios_compra.crear')
+            <a href="{{ route('inventarios_compra.create') }}" class="btn btn-warning fw-bold px-4 py-2">
+                + Nuevo inventario
+            </a>
+        @endcan
     </div>
 
     @if (session('success'))
@@ -29,179 +31,184 @@
     <div class="card shadow-sm border-0 rounded-4">
         <div class="card-body p-4">
 
-            <form method="GET" action="{{ route('inventarios_compra.index') }}">
+            <form id="filtros" method="GET" action="{{ route('inventarios_compra.index') }}"></form>
 
-                <div class="table-responsive">
+            <div class="table-responsive">
 
-                    <table class="table align-middle mb-0">
+                <table class="table align-middle mb-0">
 
-                        <thead>
+                    <thead>
 
-                            <tr class="table-dark">
-                                <th>ID</th>
-                                <th>Nombre</th>
-                                <th>Descripción</th>
-                                <th>Unidad</th>
-                                <th>Cantidad</th>
-                                <th>Stock mínimo</th>
-                                <th>Stock máximo</th>
-                                <th>Ubicación</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
-                            </tr>
+                        <tr class="table-dark">
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Descripción</th>
+                            <th>Unidad</th>
+                            <th>Cantidad</th>
+                            <th>Stock mínimo</th>
+                            <th>Stock máximo</th>
+                            <th>Ubicación</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
 
+                        <tr>
+
+                            <th>
+                                <input form="filtros" type="number" name="id" value="{{ request('id') }}"
+                                    class="form-control form-control-sm" placeholder="ID">
+                            </th>
+
+                            <th>
+                                <input form="filtros" type="text" name="nombre" value="{{ request('nombre') }}"
+                                    class="form-control form-control-sm" placeholder="Nombre">
+                            </th>
+
+                            <th>
+                                <input form="filtros" type="text" name="descripcion" value="{{ request('descripcion') }}"
+                                    class="form-control form-control-sm" placeholder="Descripción">
+                            </th>
+
+                            <th>
+                                <input form="filtros" type="text" name="unidad_medida" value="{{ request('unidad_medida') }}"
+                                    class="form-control form-control-sm" placeholder="Unidad">
+                            </th>
+
+                            <th>
+                                <input form="filtros" type="number" step="0.0001" name="cantidad" value="{{ request('cantidad') }}"
+                                    class="form-control form-control-sm" placeholder="Cantidad">
+                            </th>
+
+                            <th>
+                                <input form="filtros" type="number" step="0.0001" name="stock_minimo"
+                                    value="{{ request('stock_minimo') }}" class="form-control form-control-sm"
+                                    placeholder="Mínimo">
+                            </th>
+
+                            <th>
+                                <input form="filtros" type="number" step="0.0001" name="stock_maximo"
+                                    value="{{ request('stock_maximo') }}" class="form-control form-control-sm"
+                                    placeholder="Máximo">
+                            </th>
+
+                            <th>
+                                <input form="filtros" type="text" name="ubicacion" value="{{ request('ubicacion') }}"
+                                    class="form-control form-control-sm" placeholder="Ubicación">
+                            </th>
+
+                            <th>
+                                <select form="filtros" name="estado" class="form-select form-select-sm">
+
+                                    <option value="">
+                                        Todos
+                                    </option>
+
+                                    <option value="1" {{ request('estado') === '1' ? 'selected' : '' }}>
+                                        Activo
+                                    </option>
+
+                                    <option value="0" {{ request('estado') === '0' ? 'selected' : '' }}>
+                                        Inactivo
+                                    </option>
+
+                                </select>
+                            </th>
+
+                            <th>
+                                <div class="d-flex gap-2">
+
+                                    <button type="submit" form="filtros" class="btn btn-dark btn-sm">
+                                        Filtrar
+                                    </button>
+
+                                    <a href="{{ route('inventarios_compra.index') }}"
+                                        class="btn btn-outline-secondary btn-sm">
+                                        Limpiar
+                                    </a>
+
+                                </div>
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        @forelse ($inventariosCompra as $inventarioCompra)
                             <tr>
 
-                                <th>
-                                    <input type="number" name="id" value="{{ request('id') }}"
-                                        class="form-control form-control-sm" placeholder="ID">
-                                </th>
+                                <td class="fw-semibold">
+                                    #{{ $inventarioCompra->id }}
+                                </td>
 
-                                <th>
-                                    <input type="text" name="nombre" value="{{ request('nombre') }}"
-                                        class="form-control form-control-sm" placeholder="Nombre">
-                                </th>
+                                <td class="fw-semibold">
+                                    {{ $inventarioCompra->nombre }}
+                                </td>
 
-                                <th>
-                                    <input type="text" name="descripcion" value="{{ request('descripcion') }}"
-                                        class="form-control form-control-sm" placeholder="Descripción">
-                                </th>
+                                <td>
+                                    {{ $inventarioCompra->descripcion ?: 'Sin descripción' }}
+                                </td>
 
-                                <th>
-                                    <input type="text" name="unidad_medida" value="{{ request('unidad_medida') }}"
-                                        class="form-control form-control-sm" placeholder="Unidad">
-                                </th>
+                                <td>
+                                    <span class="badge bg-dark">
+                                        {{ $inventarioCompra->unidad_medida }}
+                                    </span>
+                                </td>
 
-                                <th>
-                                    <input type="number" step="0.0001" name="cantidad" value="{{ request('cantidad') }}"
-                                        class="form-control form-control-sm" placeholder="Cantidad">
-                                </th>
+                                <td>
+                                    {{ number_format($inventarioCompra->cantidad, 4) }}
+                                </td>
 
-                                <th>
-                                    <input type="number" step="0.0001" name="stock_minimo"
-                                        value="{{ request('stock_minimo') }}" class="form-control form-control-sm"
-                                        placeholder="Mínimo">
-                                </th>
+                                <td>
+                                    {{ number_format($inventarioCompra->stock_minimo, 4) }}
+                                </td>
 
-                                <th>
-                                    <input type="number" step="0.0001" name="stock_maximo"
-                                        value="{{ request('stock_maximo') }}" class="form-control form-control-sm"
-                                        placeholder="Máximo">
-                                </th>
+                                <td>
+                                    @if ($inventarioCompra->stock_maximo !== null)
+                                        {{ number_format($inventarioCompra->stock_maximo, 4) }}
+                                    @else
+                                        -
+                                    @endif
+                                </td>
 
-                                <th>
-                                    <input type="text" name="ubicacion" value="{{ request('ubicacion') }}"
-                                        class="form-control form-control-sm" placeholder="Ubicación">
-                                </th>
+                                <td>
+                                    {{ $inventarioCompra->ubicacion ?: 'Sin ubicación' }}
+                                </td>
 
-                                <th>
-                                    <select name="estado" class="form-select form-select-sm">
+                                <td>
 
-                                        <option value="">
-                                            Todos
-                                        </option>
-
-                                        <option value="1" {{ request('estado') === '1' ? 'selected' : '' }}>
+                                    @if ($inventarioCompra->estado)
+                                        <span class="badge rounded-pill bg-success-subtle text-success px-3 py-2">
                                             Activo
-                                        </option>
-
-                                        <option value="0" {{ request('estado') === '0' ? 'selected' : '' }}>
-                                            Inactivo
-                                        </option>
-
-                                    </select>
-                                </th>
-
-                                <th>
-                                    <div class="d-flex gap-2">
-
-                                        <button type="submit" class="btn btn-dark btn-sm">
-                                            Filtrar
-                                        </button>
-
-                                        <a href="{{ route('inventarios_compra.index') }}"
-                                            class="btn btn-outline-secondary btn-sm">
-                                            Limpiar
-                                        </a>
-
-                                    </div>
-                                </th>
-
-                            </tr>
-
-                        </thead>
-
-                        <tbody>
-
-                            @forelse ($inventariosCompra as $inventarioCompra)
-                                <tr>
-
-                                    <td class="fw-semibold">
-                                        #{{ $inventarioCompra->id }}
-                                    </td>
-
-                                    <td class="fw-semibold">
-                                        {{ $inventarioCompra->nombre }}
-                                    </td>
-
-                                    <td>
-                                        {{ $inventarioCompra->descripcion ?: 'Sin descripción' }}
-                                    </td>
-
-                                    <td>
-                                        <span class="badge bg-dark">
-                                            {{ $inventarioCompra->unidad_medida }}
                                         </span>
-                                    </td>
+                                    @else
+                                        <span class="badge rounded-pill bg-danger-subtle text-danger px-3 py-2">
+                                            Inactivo
+                                        </span>
+                                    @endif
 
-                                    <td>
-                                        {{ number_format($inventarioCompra->cantidad, 4) }}
-                                    </td>
+                                </td>
 
-                                    <td>
-                                        {{ number_format($inventarioCompra->stock_minimo, 4) }}
-                                    </td>
+                                <td>
 
-                                    <td>
-                                        @if ($inventarioCompra->stock_maximo !== null)
-                                            {{ number_format($inventarioCompra->stock_maximo, 4) }}
-                                        @else
-                                            -
-                                        @endif
-                                    </td>
+                                    <div class="d-flex gap-2 flex-wrap">
 
-                                    <td>
-                                        {{ $inventarioCompra->ubicacion ?: 'Sin ubicación' }}
-                                    </td>
-
-                                    <td>
-
-                                        @if ($inventarioCompra->estado)
-                                            <span class="badge rounded-pill bg-success-subtle text-success px-3 py-2">
-                                                Activo
-                                            </span>
-                                        @else
-                                            <span class="badge rounded-pill bg-danger-subtle text-danger px-3 py-2">
-                                                Inactivo
-                                            </span>
-                                        @endif
-
-                                    </td>
-
-                                    <td>
-
-                                        <div class="d-flex gap-2 flex-wrap">
-
+                                        @can('inventarios_compra.ver')
                                             <a href="{{ route('inventarios_compra.show', $inventarioCompra->id) }}"
                                                 class="btn btn-outline-info btn-sm">
                                                 Ver
                                             </a>
+                                        @endcan
 
+                                        @can('inventarios_compra.modificar')
                                             <a href="{{ route('inventarios_compra.edit', $inventarioCompra->id) }}"
                                                 class="btn btn-outline-warning btn-sm">
                                                 Editar
                                             </a>
+                                        @endcan
 
+                                        @can('inventarios_compra.eliminar')
                                             <form method="POST"
                                                 action="{{ route('inventarios_compra.cambiar-estado', $inventarioCompra->id) }}"
                                                 onsubmit="return confirm('¿Deseas cambiar el estado de este inventario?')">
@@ -220,33 +227,32 @@
                                                 @endif
 
                                             </form>
+                                        @endcan
 
-                                        </div>
+                                    </div>
 
-                                    </td>
+                                </td>
 
-                                </tr>
+                            </tr>
 
-                            @empty
+                        @empty
 
-                                <tr>
-                                    <td colspan="10" class="text-center text-muted py-4">
-                                        No se encontraron registros.
-                                    </td>
-                                </tr>
-                            @endforelse
+                            <tr>
+                                <td colspan="10" class="text-center text-muted py-4">
+                                    No se encontraron registros.
+                                </td>
+                            </tr>
+                        @endforelse
 
-                        </tbody>
+                    </tbody>
 
-                    </table>
+                </table>
 
-                </div>
+            </div>
 
-                <div class="mt-4">
-                    {{ $inventariosCompra->links() }}
-                </div>
-
-            </form>
+            <div class="mt-4">
+                {{ $inventariosCompra->links() }}
+            </div>
 
         </div>
     </div>

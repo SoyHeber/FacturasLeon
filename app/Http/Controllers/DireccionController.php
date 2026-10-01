@@ -8,11 +8,60 @@ use Illuminate\Http\Request;
 
 class DireccionController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $direcciones = Direccion::with('municipio.departamento.pais')
+        $query = Direccion::with('municipio.departamento.pais');
+
+        // Filtro por ID
+        if ($request->filled('id')) {
+            $query->where('id', $request->id);
+        }
+
+        // Filtro por país
+        if ($request->filled('pais')) {
+            $query->whereHas('municipio.departamento.pais', function ($q) use ($request) {
+                $q->where('nombre', 'like', '%' . $request->pais . '%');
+            });
+        }
+
+        // Filtro por departamento
+        if ($request->filled('departamento')) {
+            $query->whereHas('municipio.departamento', function ($q) use ($request) {
+                $q->where('nombre', 'like', '%' . $request->departamento . '%');
+            });
+        }
+
+        // Filtro por municipio
+        if ($request->filled('municipio')) {
+            $query->whereHas('municipio', function ($q) use ($request) {
+                $q->where('nombre', 'like', '%' . $request->municipio . '%');
+            });
+        }
+
+        // Filtro por dirección
+        if ($request->filled('direccion')) {
+            $query->where('direccion', 'like', '%' . $request->direccion . '%');
+        }
+
+        // Filtro por código postal
+        if ($request->filled('codigo_postal')) {
+            $query->where('codigo_postal', 'like', '%' . $request->codigo_postal . '%');
+        }
+
+        // Filtro por estado
+        if ($request->filled('estado')) {
+            $query->where('estado', $request->estado);
+        }
+
+        // Filtro por fecha de creación
+        if ($request->filled('fecha')) {
+            $query->whereDate('created_at', $request->fecha);
+        }
+
+        $direcciones = $query
             ->latest()
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString();
 
         return view('direcciones.index', compact('direcciones'));
     }

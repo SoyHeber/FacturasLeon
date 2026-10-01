@@ -54,19 +54,23 @@
 
                     <div class="d-flex gap-2">
                         <a href="{{ route('municipios.index') }}" class="btn btn-secondary">Volver</a>
-                        <a href="{{ route('municipios.edit', $municipio->id) }}" class="btn btn-warning">Editar</a>
+                        @can('municipios.modificar')
+                            <a href="{{ route('municipios.edit', $municipio->id) }}" class="btn btn-warning">Editar</a>
+                        @endcan
 
-                        <form action="{{ route('municipios.cambiar-estado', $municipio->id) }}" method="POST"
-                            onsubmit="return confirm('¿Deseas cambiar el estado de este municipio?')">
-                            @csrf
-                            @method('PATCH')
+                        @can('municipios.eliminar')
+                            <form action="{{ route('municipios.cambiar-estado', $municipio->id) }}" method="POST"
+                                onsubmit="return confirm('¿Deseas cambiar el estado de este municipio?')">
+                                @csrf
+                                @method('PATCH')
 
-                            @if ($municipio->estado)
-                                <button type="submit" class="btn btn-secondary">Inactivar</button>
-                            @else
-                                <button type="submit" class="btn btn-success">Activar</button>
-                            @endif
-                        </form>
+                                @if ($municipio->estado)
+                                    <button type="submit" class="btn btn-secondary">Inactivar</button>
+                                @else
+                                    <button type="submit" class="btn btn-success">Activar</button>
+                                @endif
+                            </form>
+                        @endcan
                     </div>
                 </div>
             </div>

@@ -7,11 +7,39 @@ use Illuminate\Http\Request;
 
 class AccionController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $acciones = Accion::withCount('opciones')
+        $query = Accion::withCount('opciones');
+
+        // Filtro por ID
+        if ($request->filled('id')) {
+            $query->where('id', $request->id);
+        }
+
+        // Filtro por nombre
+        if ($request->filled('nombre')) {
+            $query->where('nombre', 'like', '%' . $request->nombre . '%');
+        }
+
+        // Filtro por clave
+        if ($request->filled('clave')) {
+            $query->where('clave', 'like', '%' . $request->clave . '%');
+        }
+
+        // Filtro por descripción
+        if ($request->filled('descripcion')) {
+            $query->where('descripcion', 'like', '%' . $request->descripcion . '%');
+        }
+
+        // Filtro por estado
+        if ($request->filled('estado')) {
+            $query->where('estado', $request->estado);
+        }
+
+        $acciones = $query
             ->orderBy('id')
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString();
 
         return view('acciones.index', compact('acciones'));
     }

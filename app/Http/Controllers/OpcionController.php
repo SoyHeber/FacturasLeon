@@ -12,11 +12,48 @@ use Illuminate\Validation\Rule;
 
 class OpcionController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $opciones = Opcion::with(['modulo', 'acciones'])
+        $query = Opcion::with(['modulo', 'acciones']);
+
+        // Filtro por ID
+        if ($request->filled('id')) {
+            $query->where('id', $request->id);
+        }
+
+        // Filtro por módulo
+        if ($request->filled('modulo')) {
+            $query->whereHas('modulo', function ($q) use ($request) {
+                $q->where('nombre', 'like', '%' . $request->modulo . '%');
+            });
+        }
+
+        // Filtro por nombre
+        if ($request->filled('nombre')) {
+            $query->where('nombre', 'like', '%' . $request->nombre . '%');
+        }
+
+        // Filtro por ruta
+        if ($request->filled('ruta')) {
+            $query->where('ruta', 'like', '%' . $request->ruta . '%');
+        }
+
+        // Filtro por acciones admitidas
+        if ($request->filled('accion')) {
+            $query->whereHas('acciones', function ($q) use ($request) {
+                $q->where('nombre', 'like', '%' . $request->accion . '%');
+            });
+        }
+
+        // Filtro por estado
+        if ($request->filled('estado')) {
+            $query->where('estado', $request->estado);
+        }
+
+        $opciones = $query
             ->latest()
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString();
 
         return view('opciones.index', compact('opciones'));
     }

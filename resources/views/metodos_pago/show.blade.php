@@ -44,19 +44,23 @@
 
                     <div class="d-flex gap-2">
                         <a href="{{ route('metodos_pago.index') }}" class="btn btn-secondary">Volver</a>
-                        <a href="{{ route('metodos_pago.edit', $metodoPago->id) }}" class="btn btn-warning">Editar</a>
+                        @can('metodos_pago.modificar')
+                            <a href="{{ route('metodos_pago.edit', $metodoPago->id) }}" class="btn btn-warning">Editar</a>
+                        @endcan
 
-                        <form action="{{ route('metodos_pago.cambiar-estado', $metodoPago->id) }}" method="POST"
-                            onsubmit="return confirm('¿Deseas cambiar el estado de este método de pago?')">
-                            @csrf
-                            @method('PATCH')
+                        @can('metodos_pago.eliminar')
+                            <form action="{{ route('metodos_pago.cambiar-estado', $metodoPago->id) }}" method="POST"
+                                onsubmit="return confirm('¿Deseas cambiar el estado de este método de pago?')">
+                                @csrf
+                                @method('PATCH')
 
-                            @if ($metodoPago->estado)
-                                <button type="submit" class="btn btn-secondary">Inactivar</button>
-                            @else
-                                <button type="submit" class="btn btn-success">Activar</button>
-                            @endif
-                        </form>
+                                @if ($metodoPago->estado)
+                                    <button type="submit" class="btn btn-secondary">Inactivar</button>
+                                @else
+                                    <button type="submit" class="btn btn-success">Activar</button>
+                                @endif
+                            </form>
+                        @endcan
                     </div>
                 </div>
             </div>

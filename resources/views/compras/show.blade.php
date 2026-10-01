@@ -231,27 +231,31 @@
                     Volver
                 </a>
 
-                <a href="{{ route('compras.edit', $compra->id) }}" class="btn btn-warning">
-                    Editar
-                </a>
+                @can('compras.modificar')
+                    <a href="{{ route('compras.edit', $compra->id) }}" class="btn btn-warning">
+                        Editar
+                    </a>
+                @endcan
 
-                <form method="POST" action="{{ route('compras.cambiar-estado', $compra->id) }}"
-                    onsubmit="return confirm('¿Deseas cambiar el estado de esta compra?')">
+                @can('compras.eliminar')
+                    <form method="POST" action="{{ route('compras.cambiar-estado', $compra->id) }}"
+                        onsubmit="return confirm('¿Deseas cambiar el estado de esta compra?')">
 
-                    @csrf
-                    @method('PATCH')
+                        @csrf
+                        @method('PATCH')
 
-                    @if ($compra->estado)
-                        <button type="submit" class="btn btn-outline-secondary">
-                            Inactivar
-                        </button>
-                    @else
-                        <button type="submit" class="btn btn-outline-success">
-                            Activar
-                        </button>
-                    @endif
+                        @if ($compra->estado)
+                            <button type="submit" class="btn btn-outline-secondary">
+                                Inactivar
+                            </button>
+                        @else
+                            <button type="submit" class="btn btn-outline-success">
+                                Activar
+                            </button>
+                        @endif
 
-                </form>
+                    </form>
+                @endcan
 
             </div>
 

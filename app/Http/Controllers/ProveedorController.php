@@ -9,12 +9,75 @@ use Illuminate\Http\Request;
 
 class ProveedorController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $proveedores = Proveedor::with([
+        $query = Proveedor::with([
             'tipoIdentificacion',
-            'direccion.municipio.departamento.pais'
-        ])->latest()->paginate(10);
+            'direccion.municipio.departamento.pais',
+        ]);
+
+        // Filtro por ID
+        if ($request->filled('id')) {
+            $query->where('id', $request->id);
+        }
+
+        // Filtro por nombre
+        if ($request->filled('nombre')) {
+            $query->where('nombre', 'like', '%' . $request->nombre . '%');
+        }
+
+        // Filtro por tipo de identificación
+        if ($request->filled('tipo_identificacion')) {
+            $query->whereHas('tipoIdentificacion', function ($q) use ($request) {
+                $q->where('nombre', 'like', '%' . $request->tipo_identificacion . '%');
+            });
+        }
+
+        // Filtro por número de identificación
+        if ($request->filled('numero_identificacion')) {
+            $query->where('numero_identificacion', 'like', '%' . $request->numero_identificacion . '%');
+        }
+
+        // Filtro por dirección (dirección, municipio, departamento o país)
+        if ($request->filled('direccion')) {
+            $query->whereHas('direccion', function ($q) use ($request) {
+                $q->where('direccion', 'like', '%' . $request->direccion . '%')
+                    ->orWhereHas('municipio', function ($m) use ($request) {
+                        $m->where('nombre', 'like', '%' . $request->direccion . '%');
+                    })
+                    ->orWhereHas('municipio.departamento', function ($d) use ($request) {
+                        $d->where('nombre', 'like', '%' . $request->direccion . '%');
+                    })
+                    ->orWhereHas('municipio.departamento.pais', function ($p) use ($request) {
+                        $p->where('nombre', 'like', '%' . $request->direccion . '%');
+                    });
+            });
+        }
+
+        // Filtro por teléfono
+        if ($request->filled('telefono')) {
+            $query->where('telefono', 'like', '%' . $request->telefono . '%');
+        }
+
+        // Filtro por correo
+        if ($request->filled('correo')) {
+            $query->where('correo', 'like', '%' . $request->correo . '%');
+        }
+
+        // Filtro por estado
+        if ($request->filled('estado')) {
+            $query->where('estado', $request->estado);
+        }
+
+        // Filtro por fecha de creación
+        if ($request->filled('fecha')) {
+            $query->whereDate('created_at', $request->fecha);
+        }
+
+        $proveedores = $query
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
 
         return view('proveedores.index', compact('proveedores'));
     }

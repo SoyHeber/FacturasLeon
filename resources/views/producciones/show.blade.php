@@ -122,27 +122,31 @@
                     Volver
                 </a>
 
-                <a href="{{ route('producciones.edit', $produccion->id) }}" class="btn btn-warning">
-                    Editar
-                </a>
+                @can('producciones.modificar')
+                    <a href="{{ route('producciones.edit', $produccion->id) }}" class="btn btn-warning">
+                        Editar
+                    </a>
+                @endcan
 
-                <form method="POST" action="{{ route('producciones.cambiar-estado', $produccion->id) }}"
-                    onsubmit="return confirm('¿Deseas cambiar el estado de esta producción?')">
+                @can('producciones.eliminar')
+                    <form method="POST" action="{{ route('producciones.cambiar-estado', $produccion->id) }}"
+                        onsubmit="return confirm('¿Deseas cambiar el estado de esta producción?')">
 
-                    @csrf
-                    @method('PATCH')
+                        @csrf
+                        @method('PATCH')
 
-                    @if ($produccion->estado)
-                        <button type="submit" class="btn btn-outline-secondary">
-                            Inactivar
-                        </button>
-                    @else
-                        <button type="submit" class="btn btn-outline-success">
-                            Activar
-                        </button>
-                    @endif
+                        @if ($produccion->estado)
+                            <button type="submit" class="btn btn-outline-secondary">
+                                Inactivar
+                            </button>
+                        @else
+                            <button type="submit" class="btn btn-outline-success">
+                                Activar
+                            </button>
+                        @endif
 
-                </form>
+                    </form>
+                @endcan
 
             </div>
 

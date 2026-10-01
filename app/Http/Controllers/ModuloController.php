@@ -8,12 +8,40 @@ use Illuminate\Support\Facades\Auth;
 
 class ModuloController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $modulos = Modulo::withCount('opciones')
+        $query = Modulo::withCount('opciones');
+
+        // Filtro por ID
+        if ($request->filled('id')) {
+            $query->where('id', $request->id);
+        }
+
+        // Filtro por orden
+        if ($request->filled('orden')) {
+            $query->where('orden', $request->orden);
+        }
+
+        // Filtro por nombre
+        if ($request->filled('nombre')) {
+            $query->where('nombre', 'like', '%' . $request->nombre . '%');
+        }
+
+        // Filtro por descripción
+        if ($request->filled('descripcion')) {
+            $query->where('descripcion', 'like', '%' . $request->descripcion . '%');
+        }
+
+        // Filtro por estado
+        if ($request->filled('estado')) {
+            $query->where('estado', $request->estado);
+        }
+
+        $modulos = $query
             ->orderBy('orden')
             ->orderBy('nombre')
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString();
 
         return view('modulos.index', compact('modulos'));
     }

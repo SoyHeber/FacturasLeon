@@ -11,11 +11,55 @@ use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::with('roles')
+        $query = User::with('roles');
+
+        // Filtro por ID
+        if ($request->filled('id')) {
+            $query->where('id', $request->id);
+        }
+
+        // Filtro por nombre
+        if ($request->filled('name')) {
+            $query->where('name', 'like', '%' . $request->name . '%');
+        }
+
+        // Filtro por correo
+        if ($request->filled('email')) {
+            $query->where('email', 'like', '%' . $request->email . '%');
+        }
+
+        // Filtro por roles
+        if ($request->filled('rol')) {
+            $query->whereHas('roles', function ($q) use ($request) {
+                $q->where('nombre', 'like', '%' . $request->rol . '%');
+            });
+        }
+
+        // Filtro por correo verificado
+        if ($request->filled('verificado')) {
+            if ($request->verificado === '1') {
+                $query->whereNotNull('email_verified_at');
+            } elseif ($request->verificado === '0') {
+                $query->whereNull('email_verified_at');
+            }
+        }
+
+        // Filtro por estado
+        if ($request->filled('estado')) {
+            $query->where('estado', $request->estado);
+        }
+
+        // Filtro por fecha de creación
+        if ($request->filled('fecha')) {
+            $query->whereDate('created_at', $request->fecha);
+        }
+
+        $users = $query
             ->latest()
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString();
 
         return view('users.index', compact('users'));
     }

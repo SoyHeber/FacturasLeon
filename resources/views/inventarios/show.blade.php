@@ -129,27 +129,31 @@
                             Volver
                         </a>
 
-                        <a href="{{ route('inventarios.edit', $inventario->id) }}" class="btn btn-warning">
-                            Editar
-                        </a>
+                        @can('inventarios.modificar')
+                            <a href="{{ route('inventarios.edit', $inventario->id) }}" class="btn btn-warning">
+                                Editar
+                            </a>
+                        @endcan
 
-                        <form action="{{ route('inventarios.cambiar-estado', $inventario->id) }}" method="POST"
-                            onsubmit="return confirm('¿Deseas cambiar el estado de este inventario?')">
+                        @can('inventarios.eliminar')
+                            <form action="{{ route('inventarios.cambiar-estado', $inventario->id) }}" method="POST"
+                                onsubmit="return confirm('¿Deseas cambiar el estado de este inventario?')">
 
-                            @csrf
-                            @method('PATCH')
+                                @csrf
+                                @method('PATCH')
 
-                            @if ($inventario->estado)
-                                <button type="submit" class="btn btn-secondary">
-                                    Inactivar
-                                </button>
-                            @else
-                                <button type="submit" class="btn btn-success">
-                                    Activar
-                                </button>
-                            @endif
+                                @if ($inventario->estado)
+                                    <button type="submit" class="btn btn-secondary">
+                                        Inactivar
+                                    </button>
+                                @else
+                                    <button type="submit" class="btn btn-success">
+                                        Activar
+                                    </button>
+                                @endif
 
-                        </form>
+                            </form>
+                        @endcan
 
                     </div>
 
