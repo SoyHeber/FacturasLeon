@@ -289,8 +289,7 @@
                         </label>
 
                         <input type="datetime-local" name="fecha_emision" class="form-control"
-                            value="{{ old('fecha_emision', $compra->fecha_emision?->format('Y-m-d\TH:i')) }}"
-                            required>
+                            value="{{ old('fecha_emision', $compra->fecha_emision?->format('Y-m-d\TH:i')) }}" required>
 
                     </div>
 
@@ -412,8 +411,8 @@
 
                                     <td>
 
-                                        <input type="number" class="form-control cantidad" step="0.0001"
-                                            min="0.0001" value="{{ $detalle['cantidad'] }}" required>
+                                        <input type="number" class="form-control cantidad" step="0.00001"
+                                            min="0.00001" value="{{ $detalle['cantidad'] }}" required>
 
                                     </td>
 
@@ -438,7 +437,7 @@
                                     <td>
 
                                         <input type="number" class="form-control importe-bruto" step="0.01"
-                                            min="0" value="{{ $detalle['importe_bruto'] }}" required>
+                                            min="0" value="{{ $detalle['importe_bruto'] }}" readonly>
 
                                     </td>
 
@@ -446,7 +445,7 @@
                                     <td>
 
                                         <input type="number" class="form-control importe-descuento" step="0.01"
-                                            min="0" value="{{ $detalle['importe_descuento'] }}" required>
+                                            min="0" value="{{ $detalle['importe_descuento'] }}" readonly>
 
                                     </td>
 
@@ -470,7 +469,7 @@
                                     <td>
 
                                         <input type="number" class="form-control importe-neto" step="0.01"
-                                            min="0" value="{{ $detalle['importe_neto'] }}" required>
+                                            min="0" value="{{ $detalle['importe_neto'] }}" readonly>
 
                                     </td>
 
@@ -478,7 +477,7 @@
                                     <td>
 
                                         <input type="number" class="form-control importe-iva" step="0.01"
-                                            min="0" value="{{ $detalle['importe_iva'] }}" required>
+                                            min="0" value="{{ $detalle['importe_iva'] }}" readonly>
 
                                     </td>
 
@@ -486,7 +485,7 @@
                                     <td>
 
                                         <input type="number" class="form-control importe-total" step="0.01"
-                                            min="0" value="{{ $detalle['importe_total'] }}" required>
+                                            min="0" value="{{ $detalle['importe_total'] }}" readonly>
 
                                     </td>
 
@@ -675,53 +674,82 @@
             </td>
 
             <td>
-                <input type="number" class="form-control cantidad" step="0.0001" min="0.0001" value="1"
+
+                <input type="number" class="form-control cantidad" step="0.00001" min="0.00001" value="1.00000"
                     required>
+
             </td>
 
+
             <td>
+
                 <input type="number" class="form-control precio-unitario" step="0.000001" min="0"
-                    value="0" required>
+                    value="0.000000" required>
+
             </td>
 
+
             <td>
+
                 <input type="number" class="form-control porcentaje-descuento" step="0.0001" min="0"
-                    max="100" value="0" required>
+                    max="100" value="0.0000" required>
+
             </td>
 
-            <td>
-                <input type="number" class="form-control importe-bruto" step="0.01" min="0" value="0"
-                    required>
-            </td>
 
             <td>
+
+                <input type="number" class="form-control importe-bruto" step="0.01" min="0" value="0.00"
+                    readonly>
+
+            </td>
+
+
+            <td>
+
                 <input type="number" class="form-control importe-descuento" step="0.01" min="0"
-                    value="0" required>
+                    value="0.00" readonly>
+
             </td>
 
-            <td>
-                <input type="number" class="form-control importe-exento" step="0.01" min="0" value="0"
-                    required>
-            </td>
 
             <td>
-                <input type="number" class="form-control importe-otros" step="0.01" min="0" value="0"
+
+                <input type="number" class="form-control importe-exento" step="0.01" min="0" value="0.00"
                     required>
+
             </td>
 
-            <td>
-                <input type="number" class="form-control importe-neto" step="0.01" min="0" value="0"
-                    required>
-            </td>
 
             <td>
-                <input type="number" class="form-control importe-iva" step="0.01" min="0" value="0"
+
+                <input type="number" class="form-control importe-otros" step="0.01" min="0" value="0.00"
                     required>
+
             </td>
 
+
             <td>
-                <input type="number" class="form-control importe-total" step="0.01" min="0" value="0"
-                    required>
+
+                <input type="number" class="form-control importe-neto" step="0.01" min="0" value="0.00"
+                    readonly>
+
+            </td>
+
+
+            <td>
+
+                <input type="number" class="form-control importe-iva" step="0.01" min="0" value="0.00"
+                    readonly>
+
+            </td>
+
+
+            <td>
+
+                <input type="number" class="form-control importe-total" step="0.01" min="0" value="0.00"
+                    readonly>
+
             </td>
 
             <td>
@@ -762,13 +790,169 @@
                 document.getElementById('proveedor_id');
 
 
+            /*
+            |--------------------------------------------------------------------------
+            | FUNCIONES NUMÉRICAS
+            |--------------------------------------------------------------------------
+            */
+
             function numero(valor) {
 
-                const resultado = parseFloat(valor);
+                const resultado =
+                    parseFloat(valor);
 
                 return isNaN(resultado) ?
                     0 :
                     resultado;
+            }
+
+
+            function redondear(valor, decimales = 2) {
+
+                const factor =
+                    Math.pow(
+                        10,
+                        decimales
+                    );
+
+                return Math.round(
+                    (
+                        Number(valor) +
+                        Number.EPSILON
+                    ) * factor
+                ) / factor;
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | CÁLCULO DE LÍNEA
+            |--------------------------------------------------------------------------
+            */
+
+            function calcularLinea(fila) {
+
+                const cantidad =
+                    numero(
+                        fila.querySelector(
+                            '.cantidad'
+                        ).value
+                    );
+
+                const precio =
+                    numero(
+                        fila.querySelector(
+                            '.precio-unitario'
+                        ).value
+                    );
+
+                const porcentajeDescuento =
+                    numero(
+                        fila.querySelector(
+                            '.porcentaje-descuento'
+                        ).value
+                    );
+
+                const exento =
+                    numero(
+                        fila.querySelector(
+                            '.importe-exento'
+                        ).value
+                    );
+
+                const otros =
+                    numero(
+                        fila.querySelector(
+                            '.importe-otros'
+                        ).value
+                    );
+
+
+                const bruto =
+                    redondear(
+                        cantidad * precio,
+                        2
+                    );
+
+
+                const descuento =
+                    redondear(
+                        bruto *
+                        (
+                            porcentajeDescuento /
+                            100
+                        ),
+                        2
+                    );
+
+
+                let baseAfecta =
+                    redondear(
+                        bruto -
+                        descuento -
+                        exento -
+                        otros,
+                        2
+                    );
+
+
+                if (baseAfecta < 0) {
+                    baseAfecta = 0;
+                }
+
+
+                const neto =
+                    redondear(
+                        baseAfecta / 1.12,
+                        2
+                    );
+
+
+                const iva =
+                    redondear(
+                        baseAfecta - neto,
+                        2
+                    );
+
+
+                const total =
+                    redondear(
+                        neto +
+                        iva +
+                        exento +
+                        otros,
+                        2
+                    );
+
+
+                fila.querySelector(
+                        '.importe-bruto'
+                    ).value =
+                    bruto.toFixed(2);
+
+
+                fila.querySelector(
+                        '.importe-descuento'
+                    ).value =
+                    descuento.toFixed(2);
+
+
+                fila.querySelector(
+                        '.importe-neto'
+                    ).value =
+                    neto.toFixed(2);
+
+
+                fila.querySelector(
+                        '.importe-iva'
+                    ).value =
+                    iva.toFixed(2);
+
+
+                fila.querySelector(
+                        '.importe-total'
+                    ).value =
+                    total.toFixed(2);
             }
 
 
@@ -785,25 +969,30 @@
                         proveedorSelect.selectedIndex
                     ];
 
+
                 document.getElementById(
                         'proveedor_nombre'
                     ).textContent =
                     option.dataset.nombre || '-';
+
 
                 document.getElementById(
                         'proveedor_identificacion'
                     ).textContent =
                     option.dataset.identificacion || '-';
 
+
                 document.getElementById(
                         'proveedor_telefono'
                     ).textContent =
                     option.dataset.telefono || '-';
 
+
                 document.getElementById(
                         'proveedor_correo'
                     ).textContent =
                     option.dataset.correo || '-';
+
 
                 document.getElementById(
                         'proveedor_direccion'
@@ -814,7 +1003,7 @@
 
             /*
             |--------------------------------------------------------------------------
-            | NOMBRES Y NÚMEROS DE LÍNEA
+            | RENUMERAR
             |--------------------------------------------------------------------------
             */
 
@@ -825,93 +1014,102 @@
                         '.detalle-row'
                     );
 
-                filas.forEach((fila, index) => {
 
-                    fila.querySelector(
-                            '.numero-linea'
-                        ).textContent =
-                        index + 1;
+                filas.forEach(
+                    (fila, index) => {
 
-
-                    fila.querySelector(
-                            '.detalle-id'
-                        ).name =
-                        `detalles[${index}][id]`;
+                        fila.querySelector(
+                                '.numero-linea'
+                            ).textContent =
+                            index + 1;
 
 
-                    fila.querySelector(
-                            '.inventario-compra'
-                        ).name =
-                        `detalles[${index}][inventario_compra_id]`;
+                        fila.querySelector(
+                                '.detalle-id'
+                            ).name =
+                            `detalles[${index}][id]`;
 
 
-                    fila.querySelector(
-                            '.cantidad'
-                        ).name =
-                        `detalles[${index}][cantidad]`;
+                        fila.querySelector(
+                                '.inventario-compra'
+                            ).name =
+                            `detalles[${index}][inventario_compra_id]`;
 
 
-                    fila.querySelector(
-                            '.precio-unitario'
-                        ).name =
-                        `detalles[${index}][precio_unitario]`;
+                        fila.querySelector(
+                                '.cantidad'
+                            ).name =
+                            `detalles[${index}][cantidad]`;
 
 
-                    fila.querySelector(
-                            '.porcentaje-descuento'
-                        ).name =
-                        `detalles[${index}][porcentaje_descuento]`;
+                        fila.querySelector(
+                                '.precio-unitario'
+                            ).name =
+                            `detalles[${index}][precio_unitario]`;
 
 
-                    fila.querySelector(
-                            '.importe-bruto'
-                        ).name =
-                        `detalles[${index}][importe_bruto]`;
+                        fila.querySelector(
+                                '.porcentaje-descuento'
+                            ).name =
+                            `detalles[${index}][porcentaje_descuento]`;
 
 
-                    fila.querySelector(
-                            '.importe-descuento'
-                        ).name =
-                        `detalles[${index}][importe_descuento]`;
+                        fila.querySelector(
+                                '.importe-bruto'
+                            ).name =
+                            `detalles[${index}][importe_bruto]`;
 
 
-                    fila.querySelector(
-                            '.importe-exento'
-                        ).name =
-                        `detalles[${index}][importe_exento]`;
+                        fila.querySelector(
+                                '.importe-descuento'
+                            ).name =
+                            `detalles[${index}][importe_descuento]`;
 
 
-                    fila.querySelector(
-                            '.importe-otros'
-                        ).name =
-                        `detalles[${index}][importe_otros]`;
+                        fila.querySelector(
+                                '.importe-exento'
+                            ).name =
+                            `detalles[${index}][importe_exento]`;
 
 
-                    fila.querySelector(
-                            '.importe-neto'
-                        ).name =
-                        `detalles[${index}][importe_neto]`;
+                        fila.querySelector(
+                                '.importe-otros'
+                            ).name =
+                            `detalles[${index}][importe_otros]`;
 
 
-                    fila.querySelector(
-                            '.importe-iva'
-                        ).name =
-                        `detalles[${index}][importe_iva]`;
+                        fila.querySelector(
+                                '.importe-neto'
+                            ).name =
+                            `detalles[${index}][importe_neto]`;
 
 
-                    fila.querySelector(
-                            '.importe-total'
-                        ).name =
-                        `detalles[${index}][importe_total]`;
+                        fila.querySelector(
+                                '.importe-iva'
+                            ).name =
+                            `detalles[${index}][importe_iva]`;
 
 
-                    fila.querySelector(
-                            '.detalle-observacion'
-                        ).name =
-                        `detalles[${index}][observacion]`;
-                });
+                        fila.querySelector(
+                                '.importe-total'
+                            ).name =
+                            `detalles[${index}][importe_total]`;
+
+
+                        fila.querySelector(
+                                '.detalle-observacion'
+                            ).name =
+                            `detalles[${index}][observacion]`;
+                    }
+                );
             }
 
+
+            /*
+            |--------------------------------------------------------------------------
+            | AGREGAR LÍNEA
+            |--------------------------------------------------------------------------
+            */
 
             function agregarLinea() {
 
@@ -920,11 +1118,31 @@
                         true
                     );
 
+
                 detalleBody.appendChild(
                     fragment
                 );
 
+
                 renumerarLineas();
+
+
+                const filas =
+                    detalleBody.querySelectorAll(
+                        '.detalle-row'
+                    );
+
+
+                const ultimaFila =
+                    filas[
+                        filas.length - 1
+                    ];
+
+
+                calcularLinea(
+                    ultimaFila
+                );
+
 
                 recalcularTotales();
             }
@@ -948,7 +1166,9 @@
 
 
                 detalleBody
-                    .querySelectorAll('.detalle-row')
+                    .querySelectorAll(
+                        '.detalle-row'
+                    )
                     .forEach(fila => {
 
                         bruto += numero(
@@ -1000,30 +1220,36 @@
                     ).textContent =
                     bruto.toFixed(2);
 
+
                 document.getElementById(
                         'totalDescuento'
                     ).textContent =
                     descuento.toFixed(2);
+
 
                 document.getElementById(
                         'totalExento'
                     ).textContent =
                     exento.toFixed(2);
 
+
                 document.getElementById(
                         'totalOtros'
                     ).textContent =
                     otros.toFixed(2);
+
 
                 document.getElementById(
                         'totalNeto'
                     ).textContent =
                     neto.toFixed(2);
 
+
                 document.getElementById(
                         'totalIva'
                     ).textContent =
                     iva.toFixed(2);
+
 
                 document.getElementById(
                         'totalGeneral'
@@ -1052,7 +1278,54 @@
 
             detalleBody.addEventListener(
                 'input',
-                recalcularTotales
+                function(event) {
+
+                    const fila =
+                        event.target.closest(
+                            '.detalle-row'
+                        );
+
+
+                    if (!fila) {
+                        return;
+                    }
+
+
+                    const campoCalculable =
+
+                        event.target.classList.contains(
+                            'cantidad'
+                        ) ||
+
+                        event.target.classList.contains(
+                            'precio-unitario'
+                        ) ||
+
+                        event.target.classList.contains(
+                            'porcentaje-descuento'
+                        ) ||
+
+                        event.target.classList.contains(
+                            'importe-exento'
+                        ) ||
+
+                        event.target.classList.contains(
+                            'importe-otros'
+                        );
+
+
+                    if (!campoCalculable) {
+                        return;
+                    }
+
+
+                    calcularLinea(
+                        fila
+                    );
+
+
+                    recalcularTotales();
+                }
             );
 
 
@@ -1071,6 +1344,7 @@
                                 '.detalle-row'
                             );
 
+
                         if (filas.length <= 1) {
 
                             alert(
@@ -1080,9 +1354,13 @@
                             return;
                         }
 
+
                         event.target
-                            .closest('.detalle-row')
+                            .closest(
+                                '.detalle-row'
+                            )
                             .remove();
+
 
                         renumerarLineas();
 
@@ -1099,6 +1377,19 @@
             */
 
             renumerarLineas();
+
+
+            detalleBody
+                .querySelectorAll(
+                    '.detalle-row'
+                )
+                .forEach(fila => {
+
+                    calcularLinea(
+                        fila
+                    );
+                });
+
 
             recalcularTotales();
 

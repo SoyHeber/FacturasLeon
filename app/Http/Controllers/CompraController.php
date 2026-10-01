@@ -6,6 +6,7 @@ use App\Models\Compra;
 use App\Models\DetalleCompra;
 use App\Models\Proveedor;
 use App\Models\InventarioCompra;
+use App\Services\CalculadoraDteService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -106,21 +107,10 @@ class CompraController extends Controller
     }
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | CREATE
-    |--------------------------------------------------------------------------
-    |
-    | Ahora cargamos:
-    | - Proveedores
-    | - Inventarios de compra
-    |
-    | Los inventarios serán utilizados para agregar las líneas del detalle.
-    |
-    */
     public function create()
     {
-        $proveedores = Proveedor::where('estado', true)
+        $proveedores = Proveedor::with('direccion')
+            ->where('estado', true)
             ->orderBy('nombre')
             ->get();
 
@@ -141,20 +131,12 @@ class CompraController extends Controller
     }
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | STORE MAESTRO - DETALLE
-    |--------------------------------------------------------------------------
-    */
-    public function store(Request $request)
-    {
+    public function store(
+        Request $request,
+        CalculadoraDteService $calculadoraDte
+    ) {
         $validated = $request->validate([
-
-            /*
-            |--------------------------------------------------------------------------
-            | ENCABEZADO
-            |--------------------------------------------------------------------------
-            */
+            // Encabezado
 
             'proveedor_id' => [
                 'required',
@@ -178,6 +160,21 @@ class CompraController extends Controller
                 'required',
                 'integer',
                 'min:0',
+
+                Rule::unique(
+                    'compras',
+                    'numero'
+                )->where(function ($query) use ($request) {
+                    return $query
+                        ->where(
+                            'proveedor_id',
+                            $request->proveedor_id
+                        )
+                        ->where(
+                            'serie',
+                            strtoupper($request->serie)
+                        );
+                }),
             ],
 
             'numero_autorizacion' => [
@@ -216,11 +213,7 @@ class CompraController extends Controller
             ],
 
 
-            /*
-            |--------------------------------------------------------------------------
-            | DETALLES
-            |--------------------------------------------------------------------------
-            */
+            // Detalles
 
             'detalles' => [
                 'required',
@@ -252,18 +245,6 @@ class CompraController extends Controller
                 'max:100',
             ],
 
-            'detalles.*.importe_bruto' => [
-                'required',
-                'numeric',
-                'min:0',
-            ],
-
-            'detalles.*.importe_descuento' => [
-                'required',
-                'numeric',
-                'min:0',
-            ],
-
             'detalles.*.importe_exento' => [
                 'required',
                 'numeric',
@@ -276,41 +257,41 @@ class CompraController extends Controller
                 'min:0',
             ],
 
-            'detalles.*.importe_neto' => [
-                'required',
-                'numeric',
-                'min:0',
-            ],
-
-            'detalles.*.importe_iva' => [
-                'required',
-                'numeric',
-                'min:0',
-            ],
-
-            'detalles.*.importe_total' => [
-                'required',
-                'numeric',
-                'min:0',
-            ],
-
             'detalles.*.observacion' => [
                 'nullable',
                 'string',
+                'max:255',
             ],
+        ], [
+            'numero.unique' =>
+            'Ya existe una compra para este proveedor con la misma serie y número.',
+
+            'numero_autorizacion.unique' =>
+            'El número de autorización ya se encuentra registrado.',
         ]);
 
-        DB::transaction(function () use ($validated, $request) {
 
-            /*
-            |--------------------------------------------------------------------------
-            | 1. CREAR CABECERA
-            |--------------------------------------------------------------------------
-            |
-            | Inicialmente los totales quedan en cero.
-            | Después se actualizan según la suma de los detalles.
-            |
-            */
+        // Calcula los valores en el servidor
+
+        $calculo = $calculadoraDte->calcularCompra(
+            $validated['detalles']
+        );
+
+        $detallesCalculados =
+            $calculo['detalles'];
+
+        $totales =
+            $calculo['totales'];
+
+
+        DB::transaction(function () use (
+            $validated,
+            $request,
+            $detallesCalculados,
+            $totales
+        ) {
+
+            // Crea la compra
 
             $compra = Compra::create([
                 'proveedor_id' =>
@@ -320,10 +301,14 @@ class CompraController extends Controller
                 auth()->id(),
 
                 'tipo_dte' =>
-                strtoupper($validated['tipo_dte']),
+                strtoupper(
+                    $validated['tipo_dte']
+                ),
 
                 'serie' =>
-                strtoupper($validated['serie']),
+                strtoupper(
+                    $validated['serie']
+                ),
 
                 'numero' =>
                 $validated['numero'],
@@ -340,21 +325,30 @@ class CompraController extends Controller
                 $validated['fecha_certificacion'] ?? null,
 
                 'moneda' =>
-                strtoupper($validated['moneda']),
+                strtoupper(
+                    $validated['moneda']
+                ),
 
-                'importe_bruto' => 0,
+                'importe_bruto' =>
+                $totales['importe_bruto'],
 
-                'importe_descuento' => 0,
+                'importe_descuento' =>
+                $totales['importe_descuento'],
 
-                'importe_exento' => 0,
+                'importe_exento' =>
+                $totales['importe_exento'],
 
-                'importe_otros' => 0,
+                'importe_otros' =>
+                $totales['importe_otros'],
 
-                'importe_neto' => 0,
+                'importe_neto' =>
+                $totales['importe_neto'],
 
-                'importe_iva' => 0,
+                'importe_iva' =>
+                $totales['importe_iva'],
 
-                'importe_total' => 0,
+                'importe_total' =>
+                $totales['importe_total'],
 
                 'observacion' =>
                 $validated['observacion'] ?? null,
@@ -364,47 +358,18 @@ class CompraController extends Controller
             ]);
 
 
-            /*
-            |--------------------------------------------------------------------------
-            | 2. INICIALIZAR TOTALES
-            |--------------------------------------------------------------------------
-            */
-
-            $totalBruto = 0;
-            $totalDescuento = 0;
-            $totalExento = 0;
-            $totalOtros = 0;
-            $totalNeto = 0;
-            $totalIva = 0;
-            $totalGeneral = 0;
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | 3. CREAR DETALLES
-            |--------------------------------------------------------------------------
-            */
+            // Crea los detalles
 
             foreach (
-                $validated['detalles']
+                $detallesCalculados
                 as $index => $detalle
             ) {
-
-                /*
-                 * El número de línea se genera automáticamente.
-                 *
-                 * index 0 = línea 1
-                 * index 1 = línea 2
-                 * index 2 = línea 3
-                 */
-                $numeroLinea = $index + 1;
-
                 DetalleCompra::create([
                     'compra_id' =>
                     $compra->id,
 
                     'numero_linea' =>
-                    $numeroLinea,
+                    $index + 1,
 
                     'inventario_compra_id' =>
                     $detalle['inventario_compra_id'],
@@ -444,66 +409,9 @@ class CompraController extends Controller
 
                     'estado' => true,
                 ]);
-
-
-                /*
-                |--------------------------------------------------------------------------
-                | 4. ACUMULAR TOTALES
-                |--------------------------------------------------------------------------
-                */
-
-                $totalBruto +=
-                    (float) $detalle['importe_bruto'];
-
-                $totalDescuento +=
-                    (float) $detalle['importe_descuento'];
-
-                $totalExento +=
-                    (float) $detalle['importe_exento'];
-
-                $totalOtros +=
-                    (float) $detalle['importe_otros'];
-
-                $totalNeto +=
-                    (float) $detalle['importe_neto'];
-
-                $totalIva +=
-                    (float) $detalle['importe_iva'];
-
-                $totalGeneral +=
-                    (float) $detalle['importe_total'];
             }
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | 5. ACTUALIZAR TOTALES DE LA COMPRA
-            |--------------------------------------------------------------------------
-            */
-
-            $compra->update([
-                'importe_bruto' =>
-                round($totalBruto, 2),
-
-                'importe_descuento' =>
-                round($totalDescuento, 2),
-
-                'importe_exento' =>
-                round($totalExento, 2),
-
-                'importe_otros' =>
-                round($totalOtros, 2),
-
-                'importe_neto' =>
-                round($totalNeto, 2),
-
-                'importe_iva' =>
-                round($totalIva, 2),
-
-                'importe_total' =>
-                round($totalGeneral, 2),
-            ]);
         });
+
 
         return redirect()
             ->route('compras.index')
@@ -514,15 +422,10 @@ class CompraController extends Controller
     }
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | SHOW
-    |--------------------------------------------------------------------------
-    */
     public function show(Compra $compra)
     {
         $compra->load([
-            'proveedor',
+            'proveedor.direccion',
             'user',
             'detalles.inventarioCompra',
         ]);
@@ -534,22 +437,16 @@ class CompraController extends Controller
     }
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | EDIT
-    |--------------------------------------------------------------------------
-    |
-    | De momento seguimos utilizando el formulario de edición actual.
-    |
-    | En una siguiente etapa convertiremos también EDIT en maestro-detalle.
-    |
-    */
     public function edit(Compra $compra)
     {
         $proveedores = Proveedor::with('direccion')
             ->where(function ($query) use ($compra) {
-                $query->where('estado', true)
-                    ->orWhere('id', $compra->proveedor_id);
+                $query
+                    ->where('estado', true)
+                    ->orWhere(
+                        'id',
+                        $compra->proveedor_id
+                    );
             })
             ->orderBy('nombre')
             ->get();
@@ -577,28 +474,13 @@ class CompraController extends Controller
     }
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | UPDATE
-    |--------------------------------------------------------------------------
-    |
-    | Por ahora conservamos el comportamiento actual.
-    |
-    | Cuando construyamos el formulario maestro-detalle de edición,
-    | este método será actualizado para modificar también las líneas.
-    |
-    */
     public function update(
         Request $request,
-        Compra $compra
+        Compra $compra,
+        CalculadoraDteService $calculadoraDte
     ) {
         $validated = $request->validate([
-
-            /*
-        |--------------------------------------------------------------------------
-        | ENCABEZADO
-        |--------------------------------------------------------------------------
-        */
+            // Encabezado
 
             'proveedor_id' => [
                 'required',
@@ -622,6 +504,27 @@ class CompraController extends Controller
                 'required',
                 'integer',
                 'min:0',
+
+                Rule::unique(
+                    'compras',
+                    'numero'
+                )
+                    ->where(function ($query) use ($request) {
+                        return $query
+                            ->where(
+                                'proveedor_id',
+                                $request->proveedor_id
+                            )
+                            ->where(
+                                'serie',
+                                strtoupper(
+                                    $request->serie
+                                )
+                            );
+                    })
+                    ->ignore(
+                        $compra->id
+                    ),
             ],
 
             'numero_autorizacion' => [
@@ -632,7 +535,9 @@ class CompraController extends Controller
                 Rule::unique(
                     'compras',
                     'numero_autorizacion'
-                )->ignore($compra->id),
+                )->ignore(
+                    $compra->id
+                ),
             ],
 
             'fecha_emision' => [
@@ -664,11 +569,7 @@ class CompraController extends Controller
             ],
 
 
-            /*
-        |--------------------------------------------------------------------------
-        | DETALLES
-        |--------------------------------------------------------------------------
-        */
+            // Detalles
 
             'detalles' => [
                 'required',
@@ -706,18 +607,6 @@ class CompraController extends Controller
                 'max:100',
             ],
 
-            'detalles.*.importe_bruto' => [
-                'required',
-                'numeric',
-                'min:0',
-            ],
-
-            'detalles.*.importe_descuento' => [
-                'required',
-                'numeric',
-                'min:0',
-            ],
-
             'detalles.*.importe_exento' => [
                 'required',
                 'numeric',
@@ -730,60 +619,61 @@ class CompraController extends Controller
                 'min:0',
             ],
 
-            'detalles.*.importe_neto' => [
-                'required',
-                'numeric',
-                'min:0',
-            ],
-
-            'detalles.*.importe_iva' => [
-                'required',
-                'numeric',
-                'min:0',
-            ],
-
-            'detalles.*.importe_total' => [
-                'required',
-                'numeric',
-                'min:0',
-            ],
-
             'detalles.*.observacion' => [
                 'nullable',
                 'string',
+                'max:255',
             ],
+        ], [
+            'numero.unique' =>
+            'Ya existe una compra para este proveedor con la misma serie y número.',
+
+            'numero_autorizacion.unique' =>
+            'El número de autorización ya se encuentra registrado.',
         ]);
+
+
+        // Calcula nuevamente los importes
+
+        $calculo = $calculadoraDte->calcularCompra(
+            $validated['detalles']
+        );
+
+        $detallesCalculados =
+            $calculo['detalles'];
+
+        $totales =
+            $calculo['totales'];
+
 
         DB::transaction(function () use (
             $validated,
             $request,
-            $compra
+            $compra,
+            $detallesCalculados,
+            $totales
         ) {
 
-            /*
-        |--------------------------------------------------------------------------
-        | 1. IDs de detalles existentes enviados desde el formulario
-        |--------------------------------------------------------------------------
-        */
+            // Obtiene los detalles enviados
 
             $idsDetalles = collect(
-                $validated['detalles']
+                $detallesCalculados
             )
                 ->pluck('id')
                 ->filter()
-                ->map(fn($id) => (int) $id)
+                ->map(
+                    fn($id) =>
+                    (int) $id
+                )
                 ->values();
 
 
-            /*
-        |--------------------------------------------------------------------------
-        | 2. Verificar que los IDs realmente pertenezcan a esta compra
-        |--------------------------------------------------------------------------
-        */
+            // Valida que pertenezcan a la compra
 
             if ($idsDetalles->isNotEmpty()) {
 
-                $cantidadValidos = $compra
+                $cantidadValidos =
+                    $compra
                     ->detalles()
                     ->whereIn(
                         'id',
@@ -803,15 +693,7 @@ class CompraController extends Controller
             }
 
 
-            /*
-        |--------------------------------------------------------------------------
-        | 3. Eliminar líneas que fueron retiradas del formulario
-        |--------------------------------------------------------------------------
-        |
-        | Por ahora podemos hacerlo porque todavía no hemos automatizado
-        | los movimientos de inventario provenientes de compras.
-        |
-        */
+            // Elimina detalles retirados
 
             if ($idsDetalles->isEmpty()) {
 
@@ -830,40 +712,18 @@ class CompraController extends Controller
             }
 
 
-            /*
-        |--------------------------------------------------------------------------
-        | 4. Inicializar totales
-        |--------------------------------------------------------------------------
-        */
-
-            $totalBruto = 0;
-            $totalDescuento = 0;
-            $totalExento = 0;
-            $totalOtros = 0;
-            $totalNeto = 0;
-            $totalIva = 0;
-            $totalGeneral = 0;
-
-
-            /*
-        |--------------------------------------------------------------------------
-        | 5. Actualizar o crear líneas
-        |--------------------------------------------------------------------------
-        */
+            // Actualiza o crea los detalles
 
             foreach (
-                $validated['detalles']
+                $detallesCalculados
                 as $index => $detalle
             ) {
-
-                $numeroLinea = $index + 1;
-
                 $datosDetalle = [
                     'compra_id' =>
                     $compra->id,
 
                     'numero_linea' =>
-                    $numeroLinea,
+                    $index + 1,
 
                     'inventario_compra_id' =>
                     $detalle['inventario_compra_id'],
@@ -905,15 +765,10 @@ class CompraController extends Controller
                 ];
 
 
-                /*
-            |--------------------------------------------------------------------------
-            | Línea existente
-            |--------------------------------------------------------------------------
-            */
-
                 if (!empty($detalle['id'])) {
 
-                    $detalleExistente = $compra
+                    $detalleExistente =
+                        $compra
                         ->detalles()
                         ->where(
                             'id',
@@ -926,52 +781,14 @@ class CompraController extends Controller
                     );
                 } else {
 
-                    /*
-                |--------------------------------------------------------------------------
-                | Línea nueva
-                |--------------------------------------------------------------------------
-                */
-
                     DetalleCompra::create(
                         $datosDetalle
                     );
                 }
-
-
-                /*
-            |--------------------------------------------------------------------------
-            | Acumular totales
-            |--------------------------------------------------------------------------
-            */
-
-                $totalBruto +=
-                    (float) $detalle['importe_bruto'];
-
-                $totalDescuento +=
-                    (float) $detalle['importe_descuento'];
-
-                $totalExento +=
-                    (float) $detalle['importe_exento'];
-
-                $totalOtros +=
-                    (float) $detalle['importe_otros'];
-
-                $totalNeto +=
-                    (float) $detalle['importe_neto'];
-
-                $totalIva +=
-                    (float) $detalle['importe_iva'];
-
-                $totalGeneral +=
-                    (float) $detalle['importe_total'];
             }
 
 
-            /*
-        |--------------------------------------------------------------------------
-        | 6. Actualizar cabecera
-        |--------------------------------------------------------------------------
-        */
+            // Actualiza la compra
 
             $compra->update([
                 'proveedor_id' =>
@@ -1007,52 +824,33 @@ class CompraController extends Controller
                 ),
 
                 'importe_bruto' =>
-                round(
-                    $totalBruto,
-                    2
-                ),
+                $totales['importe_bruto'],
 
                 'importe_descuento' =>
-                round(
-                    $totalDescuento,
-                    2
-                ),
+                $totales['importe_descuento'],
 
                 'importe_exento' =>
-                round(
-                    $totalExento,
-                    2
-                ),
+                $totales['importe_exento'],
 
                 'importe_otros' =>
-                round(
-                    $totalOtros,
-                    2
-                ),
+                $totales['importe_otros'],
 
                 'importe_neto' =>
-                round(
-                    $totalNeto,
-                    2
-                ),
+                $totales['importe_neto'],
 
                 'importe_iva' =>
-                round(
-                    $totalIva,
-                    2
-                ),
+                $totales['importe_iva'],
 
                 'importe_total' =>
-                round(
-                    $totalGeneral,
-                    2
-                ),
+                $totales['importe_total'],
 
                 'observacion' =>
                 $validated['observacion'] ?? null,
 
                 'estado' =>
-                $request->has('estado'),
+                $request->has(
+                    'estado'
+                ),
             ]);
         });
 
@@ -1069,15 +867,11 @@ class CompraController extends Controller
     }
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | CAMBIAR ESTADO
-    |--------------------------------------------------------------------------
-    */
     public function cambiarEstado(Compra $compra)
     {
         $compra->update([
-            'estado' => !$compra->estado,
+            'estado' =>
+            !$compra->estado,
         ]);
 
         return redirect()
