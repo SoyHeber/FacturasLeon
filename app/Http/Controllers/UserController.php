@@ -2,24 +2,75 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Rol;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $users = User::latest()
-            ->paginate(10);
+        $query = User::with('roles');
+
+        // Filtro por ID
+        if ($request->filled('id')) {
+            $query->where('id', $request->id);
+        }
+
+        // Filtro por nombre
+        if ($request->filled('name')) {
+            $query->where('name', 'like', '%' . $request->name . '%');
+        }
+
+        // Filtro por correo
+        if ($request->filled('email')) {
+            $query->where('email', 'like', '%' . $request->email . '%');
+        }
+
+        // Filtro por roles
+        if ($request->filled('rol')) {
+            $query->whereHas('roles', function ($q) use ($request) {
+                $q->where('nombre', 'like', '%' . $request->rol . '%');
+            });
+        }
+
+        // Filtro por correo verificado
+        if ($request->filled('verificado')) {
+            if ($request->verificado === '1') {
+                $query->whereNotNull('email_verified_at');
+            } elseif ($request->verificado === '0') {
+                $query->whereNull('email_verified_at');
+            }
+        }
+
+        // Filtro por estado
+        if ($request->filled('estado')) {
+            $query->where('estado', $request->estado);
+        }
+
+        // Filtro por fecha de creación
+        if ($request->filled('fecha')) {
+            $query->whereDate('created_at', $request->fecha);
+        }
+
+        $users = $query
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
 
         return view('users.index', compact('users'));
     }
 
     public function create()
     {
-        return view('users.create');
+        $roles = Rol::where('estado', true)
+            ->orderBy('nombre')
+            ->get();
+
+        return view('users.create', compact('roles'));
     }
 
     public function store(Request $request)
@@ -49,18 +100,33 @@ class UserController extends Controller
                 'nullable',
                 'boolean',
             ],
+
+            'roles' => [
+                'nullable',
+                'array',
+            ],
+
+            'roles.*' => [
+                'exists:roles,id',
+            ],
         ]);
 
-        User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
+        DB::transaction(function () use ($validated, $request) {
+            $user = User::create([
+                'name' => $validated['name'],
+                'email' => $validated['email'],
 
-            'password' => Hash::make(
-                $validated['password']
-            ),
+                'password' => Hash::make(
+                    $validated['password']
+                ),
 
-            'estado' => $request->has('estado'),
-        ]);
+                'estado' => $request->has('estado'),
+            ]);
+
+            $user->roles()->sync(
+                $validated['roles'] ?? []
+            );
+        });
 
         return redirect()
             ->route('users.index')
@@ -72,6 +138,8 @@ class UserController extends Controller
 
     public function show(User $user)
     {
+        $user->load('roles');
+
         return view(
             'users.show',
             compact('user')
@@ -80,9 +148,17 @@ class UserController extends Controller
 
     public function edit(User $user)
     {
+        $user->load('roles');
+
+        // Roles activos más los que ya tenga asignados aunque estén inactivos
+        $roles = Rol::where('estado', true)
+            ->orWhereIn('id', $user->roles->pluck('id'))
+            ->orderBy('nombre')
+            ->get();
+
         return view(
             'users.edit',
-            compact('user')
+            compact('user', 'roles')
         );
     }
 
@@ -117,6 +193,15 @@ class UserController extends Controller
                 'nullable',
                 'boolean',
             ],
+
+            'roles' => [
+                'nullable',
+                'array',
+            ],
+
+            'roles.*' => [
+                'exists:roles,id',
+            ],
         ]);
 
         $datos = [
@@ -131,7 +216,13 @@ class UserController extends Controller
             );
         }
 
-        $user->update($datos);
+        DB::transaction(function () use ($user, $datos, $validated) {
+            $user->update($datos);
+
+            $user->roles()->sync(
+                $validated['roles'] ?? []
+            );
+        });
 
         return redirect()
             ->route('users.index')

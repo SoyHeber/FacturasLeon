@@ -74,6 +74,31 @@
                                 class="form-control" minlength="8" required>
                         </div>
 
+                        <div class="mb-3">
+                            <label class="form-label d-block">
+                                Roles
+                            </label>
+
+                            @forelse ($roles as $rol)
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="checkbox" name="roles[]"
+                                        id="rol-{{ $rol->id }}" value="{{ $rol->id }}"
+                                        {{ in_array($rol->id, old('roles', [])) ? 'checked' : '' }}>
+
+                                    <label class="form-check-label" for="rol-{{ $rol->id }}">
+                                        {{ $rol->nombre }}
+                                        @unless ($rol->estado)
+                                            <span class="badge bg-secondary">Inactivo</span>
+                                        @endunless
+                                    </label>
+                                </div>
+                            @empty
+                                <p class="mb-0 text-muted">
+                                    No hay roles registrados.
+                                </p>
+                            @endforelse
+                        </div>
+
                         <div class="form-check mb-3">
 
                             <input class="form-check-input" type="checkbox" name="estado" id="estado" value="1"

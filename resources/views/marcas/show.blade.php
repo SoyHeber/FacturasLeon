@@ -44,7 +44,9 @@
 
                     <div class="d-flex gap-2">
                         <a href="{{ route('marcas.index') }}" class="btn btn-secondary">Volver</a>
-                        <a href="{{ route('marcas.edit', $marca->id) }}" class="btn btn-warning">Editar</a>
+                        @can('marcas.modificar')
+                            <a href="{{ route('marcas.edit', $marca->id) }}" class="btn btn-warning">Editar</a>
+                        @endcan
 
                         {{-- <form action="{{ route('marcas.destroy', $marca->id) }}" method="POST"
                             onsubmit="return confirm('¿Deseas eliminar esta marca?')">
@@ -53,17 +55,19 @@
                             <button type="submit" class="btn btn-danger">Eliminar</button>
                         </form> --}}
 
-                        <form action="{{ route('marcas.cambiar-estado', $marca->id) }}" method="POST"
-                            onsubmit="return confirm('¿Deseas cambiar el estado de esta marca?')">
-                            @csrf
-                            @method('PATCH')
+                        @can('marcas.eliminar')
+                            <form action="{{ route('marcas.cambiar-estado', $marca->id) }}" method="POST"
+                                onsubmit="return confirm('¿Deseas cambiar el estado de esta marca?')">
+                                @csrf
+                                @method('PATCH')
 
-                            @if ($marca->estado)
-                                <button type="submit" class="btn btn-secondary">Inactivar</button>
-                            @else
-                                <button type="submit" class="btn btn-success">Activar</button>
-                            @endif
-                        </form>
+                                @if ($marca->estado)
+                                    <button type="submit" class="btn btn-secondary">Inactivar</button>
+                                @else
+                                    <button type="submit" class="btn btn-success">Activar</button>
+                                @endif
+                            </form>
+                        @endcan
 
                     </div>
                 </div>

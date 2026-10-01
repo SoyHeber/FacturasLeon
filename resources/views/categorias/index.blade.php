@@ -13,9 +13,11 @@
             </p>
         </div>
 
-        <a href="{{ route('categorias.create') }}" class="btn btn-warning fw-bold px-4 py-2">
-            + Nueva categoría
-        </a>
+        @can('categorias.crear')
+            <a href="{{ route('categorias.create') }}" class="btn btn-warning fw-bold px-4 py-2">
+                + Nueva categoría
+            </a>
+        @endcan
 
     </div>
 
@@ -34,145 +36,150 @@
 
         <div class="card-body p-4">
 
-            <form method="GET" action="{{ route('categorias.index') }}">
+            <form id="filtros" method="GET" action="{{ route('categorias.index') }}"></form>
 
-                <div class="table-responsive">
+            <div class="table-responsive">
 
-                    <table class="table align-middle mb-0">
+                <table class="table align-middle mb-0">
 
-                        <thead>
+                    <thead>
 
-                            {{-- Títulos --}}
-                            <tr class="table-dark">
+                        {{-- Títulos --}}
+                        <tr class="table-dark">
 
-                                <th>ID</th>
+                            <th>ID</th>
 
-                                <th>Nombre</th>
+                            <th>Nombre</th>
 
-                                <th>Descripción</th>
+                            <th>Descripción</th>
 
-                                <th>Estado</th>
+                            <th>Estado</th>
 
-                                <th>Fecha creación</th>
+                            <th>Fecha creación</th>
 
-                                <th>Acciones</th>
+                            <th>Acciones</th>
 
-                            </tr>
+                        </tr>
 
 
-                            {{-- Filtros --}}
+                        {{-- Filtros --}}
+                        <tr>
+
+                            <th>
+                                <input form="filtros" type="number" name="id" value="{{ request('id') }}"
+                                    class="form-control form-control-sm" placeholder="ID">
+                            </th>
+
+                            <th>
+                                <input form="filtros" type="text" name="nombre" value="{{ request('nombre') }}"
+                                    class="form-control form-control-sm" placeholder="Filtrar nombre">
+                            </th>
+
+                            <th>
+                                <input form="filtros" type="text" name="descripcion" value="{{ request('descripcion') }}"
+                                    class="form-control form-control-sm" placeholder="Filtrar descripción">
+                            </th>
+
+                            <th>
+                                <select form="filtros" name="estado" class="form-select form-select-sm">
+
+                                    <option value="">
+                                        Todos
+                                    </option>
+
+                                    <option value="1" {{ request('estado') === '1' ? 'selected' : '' }}>
+                                        Activa
+                                    </option>
+
+                                    <option value="0" {{ request('estado') === '0' ? 'selected' : '' }}>
+                                        Inactiva
+                                    </option>
+
+                                </select>
+                            </th>
+
+                            <th>
+                                <input form="filtros" type="date" name="fecha" value="{{ request('fecha') }}"
+                                    class="form-control form-control-sm">
+                            </th>
+
+                            {{-- Acciones no tiene filtro --}}
+                            <th>
+
+                                <div class="d-flex gap-2">
+
+                                    <button type="submit" form="filtros" class="btn btn-dark btn-sm">
+                                        Filtrar
+                                    </button>
+
+                                    <a href="{{ route('categorias.index') }}" class="btn btn-outline-secondary btn-sm">
+                                        Limpiar
+                                    </a>
+
+                                </div>
+
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        @forelse ($categorias as $categoria)
                             <tr>
 
-                                <th>
-                                    <input type="number" name="id" value="{{ request('id') }}"
-                                        class="form-control form-control-sm" placeholder="ID">
-                                </th>
+                                <td class="fw-semibold">
+                                    #{{ $categoria->id }}
+                                </td>
 
-                                <th>
-                                    <input type="text" name="nombre" value="{{ request('nombre') }}"
-                                        class="form-control form-control-sm" placeholder="Filtrar nombre">
-                                </th>
+                                <td class="fw-bold">
+                                    {{ $categoria->nombre }}
+                                </td>
 
-                                <th>
-                                    <input type="text" name="descripcion" value="{{ request('descripcion') }}"
-                                        class="form-control form-control-sm" placeholder="Filtrar descripción">
-                                </th>
+                                <td>
+                                    {{ $categoria->descripcion ?: 'Sin descripción' }}
+                                </td>
 
-                                <th>
-                                    <select name="estado" class="form-select form-select-sm">
+                                <td>
 
-                                        <option value="">
-                                            Todos
-                                        </option>
-
-                                        <option value="1" {{ request('estado') === '1' ? 'selected' : '' }}>
+                                    @if ($categoria->estado)
+                                        <span class="badge rounded-pill bg-success-subtle text-success px-3 py-2">
                                             Activa
-                                        </option>
-
-                                        <option value="0" {{ request('estado') === '0' ? 'selected' : '' }}>
+                                        </span>
+                                    @else
+                                        <span class="badge rounded-pill bg-danger-subtle text-danger px-3 py-2">
                                             Inactiva
-                                        </option>
+                                        </span>
+                                    @endif
 
-                                    </select>
-                                </th>
+                                </td>
 
-                                <th>
-                                    <input type="date" name="fecha" value="{{ request('fecha') }}"
-                                        class="form-control form-control-sm">
-                                </th>
+                                <td>
+                                    {{ $categoria->created_at?->format('d/m/Y H:i') }}
+                                </td>
 
-                                {{-- Acciones no tiene filtro --}}
-                                <th>
+                                <td>
 
                                     <div class="d-flex gap-2">
 
-                                        <button type="submit" class="btn btn-dark btn-sm">
-                                            Filtrar
-                                        </button>
-
-                                        <a href="{{ route('categorias.index') }}" class="btn btn-outline-secondary btn-sm">
-                                            Limpiar
-                                        </a>
-
-                                    </div>
-
-                                </th>
-
-                            </tr>
-
-                        </thead>
-
-
-                        <tbody>
-
-                            @forelse ($categorias as $categoria)
-                                <tr>
-
-                                    <td class="fw-semibold">
-                                        #{{ $categoria->id }}
-                                    </td>
-
-                                    <td class="fw-bold">
-                                        {{ $categoria->nombre }}
-                                    </td>
-
-                                    <td>
-                                        {{ $categoria->descripcion ?: 'Sin descripción' }}
-                                    </td>
-
-                                    <td>
-
-                                        @if ($categoria->estado)
-                                            <span class="badge rounded-pill bg-success-subtle text-success px-3 py-2">
-                                                Activa
-                                            </span>
-                                        @else
-                                            <span class="badge rounded-pill bg-danger-subtle text-danger px-3 py-2">
-                                                Inactiva
-                                            </span>
-                                        @endif
-
-                                    </td>
-
-                                    <td>
-                                        {{ $categoria->created_at?->format('d/m/Y H:i') }}
-                                    </td>
-
-                                    <td>
-
-                                        <div class="d-flex gap-2">
-
+                                        @can('categorias.ver')
                                             <a href="{{ route('categorias.show', $categoria->id) }}"
                                                 class="btn btn-outline-info btn-sm">
                                                 Ver
                                             </a>
+                                        @endcan
 
+                                        @can('categorias.modificar')
                                             <a href="{{ route('categorias.edit', $categoria->id) }}"
                                                 class="btn btn-outline-warning btn-sm">
                                                 Editar
                                             </a>
+                                        @endcan
 
 
+                                        @can('categorias.eliminar')
                                             <form method="POST"
                                                 action="{{ route('categorias.cambiar-estado', $categoria->id) }}">
 
@@ -190,40 +197,39 @@
                                                 @endif
 
                                             </form>
+                                        @endcan
 
-                                        </div>
+                                    </div>
 
-                                    </td>
+                                </td>
 
-                                </tr>
+                            </tr>
 
-                            @empty
+                        @empty
 
-                                <tr>
+                            <tr>
 
-                                    <td colspan="6" class="text-center text-muted py-4">
+                                <td colspan="6" class="text-center text-muted py-4">
 
-                                        No se encontraron categorías.
+                                    No se encontraron categorías.
 
-                                    </td>
+                                </td>
 
-                                </tr>
-                            @endforelse
+                            </tr>
+                        @endforelse
 
-                        </tbody>
+                    </tbody>
 
-                    </table>
+                </table>
 
-                </div>
+            </div>
 
 
-                <div class="mt-4">
+            <div class="mt-4">
 
-                    {{ $categorias->links() }}
+                {{ $categorias->links() }}
 
-                </div>
-
-            </form>
+            </div>
 
         </div>
 

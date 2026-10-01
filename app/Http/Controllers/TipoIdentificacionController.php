@@ -7,9 +7,44 @@ use Illuminate\Http\Request;
 
 class TipoIdentificacionController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $tiposIdentificacion = TipoIdentificacion::latest()->paginate(10);
+        $query = TipoIdentificacion::query();
+
+        // Filtro por ID
+        if ($request->filled('id')) {
+            $query->where('id', $request->id);
+        }
+
+        // Filtro por nombre
+        if ($request->filled('nombre')) {
+            $query->where('nombre', 'like', '%' . $request->nombre . '%');
+        }
+
+        // Filtro por código
+        if ($request->filled('codigo')) {
+            $query->where('codigo', 'like', '%' . $request->codigo . '%');
+        }
+
+        // Filtro por descripción
+        if ($request->filled('descripcion')) {
+            $query->where('descripcion', 'like', '%' . $request->descripcion . '%');
+        }
+
+        // Filtro por estado
+        if ($request->filled('estado')) {
+            $query->where('estado', $request->estado);
+        }
+
+        // Filtro por fecha de creación
+        if ($request->filled('fecha')) {
+            $query->whereDate('created_at', $request->fecha);
+        }
+
+        $tiposIdentificacion = $query
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
 
         return view('tipos_identificacion.index', compact('tiposIdentificacion'));
     }

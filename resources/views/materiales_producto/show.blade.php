@@ -114,27 +114,31 @@
                     Volver
                 </a>
 
-                <a href="{{ route('materiales_producto.edit', $materialProducto->id) }}" class="btn btn-warning">
-                    Editar
-                </a>
+                @can('materiales_producto.modificar')
+                    <a href="{{ route('materiales_producto.edit', $materialProducto->id) }}" class="btn btn-warning">
+                        Editar
+                    </a>
+                @endcan
 
-                <form method="POST" action="{{ route('materiales_producto.cambiar-estado', $materialProducto->id) }}"
-                    onsubmit="return confirm('¿Deseas cambiar el estado de este material?')">
+                @can('materiales_producto.eliminar')
+                    <form method="POST" action="{{ route('materiales_producto.cambiar-estado', $materialProducto->id) }}"
+                        onsubmit="return confirm('¿Deseas cambiar el estado de este material?')">
 
-                    @csrf
-                    @method('PATCH')
+                        @csrf
+                        @method('PATCH')
 
-                    @if ($materialProducto->estado)
-                        <button type="submit" class="btn btn-outline-secondary">
-                            Inactivar
-                        </button>
-                    @else
-                        <button type="submit" class="btn btn-outline-success">
-                            Activar
-                        </button>
-                    @endif
+                        @if ($materialProducto->estado)
+                            <button type="submit" class="btn btn-outline-secondary">
+                                Inactivar
+                            </button>
+                        @else
+                            <button type="submit" class="btn btn-outline-success">
+                                Activar
+                            </button>
+                        @endif
 
-                </form>
+                    </form>
+                @endcan
 
             </div>
 

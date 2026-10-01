@@ -12,9 +12,11 @@
             </p>
         </div>
 
-        <a href="{{ route('detalles_compra.create') }}" class="btn btn-warning fw-bold px-4 py-2">
-            + Nuevo detalle
-        </a>
+        @can('detalles_compra.crear')
+            <a href="{{ route('detalles_compra.create') }}" class="btn btn-warning fw-bold px-4 py-2">
+                + Nuevo detalle
+            </a>
+        @endcan
     </div>
 
     @if (session('success'))
@@ -29,178 +31,183 @@
     <div class="card shadow-sm border-0 rounded-4">
         <div class="card-body p-4">
 
-            <form method="GET" action="{{ route('detalles_compra.index') }}">
+            <form id="filtros" method="GET" action="{{ route('detalles_compra.index') }}"></form>
 
-                <div class="table-responsive">
+            <div class="table-responsive">
 
-                    <table class="table align-middle mb-0">
+                <table class="table align-middle mb-0">
 
-                        <thead>
+                    <thead>
 
-                            <tr class="table-dark">
-                                <th>ID</th>
-                                <th>Compra</th>
-                                <th>Material / Insumo</th>
-                                <th>Cantidad</th>
-                                <th>Precio Unitario</th>
-                                <th>% Descuento</th>
-                                <th>Total</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
-                            </tr>
+                        <tr class="table-dark">
+                            <th>ID</th>
+                            <th>Compra</th>
+                            <th>Material / Insumo</th>
+                            <th>Cantidad</th>
+                            <th>Precio Unitario</th>
+                            <th>% Descuento</th>
+                            <th>Total</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
 
+                        <tr>
+
+                            <th>
+                                <input form="filtros" type="number" name="id" value="{{ request('id') }}"
+                                    class="form-control form-control-sm" placeholder="ID">
+                            </th>
+
+                            <th>
+                                <input form="filtros" type="number" name="compra_id" value="{{ request('compra_id') }}"
+                                    class="form-control form-control-sm" placeholder="Compra">
+                            </th>
+
+                            <th>
+                                <input form="filtros" type="text" name="inventario_compra"
+                                    value="{{ request('inventario_compra') }}" class="form-control form-control-sm"
+                                    placeholder="Material">
+                            </th>
+
+                            <th>
+                                <input form="filtros" type="number" step="0.0001" name="cantidad" value="{{ request('cantidad') }}"
+                                    class="form-control form-control-sm" placeholder="Cantidad">
+                            </th>
+
+                            <th>
+                                <input form="filtros" type="number" step="0.000001" name="precio_unitario"
+                                    value="{{ request('precio_unitario') }}" class="form-control form-control-sm"
+                                    placeholder="Precio">
+                            </th>
+
+                            <th>
+                                <input form="filtros" type="number" step="0.0001" name="porcentaje_descuento"
+                                    value="{{ request('porcentaje_descuento') }}" class="form-control form-control-sm"
+                                    placeholder="%">
+                            </th>
+
+                            <th>
+                                <input form="filtros" type="number" step="0.01" name="importe_total"
+                                    value="{{ request('importe_total') }}" class="form-control form-control-sm"
+                                    placeholder="Total">
+                            </th>
+
+                            <th>
+                                <select form="filtros" name="estado" class="form-select form-select-sm">
+
+                                    <option value="">
+                                        Todos
+                                    </option>
+
+                                    <option value="1" {{ request('estado') === '1' ? 'selected' : '' }}>
+                                        Activo
+                                    </option>
+
+                                    <option value="0" {{ request('estado') === '0' ? 'selected' : '' }}>
+                                        Inactivo
+                                    </option>
+
+                                </select>
+                            </th>
+
+                            <th>
+                                <div class="d-flex gap-2">
+
+                                    <button type="submit" form="filtros" class="btn btn-dark btn-sm">
+                                        Filtrar
+                                    </button>
+
+                                    <a href="{{ route('detalles_compra.index') }}"
+                                        class="btn btn-outline-secondary btn-sm">
+                                        Limpiar
+                                    </a>
+
+                                </div>
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        @forelse ($detallesCompra as $detalleCompra)
                             <tr>
 
-                                <th>
-                                    <input type="number" name="id" value="{{ request('id') }}"
-                                        class="form-control form-control-sm" placeholder="ID">
-                                </th>
+                                <td class="fw-semibold">
+                                    #{{ $detalleCompra->id }}
+                                </td>
 
-                                <th>
-                                    <input type="number" name="compra_id" value="{{ request('compra_id') }}"
-                                        class="form-control form-control-sm" placeholder="Compra">
-                                </th>
-
-                                <th>
-                                    <input type="text" name="inventario_compra"
-                                        value="{{ request('inventario_compra') }}" class="form-control form-control-sm"
-                                        placeholder="Material">
-                                </th>
-
-                                <th>
-                                    <input type="number" step="0.0001" name="cantidad" value="{{ request('cantidad') }}"
-                                        class="form-control form-control-sm" placeholder="Cantidad">
-                                </th>
-
-                                <th>
-                                    <input type="number" step="0.000001" name="precio_unitario"
-                                        value="{{ request('precio_unitario') }}" class="form-control form-control-sm"
-                                        placeholder="Precio">
-                                </th>
-
-                                <th>
-                                    <input type="number" step="0.0001" name="porcentaje_descuento"
-                                        value="{{ request('porcentaje_descuento') }}" class="form-control form-control-sm"
-                                        placeholder="%">
-                                </th>
-
-                                <th>
-                                    <input type="number" step="0.01" name="importe_total"
-                                        value="{{ request('importe_total') }}" class="form-control form-control-sm"
-                                        placeholder="Total">
-                                </th>
-
-                                <th>
-                                    <select name="estado" class="form-select form-select-sm">
-
-                                        <option value="">
-                                            Todos
-                                        </option>
-
-                                        <option value="1" {{ request('estado') === '1' ? 'selected' : '' }}>
-                                            Activo
-                                        </option>
-
-                                        <option value="0" {{ request('estado') === '0' ? 'selected' : '' }}>
-                                            Inactivo
-                                        </option>
-
-                                    </select>
-                                </th>
-
-                                <th>
-                                    <div class="d-flex gap-2">
-
-                                        <button type="submit" class="btn btn-dark btn-sm">
-                                            Filtrar
-                                        </button>
-
-                                        <a href="{{ route('detalles_compra.index') }}"
-                                            class="btn btn-outline-secondary btn-sm">
-                                            Limpiar
-                                        </a>
-
+                                <td>
+                                    <div class="fw-semibold">
+                                        Compra #{{ $detalleCompra->compra_id }}
                                     </div>
-                                </th>
 
-                            </tr>
+                                    <small class="text-muted">
+                                        {{ $detalleCompra->compra->serie ?? '' }}
+                                        -
+                                        {{ $detalleCompra->compra->numero ?? '' }}
+                                    </small>
+                                </td>
 
-                        </thead>
+                                <td>
+                                    {{ $detalleCompra->inventarioCompra->nombre ?? 'Sin material' }}
+                                </td>
 
-                        <tbody>
+                                <td>
+                                    {{ number_format($detalleCompra->cantidad, 4) }}
 
-                            @forelse ($detallesCompra as $detalleCompra)
-                                <tr>
+                                    <small class="text-muted">
+                                        {{ $detalleCompra->inventarioCompra->unidad_medida ?? '' }}
+                                    </small>
+                                </td>
 
-                                    <td class="fw-semibold">
-                                        #{{ $detalleCompra->id }}
-                                    </td>
+                                <td>
+                                    {{ number_format($detalleCompra->precio_unitario, 6) }}
+                                </td>
 
-                                    <td>
-                                        <div class="fw-semibold">
-                                            Compra #{{ $detalleCompra->compra_id }}
-                                        </div>
+                                <td>
+                                    {{ number_format($detalleCompra->porcentaje_descuento, 4) }}%
+                                </td>
 
-                                        <small class="text-muted">
-                                            {{ $detalleCompra->compra->serie ?? '' }}
-                                            -
-                                            {{ $detalleCompra->compra->numero ?? '' }}
-                                        </small>
-                                    </td>
+                                <td class="fw-bold">
+                                    {{ $detalleCompra->compra->moneda ?? 'GTQ' }}
+                                    {{ number_format($detalleCompra->importe_total, 2) }}
+                                </td>
 
-                                    <td>
-                                        {{ $detalleCompra->inventarioCompra->nombre ?? 'Sin material' }}
-                                    </td>
+                                <td>
 
-                                    <td>
-                                        {{ number_format($detalleCompra->cantidad, 4) }}
+                                    @if ($detalleCompra->estado)
+                                        <span class="badge rounded-pill bg-success-subtle text-success px-3 py-2">
+                                            Activo
+                                        </span>
+                                    @else
+                                        <span class="badge rounded-pill bg-danger-subtle text-danger px-3 py-2">
+                                            Inactivo
+                                        </span>
+                                    @endif
 
-                                        <small class="text-muted">
-                                            {{ $detalleCompra->inventarioCompra->unidad_medida ?? '' }}
-                                        </small>
-                                    </td>
+                                </td>
 
-                                    <td>
-                                        {{ number_format($detalleCompra->precio_unitario, 6) }}
-                                    </td>
+                                <td>
 
-                                    <td>
-                                        {{ number_format($detalleCompra->porcentaje_descuento, 4) }}%
-                                    </td>
+                                    <div class="d-flex gap-2 flex-wrap">
 
-                                    <td class="fw-bold">
-                                        {{ $detalleCompra->compra->moneda ?? 'GTQ' }}
-                                        {{ number_format($detalleCompra->importe_total, 2) }}
-                                    </td>
-
-                                    <td>
-
-                                        @if ($detalleCompra->estado)
-                                            <span class="badge rounded-pill bg-success-subtle text-success px-3 py-2">
-                                                Activo
-                                            </span>
-                                        @else
-                                            <span class="badge rounded-pill bg-danger-subtle text-danger px-3 py-2">
-                                                Inactivo
-                                            </span>
-                                        @endif
-
-                                    </td>
-
-                                    <td>
-
-                                        <div class="d-flex gap-2 flex-wrap">
-
+                                        @can('detalles_compra.ver')
                                             <a href="{{ route('detalles_compra.show', $detalleCompra->id) }}"
                                                 class="btn btn-outline-info btn-sm">
                                                 Ver
                                             </a>
+                                        @endcan
 
+                                        @can('detalles_compra.modificar')
                                             <a href="{{ route('detalles_compra.edit', $detalleCompra->id) }}"
                                                 class="btn btn-outline-warning btn-sm">
                                                 Editar
                                             </a>
+                                        @endcan
 
+                                        @can('detalles_compra.eliminar')
                                             <form method="POST"
                                                 action="{{ route('detalles_compra.cambiar-estado', $detalleCompra->id) }}"
                                                 onsubmit="return confirm('¿Deseas cambiar el estado de este detalle?')">
@@ -219,33 +226,32 @@
                                                 @endif
 
                                             </form>
+                                        @endcan
 
-                                        </div>
+                                    </div>
 
-                                    </td>
+                                </td>
 
-                                </tr>
+                            </tr>
 
-                            @empty
+                        @empty
 
-                                <tr>
-                                    <td colspan="9" class="text-center text-muted py-4">
-                                        No se encontraron detalles de compra.
-                                    </td>
-                                </tr>
-                            @endforelse
+                            <tr>
+                                <td colspan="9" class="text-center text-muted py-4">
+                                    No se encontraron detalles de compra.
+                                </td>
+                            </tr>
+                        @endforelse
 
-                        </tbody>
+                    </tbody>
 
-                    </table>
+                </table>
 
-                </div>
+            </div>
 
-                <div class="mt-4">
-                    {{ $detallesCompra->links() }}
-                </div>
-
-            </form>
+            <div class="mt-4">
+                {{ $detallesCompra->links() }}
+            </div>
 
         </div>
     </div>

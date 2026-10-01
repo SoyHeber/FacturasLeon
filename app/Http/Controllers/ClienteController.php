@@ -11,16 +11,76 @@ use Illuminate\Validation\Rule;
 
 class ClienteController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $clientes = Cliente::with([
+        $query = Cliente::with([
             'tipoIdentificacion',
             'direccion.municipio.departamento.pais',
             'persona',
             'sociedad',
-        ])
+        ]);
+
+        // Filtro por ID
+        if ($request->filled('id')) {
+            $query->where('id', $request->id);
+        }
+
+        // Filtro por tipo de cliente
+        if ($request->filled('tipo')) {
+            if ($request->tipo === 'persona') {
+                $query->whereHas('persona');
+            } elseif ($request->tipo === 'sociedad') {
+                $query->whereHas('sociedad');
+            }
+        }
+
+        // Filtro por nombre (persona o sociedad)
+        if ($request->filled('nombre')) {
+            $query->where(function ($q) use ($request) {
+                $q->whereHas('persona', function ($p) use ($request) {
+                    $p->where('nombre1', 'like', '%' . $request->nombre . '%')
+                        ->orWhere('nombre2', 'like', '%' . $request->nombre . '%')
+                        ->orWhere('nombre3', 'like', '%' . $request->nombre . '%')
+                        ->orWhere('apellido1', 'like', '%' . $request->nombre . '%')
+                        ->orWhere('apellido2', 'like', '%' . $request->nombre . '%')
+                        ->orWhere('apellido_casada', 'like', '%' . $request->nombre . '%');
+                })->orWhereHas('sociedad', function ($s) use ($request) {
+                    $s->where('nombre', 'like', '%' . $request->nombre . '%');
+                });
+            });
+        }
+
+        // Filtro por tipo de identificación
+        if ($request->filled('tipo_identificacion')) {
+            $query->whereHas('tipoIdentificacion', function ($q) use ($request) {
+                $q->where('nombre', 'like', '%' . $request->tipo_identificacion . '%');
+            });
+        }
+
+        // Filtro por número de identificación
+        if ($request->filled('numero_identificacion')) {
+            $query->where('numero_identificacion', 'like', '%' . $request->numero_identificacion . '%');
+        }
+
+        // Filtro por teléfono
+        if ($request->filled('telefono')) {
+            $query->where('telefono', 'like', '%' . $request->telefono . '%');
+        }
+
+        // Filtro por correo
+        if ($request->filled('correo')) {
+            $query->where('correo', 'like', '%' . $request->correo . '%');
+        }
+
+        // Filtro por estado
+        if ($request->filled('estado')) {
+            $query->where('estado', $request->estado);
+        }
+
+        $clientes = $query
             ->latest()
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString();
 
         return view('clientes.index', compact('clientes'));
     }

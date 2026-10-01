@@ -7,9 +7,39 @@ use Illuminate\Http\Request;
 
 class MetodoPagoController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $metodosPago = MetodoPago::latest()->paginate(10);
+        $query = MetodoPago::query();
+
+        // Filtro por ID
+        if ($request->filled('id')) {
+            $query->where('id', $request->id);
+        }
+
+        // Filtro por nombre
+        if ($request->filled('nombre')) {
+            $query->where('nombre', 'like', '%' . $request->nombre . '%');
+        }
+
+        // Filtro por descripción
+        if ($request->filled('descripcion')) {
+            $query->where('descripcion', 'like', '%' . $request->descripcion . '%');
+        }
+
+        // Filtro por estado
+        if ($request->filled('estado')) {
+            $query->where('estado', $request->estado);
+        }
+
+        // Filtro por fecha de creación
+        if ($request->filled('fecha')) {
+            $query->whereDate('created_at', $request->fecha);
+        }
+
+        $metodosPago = $query
+            ->latest()
+            ->paginate(10)
+            ->withQueryString();
 
         return view('metodos_pago.index', compact('metodosPago'));
     }

@@ -64,19 +64,23 @@
 
                     <div class="d-flex gap-2">
                         <a href="{{ route('direcciones.index') }}" class="btn btn-secondary">Volver</a>
-                        <a href="{{ route('direcciones.edit', $direccion->id) }}" class="btn btn-warning">Editar</a>
+                        @can('direcciones.modificar')
+                            <a href="{{ route('direcciones.edit', $direccion->id) }}" class="btn btn-warning">Editar</a>
+                        @endcan
 
-                        <form action="{{ route('direcciones.cambiar-estado', $direccion->id) }}" method="POST"
-                            onsubmit="return confirm('¿Deseas cambiar el estado de esta dirección?')">
-                            @csrf
-                            @method('PATCH')
+                        @can('direcciones.eliminar')
+                            <form action="{{ route('direcciones.cambiar-estado', $direccion->id) }}" method="POST"
+                                onsubmit="return confirm('¿Deseas cambiar el estado de esta dirección?')">
+                                @csrf
+                                @method('PATCH')
 
-                            @if ($direccion->estado)
-                                <button type="submit" class="btn btn-secondary">Inactivar</button>
-                            @else
-                                <button type="submit" class="btn btn-success">Activar</button>
-                            @endif
-                        </form>
+                                @if ($direccion->estado)
+                                    <button type="submit" class="btn btn-secondary">Inactivar</button>
+                                @else
+                                    <button type="submit" class="btn btn-success">Activar</button>
+                                @endif
+                            </form>
+                        @endcan
                     </div>
                 </div>
             </div>

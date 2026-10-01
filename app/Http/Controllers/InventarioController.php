@@ -9,11 +9,74 @@ use Illuminate\Validation\Rule;
 
 class InventarioController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $inventarios = Inventario::with('producto')
+        $query = Inventario::with('producto');
+
+        // Filtro por ID
+        if ($request->filled('id')) {
+            $query->where('id', $request->id);
+        }
+
+        // Filtro por producto
+        if ($request->filled('producto')) {
+            $query->whereHas('producto', function ($q) use ($request) {
+                $q->where('nombre', 'like', '%' . $request->producto . '%');
+            });
+        }
+
+        // Filtro por código del producto
+        if ($request->filled('codigo')) {
+            $query->whereHas('producto', function ($q) use ($request) {
+                $q->where('codigo', 'like', '%' . $request->codigo . '%');
+            });
+        }
+
+        // Filtro por cantidad
+        if ($request->filled('cantidad')) {
+            $query->where('cantidad', $request->cantidad);
+        }
+
+        // Filtro por stock mínimo
+        if ($request->filled('stock_minimo')) {
+            $query->where('stock_minimo', $request->stock_minimo);
+        }
+
+        // Filtro por stock máximo
+        if ($request->filled('stock_maximo')) {
+            $query->where('stock_maximo', $request->stock_maximo);
+        }
+
+        // Filtro por ubicación
+        if ($request->filled('ubicacion')) {
+            $query->where('ubicacion', 'like', '%' . $request->ubicacion . '%');
+        }
+
+        // Filtro por estado del stock (bajo, sobre o normal)
+        if ($request->filled('estado_stock')) {
+            if ($request->estado_stock === 'bajo') {
+                $query->whereColumn('cantidad', '<', 'stock_minimo');
+            } elseif ($request->estado_stock === 'sobre') {
+                $query->whereNotNull('stock_maximo')
+                    ->whereColumn('cantidad', '>', 'stock_maximo');
+            } elseif ($request->estado_stock === 'normal') {
+                $query->whereColumn('cantidad', '>=', 'stock_minimo')
+                    ->where(function ($q) {
+                        $q->whereNull('stock_maximo')
+                            ->orWhereColumn('cantidad', '<=', 'stock_maximo');
+                    });
+            }
+        }
+
+        // Filtro por estado
+        if ($request->filled('estado')) {
+            $query->where('estado', $request->estado);
+        }
+
+        $inventarios = $query
             ->latest()
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString();
 
         return view('inventarios.index', compact('inventarios'));
     }

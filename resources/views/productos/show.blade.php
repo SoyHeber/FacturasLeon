@@ -105,26 +105,30 @@
                             Volver
                         </a>
 
-                        <a href="{{ route('productos.edit', $producto->id) }}" class="btn btn-warning">
-                            Editar
-                        </a>
+                        @can('productos.modificar')
+                            <a href="{{ route('productos.edit', $producto->id) }}" class="btn btn-warning">
+                                Editar
+                            </a>
+                        @endcan
 
-                        <form action="{{ route('productos.cambiar-estado', $producto->id) }}" method="POST"
-                            onsubmit="return confirm('¿Deseas cambiar el estado de este producto?')">
-                            @csrf
-                            @method('PATCH')
+                        @can('productos.eliminar')
+                            <form action="{{ route('productos.cambiar-estado', $producto->id) }}" method="POST"
+                                onsubmit="return confirm('¿Deseas cambiar el estado de este producto?')">
+                                @csrf
+                                @method('PATCH')
 
-                            @if ($producto->estado)
-                                <button type="submit" class="btn btn-secondary">
-                                    Inactivar
-                                </button>
-                            @else
-                                <button type="submit" class="btn btn-success">
-                                    Activar
-                                </button>
-                            @endif
+                                @if ($producto->estado)
+                                    <button type="submit" class="btn btn-secondary">
+                                        Inactivar
+                                    </button>
+                                @else
+                                    <button type="submit" class="btn btn-success">
+                                        Activar
+                                    </button>
+                                @endif
 
-                        </form>
+                            </form>
+                        @endcan
 
                     </div>
 

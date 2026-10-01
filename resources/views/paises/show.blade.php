@@ -44,19 +44,23 @@
 
                     <div class="d-flex gap-2">
                         <a href="{{ route('paises.index') }}" class="btn btn-secondary">Volver</a>
-                        <a href="{{ route('paises.edit', $pais->id) }}" class="btn btn-warning">Editar</a>
+                        @can('paises.modificar')
+                            <a href="{{ route('paises.edit', $pais->id) }}" class="btn btn-warning">Editar</a>
+                        @endcan
 
-                        <form action="{{ route('paises.cambiar-estado', $pais->id) }}" method="POST"
-                            onsubmit="return confirm('¿Deseas cambiar el estado de este país?')">
-                            @csrf
-                            @method('PATCH')
+                        @can('paises.eliminar')
+                            <form action="{{ route('paises.cambiar-estado', $pais->id) }}" method="POST"
+                                onsubmit="return confirm('¿Deseas cambiar el estado de este país?')">
+                                @csrf
+                                @method('PATCH')
 
-                            @if ($pais->estado)
-                                <button type="submit" class="btn btn-secondary">Inactivar</button>
-                            @else
-                                <button type="submit" class="btn btn-success">Activar</button>
-                            @endif
-                        </form>
+                                @if ($pais->estado)
+                                    <button type="submit" class="btn btn-secondary">Inactivar</button>
+                                @else
+                                    <button type="submit" class="btn btn-success">Activar</button>
+                                @endif
+                            </form>
+                        @endcan
                     </div>
                 </div>
             </div>

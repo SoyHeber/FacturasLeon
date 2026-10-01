@@ -249,27 +249,31 @@
                     Volver
                 </a>
 
-                <a href="{{ route('detalles_compra.edit', $detalleCompra->id) }}" class="btn btn-warning">
-                    Editar
-                </a>
+                @can('detalles_compra.modificar')
+                    <a href="{{ route('detalles_compra.edit', $detalleCompra->id) }}" class="btn btn-warning">
+                        Editar
+                    </a>
+                @endcan
 
-                <form method="POST" action="{{ route('detalles_compra.cambiar-estado', $detalleCompra->id) }}"
-                    onsubmit="return confirm('¿Deseas cambiar el estado de este detalle?')">
+                @can('detalles_compra.eliminar')
+                    <form method="POST" action="{{ route('detalles_compra.cambiar-estado', $detalleCompra->id) }}"
+                        onsubmit="return confirm('¿Deseas cambiar el estado de este detalle?')">
 
-                    @csrf
-                    @method('PATCH')
+                        @csrf
+                        @method('PATCH')
 
-                    @if ($detalleCompra->estado)
-                        <button type="submit" class="btn btn-outline-secondary">
-                            Inactivar
-                        </button>
-                    @else
-                        <button type="submit" class="btn btn-outline-success">
-                            Activar
-                        </button>
-                    @endif
+                        @if ($detalleCompra->estado)
+                            <button type="submit" class="btn btn-outline-secondary">
+                                Inactivar
+                            </button>
+                        @else
+                            <button type="submit" class="btn btn-outline-success">
+                                Activar
+                            </button>
+                        @endif
 
-                </form>
+                    </form>
+                @endcan
 
             </div>
 

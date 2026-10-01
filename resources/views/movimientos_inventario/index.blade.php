@@ -12,9 +12,11 @@
             </p>
         </div>
 
-        <a href="{{ route('movimientos_inventario.create') }}" class="btn btn-warning fw-bold px-4 py-2">
-            + Nuevo movimiento
-        </a>
+        @can('movimientos_inventario.crear')
+            <a href="{{ route('movimientos_inventario.create') }}" class="btn btn-warning fw-bold px-4 py-2">
+                + Nuevo movimiento
+            </a>
+        @endcan
     </div>
 
     @if (session('success'))
@@ -30,190 +32,195 @@
 
         <div class="card-body p-4">
 
-            <form method="GET" action="{{ route('movimientos_inventario.index') }}">
+            <form id="filtros" method="GET" action="{{ route('movimientos_inventario.index') }}"></form>
 
-                <div class="table-responsive">
+            <div class="table-responsive">
 
-                    <table class="table align-middle mb-0">
+                <table class="table align-middle mb-0">
 
-                        <thead>
+                    <thead>
 
-                            <tr class="table-dark">
-                                <th>ID</th>
-                                <th>Producto</th>
-                                <th>Tipo</th>
-                                <th>Cantidad</th>
-                                <th>Fecha</th>
-                                <th>Motivo</th>
-                                <th>Estado</th>
-                                <th>Acciones</th>
-                            </tr>
+                        <tr class="table-dark">
+                            <th>ID</th>
+                            <th>Producto</th>
+                            <th>Tipo</th>
+                            <th>Cantidad</th>
+                            <th>Fecha</th>
+                            <th>Motivo</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
 
-                            {{-- Filtros --}}
+                        {{-- Filtros --}}
+                        <tr>
+
+                            <th>
+                                <input form="filtros" type="number" name="id" value="{{ request('id') }}"
+                                    class="form-control form-control-sm" placeholder="ID">
+                            </th>
+
+                            <th>
+                                <input form="filtros" type="text" name="producto" value="{{ request('producto') }}"
+                                    class="form-control form-control-sm" placeholder="Producto">
+                            </th>
+
+                            <th>
+                                <select form="filtros" name="tipo_movimiento" class="form-select form-select-sm">
+
+                                    <option value="">
+                                        Todos
+                                    </option>
+
+                                    <option value="ENTRADA"
+                                        {{ request('tipo_movimiento') === 'ENTRADA' ? 'selected' : '' }}>
+                                        Entrada
+                                    </option>
+
+                                    <option value="SALIDA"
+                                        {{ request('tipo_movimiento') === 'SALIDA' ? 'selected' : '' }}>
+                                        Salida
+                                    </option>
+
+                                    <option value="AJUSTE"
+                                        {{ request('tipo_movimiento') === 'AJUSTE' ? 'selected' : '' }}>
+                                        Ajuste
+                                    </option>
+
+                                </select>
+                            </th>
+
+                            <th>
+                                <input form="filtros" type="number" name="cantidad" value="{{ request('cantidad') }}"
+                                    class="form-control form-control-sm" placeholder="Cantidad">
+                            </th>
+
+                            <th>
+                                <input form="filtros" type="date" name="fecha" value="{{ request('fecha') }}"
+                                    class="form-control form-control-sm">
+                            </th>
+
+                            <th>
+                                <input form="filtros" type="text" name="motivo" value="{{ request('motivo') }}"
+                                    class="form-control form-control-sm" placeholder="Motivo">
+                            </th>
+
+                            <th>
+                                <select form="filtros" name="estado" class="form-select form-select-sm">
+
+                                    <option value="">
+                                        Todos
+                                    </option>
+
+                                    <option value="1" {{ request('estado') === '1' ? 'selected' : '' }}>
+                                        Activo
+                                    </option>
+
+                                    <option value="0" {{ request('estado') === '0' ? 'selected' : '' }}>
+                                        Inactivo
+                                    </option>
+
+                                </select>
+                            </th>
+
+                            <th>
+                                <div class="d-flex gap-2">
+
+                                    <button type="submit" form="filtros" class="btn btn-dark btn-sm">
+                                        Filtrar
+                                    </button>
+
+                                    <a href="{{ route('movimientos_inventario.index') }}"
+                                        class="btn btn-outline-secondary btn-sm">
+                                        Limpiar
+                                    </a>
+
+                                </div>
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        @forelse ($movimientos as $movimiento)
                             <tr>
 
-                                <th>
-                                    <input type="number" name="id" value="{{ request('id') }}"
-                                        class="form-control form-control-sm" placeholder="ID">
-                                </th>
+                                <td class="fw-semibold">
+                                    #{{ $movimiento->id }}
+                                </td>
 
-                                <th>
-                                    <input type="text" name="producto" value="{{ request('producto') }}"
-                                        class="form-control form-control-sm" placeholder="Producto">
-                                </th>
+                                <td>
+                                    <strong>
+                                        {{ $movimiento->inventario->producto->nombre ?? 'Sin producto' }}
+                                    </strong>
 
-                                <th>
-                                    <select name="tipo_movimiento" class="form-select form-select-sm">
+                                    <br>
 
-                                        <option value="">
-                                            Todos
-                                        </option>
+                                    <small class="text-muted">
+                                        {{ $movimiento->inventario->producto->codigo ?? 'Sin código' }}
+                                    </small>
+                                </td>
 
-                                        <option value="ENTRADA"
-                                            {{ request('tipo_movimiento') === 'ENTRADA' ? 'selected' : '' }}>
+                                <td>
+                                    @if ($movimiento->tipo_movimiento === 'ENTRADA')
+                                        <span class="badge rounded-pill bg-success-subtle text-success px-3 py-2">
                                             Entrada
-                                        </option>
-
-                                        <option value="SALIDA"
-                                            {{ request('tipo_movimiento') === 'SALIDA' ? 'selected' : '' }}>
+                                        </span>
+                                    @elseif ($movimiento->tipo_movimiento === 'SALIDA')
+                                        <span class="badge rounded-pill bg-danger-subtle text-danger px-3 py-2">
                                             Salida
-                                        </option>
-
-                                        <option value="AJUSTE"
-                                            {{ request('tipo_movimiento') === 'AJUSTE' ? 'selected' : '' }}>
+                                        </span>
+                                    @else
+                                        <span
+                                            class="badge rounded-pill bg-warning-subtle text-warning-emphasis px-3 py-2">
                                             Ajuste
-                                        </option>
+                                        </span>
+                                    @endif
+                                </td>
 
-                                    </select>
-                                </th>
+                                <td class="fw-semibold">
+                                    {{ $movimiento->cantidad }}
+                                </td>
 
-                                <th>
-                                    <input type="number" name="cantidad" value="{{ request('cantidad') }}"
-                                        class="form-control form-control-sm" placeholder="Cantidad">
-                                </th>
+                                <td>
+                                    {{ $movimiento->fecha_movimiento?->format('d/m/Y H:i') }}
+                                </td>
 
-                                <th>
-                                    <input type="date" name="fecha" value="{{ request('fecha') }}"
-                                        class="form-control form-control-sm">
-                                </th>
+                                <td>
+                                    {{ $movimiento->motivo ?: 'Sin motivo' }}
+                                </td>
 
-                                <th>
-                                    <input type="text" name="motivo" value="{{ request('motivo') }}"
-                                        class="form-control form-control-sm" placeholder="Motivo">
-                                </th>
-
-                                <th>
-                                    <select name="estado" class="form-select form-select-sm">
-
-                                        <option value="">
-                                            Todos
-                                        </option>
-
-                                        <option value="1" {{ request('estado') === '1' ? 'selected' : '' }}>
+                                <td>
+                                    @if ($movimiento->estado)
+                                        <span class="badge rounded-pill bg-success-subtle text-success px-3 py-2">
                                             Activo
-                                        </option>
-
-                                        <option value="0" {{ request('estado') === '0' ? 'selected' : '' }}>
+                                        </span>
+                                    @else
+                                        <span class="badge rounded-pill bg-danger-subtle text-danger px-3 py-2">
                                             Inactivo
-                                        </option>
+                                        </span>
+                                    @endif
+                                </td>
 
-                                    </select>
-                                </th>
+                                <td>
+                                    <div class="d-flex gap-2 flex-wrap">
 
-                                <th>
-                                    <div class="d-flex gap-2">
-
-                                        <button type="submit" class="btn btn-dark btn-sm">
-                                            Filtrar
-                                        </button>
-
-                                        <a href="{{ route('movimientos_inventario.index') }}"
-                                            class="btn btn-outline-secondary btn-sm">
-                                            Limpiar
-                                        </a>
-
-                                    </div>
-                                </th>
-
-                            </tr>
-
-                        </thead>
-
-                        <tbody>
-
-                            @forelse ($movimientos as $movimiento)
-                                <tr>
-
-                                    <td class="fw-semibold">
-                                        #{{ $movimiento->id }}
-                                    </td>
-
-                                    <td>
-                                        <strong>
-                                            {{ $movimiento->inventario->producto->nombre ?? 'Sin producto' }}
-                                        </strong>
-
-                                        <br>
-
-                                        <small class="text-muted">
-                                            {{ $movimiento->inventario->producto->codigo ?? 'Sin código' }}
-                                        </small>
-                                    </td>
-
-                                    <td>
-                                        @if ($movimiento->tipo_movimiento === 'ENTRADA')
-                                            <span class="badge rounded-pill bg-success-subtle text-success px-3 py-2">
-                                                Entrada
-                                            </span>
-                                        @elseif ($movimiento->tipo_movimiento === 'SALIDA')
-                                            <span class="badge rounded-pill bg-danger-subtle text-danger px-3 py-2">
-                                                Salida
-                                            </span>
-                                        @else
-                                            <span
-                                                class="badge rounded-pill bg-warning-subtle text-warning-emphasis px-3 py-2">
-                                                Ajuste
-                                            </span>
-                                        @endif
-                                    </td>
-
-                                    <td class="fw-semibold">
-                                        {{ $movimiento->cantidad }}
-                                    </td>
-
-                                    <td>
-                                        {{ $movimiento->fecha_movimiento?->format('d/m/Y H:i') }}
-                                    </td>
-
-                                    <td>
-                                        {{ $movimiento->motivo ?: 'Sin motivo' }}
-                                    </td>
-
-                                    <td>
-                                        @if ($movimiento->estado)
-                                            <span class="badge rounded-pill bg-success-subtle text-success px-3 py-2">
-                                                Activo
-                                            </span>
-                                        @else
-                                            <span class="badge rounded-pill bg-danger-subtle text-danger px-3 py-2">
-                                                Inactivo
-                                            </span>
-                                        @endif
-                                    </td>
-
-                                    <td>
-                                        <div class="d-flex gap-2 flex-wrap">
-
+                                        @can('movimientos_inventario.ver')
                                             <a href="{{ route('movimientos_inventario.show', $movimiento->id) }}"
                                                 class="btn btn-outline-info btn-sm">
                                                 Ver
                                             </a>
+                                        @endcan
 
+                                        @can('movimientos_inventario.modificar')
                                             <a href="{{ route('movimientos_inventario.edit', $movimiento->id) }}"
                                                 class="btn btn-outline-warning btn-sm">
                                                 Editar
                                             </a>
+                                        @endcan
 
+                                        @can('movimientos_inventario.eliminar')
                                             <form method="POST"
                                                 action="{{ route('movimientos_inventario.cambiar-estado', $movimiento->id) }}"
                                                 onsubmit="return confirm('¿Deseas cambiar el estado de este movimiento?')">
@@ -232,32 +239,31 @@
                                                 @endif
 
                                             </form>
+                                        @endcan
 
-                                        </div>
-                                    </td>
+                                    </div>
+                                </td>
 
-                                </tr>
+                            </tr>
 
-                            @empty
+                        @empty
 
-                                <tr>
-                                    <td colspan="8" class="text-center text-muted py-4">
-                                        No se encontraron movimientos de inventario.
-                                    </td>
-                                </tr>
-                            @endforelse
+                            <tr>
+                                <td colspan="8" class="text-center text-muted py-4">
+                                    No se encontraron movimientos de inventario.
+                                </td>
+                            </tr>
+                        @endforelse
 
-                        </tbody>
+                    </tbody>
 
-                    </table>
+                </table>
 
-                </div>
+            </div>
 
-                <div class="mt-4">
-                    {{ $movimientos->links() }}
-                </div>
-
-            </form>
+            <div class="mt-4">
+                {{ $movimientos->links() }}
+            </div>
 
         </div>
 

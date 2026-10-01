@@ -49,21 +49,25 @@
 
                     <div class="d-flex gap-2">
                         <a href="{{ route('tipos_identificacion.index') }}" class="btn btn-secondary">Volver</a>
-                        <a href="{{ route('tipos_identificacion.edit', $tipoIdentificacion->id) }}"
-                            class="btn btn-warning">Editar</a>
+                        @can('tipos_identificacion.modificar')
+                            <a href="{{ route('tipos_identificacion.edit', $tipoIdentificacion->id) }}"
+                                class="btn btn-warning">Editar</a>
+                        @endcan
 
-                        <form action="{{ route('tipos_identificacion.cambiar-estado', $tipoIdentificacion->id) }}"
-                            method="POST"
-                            onsubmit="return confirm('¿Deseas cambiar el estado de este tipo de identificación?')">
-                            @csrf
-                            @method('PATCH')
+                        @can('tipos_identificacion.eliminar')
+                            <form action="{{ route('tipos_identificacion.cambiar-estado', $tipoIdentificacion->id) }}"
+                                method="POST"
+                                onsubmit="return confirm('¿Deseas cambiar el estado de este tipo de identificación?')">
+                                @csrf
+                                @method('PATCH')
 
-                            @if ($tipoIdentificacion->estado)
-                                <button type="submit" class="btn btn-secondary">Inactivar</button>
-                            @else
-                                <button type="submit" class="btn btn-success">Activar</button>
-                            @endif
-                        </form>
+                                @if ($tipoIdentificacion->estado)
+                                    <button type="submit" class="btn btn-secondary">Inactivar</button>
+                                @else
+                                    <button type="submit" class="btn btn-success">Activar</button>
+                                @endif
+                            </form>
+                        @endcan
                     </div>
                 </div>
             </div>

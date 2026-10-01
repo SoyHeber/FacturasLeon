@@ -8,12 +8,48 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class DepartamentoController extends Controller
+
 {
-    public function index()
+    public function index(Request $request)
     {
-        $departamentos = Departamento::with('pais')
+        $query = Departamento::with('pais');
+
+        // Filtro por ID
+        if ($request->filled('id')) {
+            $query->where('id', $request->id);
+        }
+
+        // Filtro por país
+        if ($request->filled('pais')) {
+            $query->whereHas('pais', function ($q) use ($request) {
+                $q->where('nombre', 'like', '%' . $request->pais . '%');
+            });
+        }
+
+        // Filtro por nombre
+        if ($request->filled('nombre')) {
+            $query->where('nombre', 'like', '%' . $request->nombre . '%');
+        }
+
+        // Filtro por código
+        if ($request->filled('codigo')) {
+            $query->where('codigo', 'like', '%' . $request->codigo . '%');
+        }
+
+        // Filtro por estado
+        if ($request->filled('estado')) {
+            $query->where('estado', $request->estado);
+        }
+
+        // Filtro por fecha de creación
+        if ($request->filled('fecha')) {
+            $query->whereDate('created_at', $request->fecha);
+        }
+
+        $departamentos = $query
             ->latest()
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString();
 
         return view('departamentos.index', compact('departamentos'));
     }

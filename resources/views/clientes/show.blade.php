@@ -189,26 +189,30 @@
                             Volver
                         </a>
 
-                        <a href="{{ route('clientes.edit', $cliente->id) }}" class="btn btn-warning">
-                            Editar
-                        </a>
+                        @can('clientes.modificar')
+                            <a href="{{ route('clientes.edit', $cliente->id) }}" class="btn btn-warning">
+                                Editar
+                            </a>
+                        @endcan
 
-                        <form action="{{ route('clientes.cambiar-estado', $cliente->id) }}" method="POST"
-                            onsubmit="return confirm('¿Deseas cambiar el estado de este cliente?')">
-                            @csrf
-                            @method('PATCH')
+                        @can('clientes.eliminar')
+                            <form action="{{ route('clientes.cambiar-estado', $cliente->id) }}" method="POST"
+                                onsubmit="return confirm('¿Deseas cambiar el estado de este cliente?')">
+                                @csrf
+                                @method('PATCH')
 
-                            @if ($cliente->estado)
-                                <button type="submit" class="btn btn-secondary">
-                                    Inactivar
-                                </button>
-                            @else
-                                <button type="submit" class="btn btn-success">
-                                    Activar
-                                </button>
-                            @endif
+                                @if ($cliente->estado)
+                                    <button type="submit" class="btn btn-secondary">
+                                        Inactivar
+                                    </button>
+                                @else
+                                    <button type="submit" class="btn btn-success">
+                                        Activar
+                                    </button>
+                                @endif
 
-                        </form>
+                            </form>
+                        @endcan
 
                     </div>
 

@@ -166,6 +166,106 @@
                     </strong>
                 </div>
 
+                <div class="col-md-4 mb-4">
+                    <span class="text-muted d-block">
+                        Importe Otros
+                    </span>
+
+                    <strong>
+                        Q {{ number_format($compra->importe_otros, 2) }}
+                    </strong>
+                </div>
+
+                <div class="col-md-4 mb-4">
+                    <span class="text-muted d-block">
+                        Importe Neto
+                    </span>
+
+                    <strong>
+                        Q {{ number_format($compra->importe_neto, 2) }}
+                    </strong>
+                </div>
+
+                <div class="col-md-4 mb-4">
+                    <span class="text-muted d-block">
+                        Importe IVA
+                    </span>
+
+                    <strong>
+                        Q {{ number_format($compra->importe_iva, 2) }}
+                    </strong>
+                </div>
+
+                <div class="col-md-4 mb-4">
+                    <span class="text-muted d-block">
+                        Importe Total
+                    </span>
+
+                    <strong class="fs-5">
+                        Q {{ number_format($compra->importe_total, 2) }}
+                    </strong>
+                </div>
+
+            </div>
+
+            <div class="mb-4">
+                <span class="text-muted d-block">
+                    Observación
+                </span>
+
+                <p class="mb-0">
+                    {{ $compra->observacion ?: 'Sin observación' }}
+                </p>
+            </div>
+
+            <div class="mb-4">
+                <span class="text-muted d-block">
+                    Estado
+                </span>
+
+                @if ($compra->estado)
+                    <span class="badge rounded-pill bg-success-subtle text-success px-3 py-2">
+                        Activo
+                    </span>
+                @else
+                    <span class="badge rounded-pill bg-danger-subtle text-danger px-3 py-2">
+                        Inactivo
+                    </span>
+                @endif
+            </div>
+
+            <div class="d-flex gap-2">
+
+                <a href="{{ route('compras.index') }}" class="btn btn-outline-secondary">
+                    Volver
+                </a>
+
+                @can('compras.modificar')
+                    <a href="{{ route('compras.edit', $compra->id) }}" class="btn btn-warning">
+                        Editar
+                    </a>
+                @endcan
+
+                @can('compras.eliminar')
+                    <form method="POST" action="{{ route('compras.cambiar-estado', $compra->id) }}"
+                        onsubmit="return confirm('¿Deseas cambiar el estado de esta compra?')">
+
+                        @csrf
+                        @method('PATCH')
+
+                        @if ($compra->estado)
+                            <button type="submit" class="btn btn-outline-secondary">
+                                Inactivar
+                            </button>
+                        @else
+                            <button type="submit" class="btn btn-outline-success">
+                                Activar
+                            </button>
+                        @endif
+
+                    </form>
+                @endcan
+
             </div>
 
         </div>

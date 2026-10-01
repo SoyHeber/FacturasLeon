@@ -107,138 +107,24 @@
                 🪪 Tipos de Identificación
             </a>
 
-        </div>
+        {{-- Módulos y opciones según los permisos del usuario (App\Models\User::menu) --}}
+        @auth
+            @foreach (Auth::user()->menu() as $modulo)
+                <div class="sidebar-section-title">
+                    {{ $modulo->nombre }}
+                </div>
 
-
-        {{-- OPERACIONES --}}
-        @php
-            $operacionesActivo =
-                request()->routeIs('inventarios.*') ||
-                request()->routeIs('movimientos_inventario.*') ||
-                request()->routeIs('compras.*') ||
-                request()->routeIs('detalles_compra.*') ||
-                request()->routeIs('inventarios_compra.*') ||
-                request()->routeIs('movimientos_inventario_compra.*');
-        @endphp
-
-        <button class="sidebar-module-button" type="button" data-bs-toggle="collapse" data-bs-target="#menuOperaciones"
-            aria-expanded="{{ $operacionesActivo ? 'true' : 'false' }}" aria-controls="menuOperaciones">
-
-            <span>
-                ⚙️ Operaciones
-            </span>
-
-            <span class="sidebar-arrow">
-                ▾
-            </span>
-
-        </button>
-
-        <div class="collapse {{ $operacionesActivo ? 'show' : '' }}" id="menuOperaciones">
-
-            <a href="{{ route('inventarios.index') }}"
-                class="sidebar-link sidebar-sub-link {{ request()->routeIs('inventarios.*') ? 'active' : '' }}">
-                📦 Inventarios
-            </a>
-
-            <a href="{{ route('movimientos_inventario.index') }}"
-                class="sidebar-link sidebar-sub-link {{ request()->routeIs('movimientos_inventario.*') ? 'active' : '' }}">
-                🔄 Movimientos Inventario
-            </a>
-
-            <a href="{{ route('compras.index') }}"
-                class="sidebar-link sidebar-sub-link {{ request()->routeIs('compras.*') ? 'active' : '' }}">
-                🛒 Compras
-            </a>
-
-            <a href="{{ route('detalles_compra.index') }}"
-                class="sidebar-link sidebar-sub-link {{ request()->routeIs('detalles_compra.*') ? 'active' : '' }}">
-                📋 Detalles Compra
-            </a>
-
-            <a href="{{ route('inventarios_compra.index') }}"
-                class="sidebar-link sidebar-sub-link {{ request()->routeIs('inventarios_compra.*') ? 'active' : '' }}">
-                🧱 Inventarios Compra
-            </a>
-
-            <a href="{{ route('movimientos_inventario_compra.index') }}"
-                class="sidebar-link sidebar-sub-link {{ request()->routeIs('movimientos_inventario_compra.*') ? 'active' : '' }}">
-                🔁 Movimientos Inventario Compra
-            </a>
-
-        </div>
-
-
-        {{-- PRODUCCIÓN --}}
-        @php
-            $produccionActivo = request()->routeIs('materiales_producto.*') || request()->routeIs('producciones.*');
-        @endphp
-
-        <button class="sidebar-module-button" type="button" data-bs-toggle="collapse" data-bs-target="#menuProduccion"
-            aria-expanded="{{ $produccionActivo ? 'true' : 'false' }}" aria-controls="menuProduccion">
-
-            <span>
-                🛠️ Producción
-            </span>
-
-            <span class="sidebar-arrow">
-                ▾
-            </span>
-
-        </button>
-
-        <div class="collapse {{ $produccionActivo ? 'show' : '' }}" id="menuProduccion">
-
-            <a href="{{ route('materiales_producto.index') }}"
-                class="sidebar-link sidebar-sub-link {{ request()->routeIs('materiales_producto.*') ? 'active' : '' }}">
-                🧩 Materiales Producto
-            </a>
-
-            <a href="{{ route('producciones.index') }}"
-                class="sidebar-link sidebar-sub-link {{ request()->routeIs('producciones.*') ? 'active' : '' }}">
-                🏭 Producciones
-            </a>
-
-        </div>
-
-
-        {{-- PERSONAS --}}
-        @php
-            $personasActivo =
-                request()->routeIs('proveedores.*') ||
-                request()->routeIs('clientes.*') ||
-                request()->routeIs('direcciones.*');
-        @endphp
-
-        <button class="sidebar-module-button" type="button" data-bs-toggle="collapse" data-bs-target="#menuPersonas"
-            aria-expanded="{{ $personasActivo ? 'true' : 'false' }}" aria-controls="menuPersonas">
-
-            <span>
-                👥 Personas
-            </span>
-
-            <span class="sidebar-arrow">
-                ▾
-            </span>
-
-        </button>
-
-        <div class="collapse {{ $personasActivo ? 'show' : '' }}" id="menuPersonas">
-
-            <a href="{{ route('proveedores.index') }}"
-                class="sidebar-link sidebar-sub-link {{ request()->routeIs('proveedores.*') ? 'active' : '' }}">
-                🚚 Proveedores
-            </a>
-
-            <a href="{{ route('clientes.index') }}"
-                class="sidebar-link sidebar-sub-link {{ request()->routeIs('clientes.*') ? 'active' : '' }}">
-                👤 Clientes
-            </a>
-
-            <a href="{{ route('direcciones.index') }}"
-                class="sidebar-link sidebar-sub-link {{ request()->routeIs('direcciones.*') ? 'active' : '' }}">
-                🏘️ Direcciones
-            </a>
+                @foreach ($modulo->opciones as $opcion)
+                    @if (Route::has($opcion->ruta . '.index'))
+                        <a href="{{ route($opcion->ruta . '.index') }}"
+                            class="sidebar-link {{ request()->routeIs($opcion->ruta . '.*') ? 'active' : '' }}">
+                            <span class="sidebar-icon">{{ $opcion->icono }}</span>
+                            {{ $opcion->nombre }}
+                        </a>
+                    @endif
+                @endforeach
+            @endforeach
+        @endauth
 
         </div>
 

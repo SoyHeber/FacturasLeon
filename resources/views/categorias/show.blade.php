@@ -14,9 +14,11 @@
                 ← Volver
             </a>
 
-            <a href="{{ route('categorias.edit', $categoria->id) }}" class="btn-gold">
-                Editar
-            </a>
+            @can('categorias.modificar')
+                <a href="{{ route('categorias.edit', $categoria->id) }}" class="btn-gold">
+                    Editar
+                </a>
+            @endcan
         </div>
     </div>
 
@@ -116,20 +118,22 @@
             </div>
 
             <div class="d-flex justify-content-end gap-2 mt-4">
-                <form action="{{ route('categorias.cambiar-estado', $categoria->id) }}" method="POST">
-                    @csrf
-                    @method('PATCH')
+                @can('categorias.eliminar')
+                    <form action="{{ route('categorias.cambiar-estado', $categoria->id) }}" method="POST">
+                        @csrf
+                        @method('PATCH')
 
-                    @if ($categoria->estado)
-                        <button type="submit" class="btn btn-outline-secondary rounded-3 fw-bold">
-                            Inactivar categoría
-                        </button>
-                    @else
-                        <button type="submit" class="btn btn-outline-success rounded-3 fw-bold">
-                            Activar categoría
-                        </button>
-                    @endif
-                </form>
+                        @if ($categoria->estado)
+                            <button type="submit" class="btn btn-outline-secondary rounded-3 fw-bold">
+                                Inactivar categoría
+                            </button>
+                        @else
+                            <button type="submit" class="btn btn-outline-success rounded-3 fw-bold">
+                                Activar categoría
+                            </button>
+                        @endif
+                    </form>
+                @endcan
             </div>
         </div>
     </div>
