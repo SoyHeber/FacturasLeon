@@ -512,18 +512,18 @@
             </td>
 
             <td>
-                <input type="number" class="form-control cantidad" step="0.0001" min="0.0001" value="1"
+                <input type="number" class="form-control cantidad" step="0.00001" min="0.00001" value="1.00000"
                     required>
             </td>
 
             <td>
                 <input type="number" class="form-control precio-unitario" step="0.000001" min="0"
-                    value="0" required>
+                    value="0.000000" required>
             </td>
 
             <td>
                 <input type="number" class="form-control porcentaje-descuento" step="0.0001" min="0"
-                    max="100" value="0" required>
+                    max="100" value="0.0000" required>
             </td>
 
             <td>
