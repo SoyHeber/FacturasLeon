@@ -1,29 +1,24 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ __('Profile') }}
-        </h2>
-    </x-slot>
+@extends('layouts.app-bootstrap')
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-            <div class="p-4 sm:p-8 bg-white dark:bg-gray-800 shadow sm:rounded-lg">
-                <div class="max-w-xl">
-                    @include('profile.partials.update-profile-information-form')
-                </div>
-            </div>
-
-            <div class="p-4 sm:p-8 bg-white dark:bg-gray-800 shadow sm:rounded-lg">
-                <div class="max-w-xl">
-                    @include('profile.partials.update-password-form')
-                </div>
-            </div>
-
-            <div class="p-4 sm:p-8 bg-white dark:bg-gray-800 shadow sm:rounded-lg">
-                <div class="max-w-xl">
-                    @include('profile.partials.delete-user-form')
-                </div>
-            </div>
+@section('content')
+    <div class="module-header">
+        <div>
+            <h1 class="module-title">Cuenta</h1>
+            <p class="module-subtitle">
+                Actualiza tu información personal y la contraseña de acceso al sistema.
+            </p>
         </div>
     </div>
-</x-app-layout>
+
+    <div class="module-card mb-4">
+        <div class="module-card-body">
+            @include('profile.partials.update-profile-information-form')
+        </div>
+    </div>
+
+    <div class="module-card">
+        <div class="module-card-body">
+            @include('profile.partials.update-password-form')
+        </div>
+    </div>
+@endsection
