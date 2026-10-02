@@ -39,122 +39,50 @@
         </div>
 
 
-        {{-- CATÁLOGOS --}}
-        @php
-            $catalogosActivo =
-                request()->routeIs('categorias.*') ||
-                request()->routeIs('marcas.*') ||
-                request()->routeIs('productos.*') ||
-                request()->routeIs('paises.*') ||
-                request()->routeIs('departamentos.*') ||
-                request()->routeIs('municipios.*') ||
-                request()->routeIs('metodos_pago.*') ||
-                request()->routeIs('tipos_identificacion.*');
-        @endphp
-
-        <button class="sidebar-module-button" type="button" data-bs-toggle="collapse" data-bs-target="#menuCatalogos"
-            aria-expanded="{{ $catalogosActivo ? 'true' : 'false' }}" aria-controls="menuCatalogos">
-
-            <span>
-                📚 Catálogos
-            </span>
-
-            <span class="sidebar-arrow">
-                ▾
-            </span>
-
-        </button>
-
-        <div class="collapse {{ $catalogosActivo ? 'show' : '' }}" id="menuCatalogos">
-
-            <a href="{{ route('categorias.index') }}"
-                class="sidebar-link sidebar-sub-link {{ request()->routeIs('categorias.*') ? 'active' : '' }}">
-                📂 Categorías
-            </a>
-
-            <a href="{{ route('marcas.index') }}"
-                class="sidebar-link sidebar-sub-link {{ request()->routeIs('marcas.*') ? 'active' : '' }}">
-                🏷️ Marcas
-            </a>
-
-            <a href="{{ route('productos.index') }}"
-                class="sidebar-link sidebar-sub-link {{ request()->routeIs('productos.*') ? 'active' : '' }}">
-                💍 Productos
-            </a>
-
-            <a href="{{ route('paises.index') }}"
-                class="sidebar-link sidebar-sub-link {{ request()->routeIs('paises.*') ? 'active' : '' }}">
-                🌎 Países
-            </a>
-
-            <a href="{{ route('departamentos.index') }}"
-                class="sidebar-link sidebar-sub-link {{ request()->routeIs('departamentos.*') ? 'active' : '' }}">
-                🗺️ Departamentos
-            </a>
-
-            <a href="{{ route('municipios.index') }}"
-                class="sidebar-link sidebar-sub-link {{ request()->routeIs('municipios.*') ? 'active' : '' }}">
-                📍 Municipios
-            </a>
-
-            <a href="{{ route('metodos_pago.index') }}"
-                class="sidebar-link sidebar-sub-link {{ request()->routeIs('metodos_pago.*') ? 'active' : '' }}">
-                💳 Métodos de Pago
-            </a>
-
-            <a href="{{ route('tipos_identificacion.index') }}"
-                class="sidebar-link sidebar-sub-link {{ request()->routeIs('tipos_identificacion.*') ? 'active' : '' }}">
-                🪪 Tipos de Identificación
-            </a>
-
-        {{-- Módulos y opciones según los permisos del usuario (App\Models\User::menu) --}}
+        {{-- Módulos y opciones según los permisos del usuario --}}
         @auth
             @foreach (Auth::user()->menu() as $modulo)
-                <div class="sidebar-section-title">
-                    {{ $modulo->nombre }}
-                </div>
+                @php
+                    $opciones = $modulo->opciones->filter(
+                        fn ($opcion) => Route::has($opcion->ruta . '.index')
+                    );
+                    $moduloActivo = $opciones->contains(
+                        fn ($opcion) => request()->routeIs($opcion->ruta . '.*')
+                    );
+                    $menuId = 'menuModulo' . $modulo->id;
+                @endphp
 
-                @foreach ($modulo->opciones as $opcion)
-                    @if (Route::has($opcion->ruta . '.index'))
-                        <a href="{{ route($opcion->ruta . '.index') }}"
-                            class="sidebar-link {{ request()->routeIs($opcion->ruta . '.*') ? 'active' : '' }}">
-                            <span class="sidebar-icon">{{ $opcion->icono }}</span>
-                            {{ $opcion->nombre }}
-                        </a>
-                    @endif
-                @endforeach
+                @if ($opciones->isEmpty())
+                    @continue
+                @endif
+
+                <button class="sidebar-module-button" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#{{ $menuId }}" aria-expanded="{{ $moduloActivo ? 'true' : 'false' }}"
+                    aria-controls="{{ $menuId }}">
+
+                    <span>
+                        {{ $modulo->icono }} {{ $modulo->nombre }}
+                    </span>
+
+                    <span class="sidebar-arrow">
+                        ▾
+                    </span>
+
+                </button>
+
+                <div class="collapse {{ $moduloActivo ? 'show' : '' }}" id="{{ $menuId }}">
+                    @foreach ($opciones as $opcion)
+                        @can($opcion->ruta . '.ver')
+                            <a href="{{ route($opcion->ruta . '.index') }}"
+                                class="sidebar-link sidebar-sub-link {{ request()->routeIs($opcion->ruta . '.*') ? 'active' : '' }}">
+                                <span class="sidebar-icon">{{ $opcion->icono }}</span>
+                                {{ $opcion->nombre }}
+                            </a>
+                        @endcan
+                    @endforeach
+                </div>
             @endforeach
         @endauth
-
-        </div>
-
-
-        {{-- SEGURIDAD --}}
-        @php
-            $seguridadActivo = request()->routeIs('users.*');
-        @endphp
-
-        <button class="sidebar-module-button" type="button" data-bs-toggle="collapse" data-bs-target="#menuSeguridad"
-            aria-expanded="{{ $seguridadActivo ? 'true' : 'false' }}" aria-controls="menuSeguridad">
-
-            <span>
-                🔐 Seguridad
-            </span>
-
-            <span class="sidebar-arrow">
-                ▾
-            </span>
-
-        </button>
-
-        <div class="collapse {{ $seguridadActivo ? 'show' : '' }}" id="menuSeguridad">
-
-            <a href="{{ route('users.index') }}"
-                class="sidebar-link sidebar-sub-link {{ request()->routeIs('users.*') ? 'active' : '' }}">
-                👤 Usuarios
-            </a>
-
-        </div>
 
 
         {{-- CUENTA --}}
