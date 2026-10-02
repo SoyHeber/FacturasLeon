@@ -21,4 +21,9 @@ class TipoDocumento extends Model
     protected $casts = [
         'estado' => 'boolean',
     ];
+
+    public function compras()
+    {
+        return $this->hasMany(Compra::class);
+    }
 }

@@ -14,7 +14,7 @@ class Compra extends Model
     protected $fillable = [
         'proveedor_id',
         'user_id',
-        'tipo_dte',
+        'tipo_documento_id',
         'serie',
         'numero',
         'numero_autorizacion',
@@ -62,5 +62,10 @@ class Compra extends Model
     public function detalles()
     {
         return $this->hasMany(DetalleCompra::class);
+    }
+
+    public function tipoDocumento()
+    {
+        return $this->belongsTo(TipoDocumento::class);
     }
 }

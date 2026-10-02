@@ -50,7 +50,7 @@
 
                                     #{{ $compra->id }}
                                     -
-                                    {{ $compra->tipo_dte }}
+                                    {{ $compra->tipoDocumento->codigo }}
                                     {{ $compra->serie }}
                                     -
                                     {{ $compra->numero }}

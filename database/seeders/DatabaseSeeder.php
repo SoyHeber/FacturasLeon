@@ -20,5 +20,6 @@ class DatabaseSeeder extends Seeder
         // ]);
 
         $this->call(SeguridadSeeder::class);
+        $this->call(TipoDocumentoSeeder::class);
     }
 }

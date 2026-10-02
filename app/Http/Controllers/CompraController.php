@@ -6,6 +6,7 @@ use App\Models\Compra;
 use App\Models\DetalleCompra;
 use App\Models\Proveedor;
 use App\Models\InventarioCompra;
+use App\Models\TipoDocumento;
 use App\Services\CalculadoraDteService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -19,6 +20,7 @@ class CompraController extends Controller
         $query = Compra::with([
             'proveedor',
             'user',
+            'tipoDocumento',
         ]);
 
         if ($request->filled('id')) {
@@ -35,12 +37,11 @@ class CompraController extends Controller
             });
         }
 
-        if ($request->filled('tipo_dte')) {
-            $query->where(
-                'tipo_dte',
-                'like',
-                '%' . $request->tipo_dte . '%'
-            );
+        if ($request->filled('tipo_documento')) {
+            $query->whereHas('tipoDocumento', function ($tipo) use ($request) {
+                $tipo->where('codigo', 'like', '%' . $request->tipo_documento . '%')
+                    ->orWhere('nombre', 'like', '%' . $request->tipo_documento . '%');
+            });
         }
 
         if ($request->filled('serie')) {
@@ -109,6 +110,10 @@ class CompraController extends Controller
 
     public function create()
     {
+        $tiposDocumento = TipoDocumento::where('codigo', 'FACT')
+            ->where('estado', true)
+            ->get();
+
         $proveedores = Proveedor::with('direccion')
             ->where('estado', true)
             ->orderBy('nombre')
@@ -125,6 +130,7 @@ class CompraController extends Controller
             'compras.create',
             compact(
                 'proveedores',
+                'tiposDocumento',
                 'inventariosCompra'
             )
         );
@@ -143,11 +149,12 @@ class CompraController extends Controller
                 'exists:proveedores,id',
             ],
 
-            'tipo_dte' => [
+            'tipo_documento_id' => [
                 'required',
-                Rule::in([
-                    'FACT',
-                ]),
+                'integer',
+                Rule::exists('tipos_documento', 'id')
+                    ->where('codigo', 'FACT')
+                    ->where('estado', true),
             ],
 
             'serie' => [
@@ -291,6 +298,10 @@ class CompraController extends Controller
             $totales
         ) {
 
+            $tipoDocumento = $this->obtenerTipoDocumento(
+                (int) $validated['tipo_documento_id']
+            );
+
             // Crea la compra
 
             $compra = Compra::create([
@@ -300,10 +311,7 @@ class CompraController extends Controller
                 'user_id' =>
                 auth()->id(),
 
-                'tipo_dte' =>
-                strtoupper(
-                    $validated['tipo_dte']
-                ),
+                'tipo_documento_id' => $tipoDocumento->id,
 
                 'serie' =>
                 strtoupper(
@@ -425,6 +433,7 @@ class CompraController extends Controller
     public function show(Compra $compra)
     {
         $compra->load([
+            'tipoDocumento',
             'proveedor.direccion',
             'user',
             'detalles.inventarioCompra',
@@ -439,6 +448,13 @@ class CompraController extends Controller
 
     public function edit(Compra $compra)
     {
+        $tiposDocumento = TipoDocumento::where('codigo', 'FACT')
+            ->where(function ($query) use ($compra) {
+                $query->where('estado', true)
+                    ->orWhere('id', $compra->tipo_documento_id);
+            })
+            ->get();
+
         $proveedores = Proveedor::with('direccion')
             ->where(function ($query) use ($compra) {
                 $query
@@ -461,6 +477,7 @@ class CompraController extends Controller
         $compra->load([
             'proveedor.direccion',
             'detalles.inventarioCompra',
+            'tipoDocumento',
         ]);
 
         return view(
@@ -468,6 +485,7 @@ class CompraController extends Controller
             compact(
                 'compra',
                 'proveedores',
+                'tiposDocumento',
                 'inventariosCompra'
             )
         );
@@ -487,11 +505,15 @@ class CompraController extends Controller
                 'exists:proveedores,id',
             ],
 
-            'tipo_dte' => [
+            'tipo_documento_id' => [
                 'required',
-                Rule::in([
-                    'FACT',
-                ]),
+                'integer',
+                Rule::exists('tipos_documento', 'id')
+                    ->where('codigo', 'FACT')
+                    ->where(function ($query) use ($compra) {
+                        $query->where('estado', true)
+                            ->orWhere('id', $compra->tipo_documento_id);
+                    }),
             ],
 
             'serie' => [
@@ -654,6 +676,11 @@ class CompraController extends Controller
             $totales
         ) {
 
+            $tipoDocumento = $this->obtenerTipoDocumento(
+                (int) $validated['tipo_documento_id'],
+                $compra
+            );
+
             // Obtiene los detalles enviados
 
             $idsDetalles = collect(
@@ -794,10 +821,7 @@ class CompraController extends Controller
                 'proveedor_id' =>
                 $validated['proveedor_id'],
 
-                'tipo_dte' =>
-                strtoupper(
-                    $validated['tipo_dte']
-                ),
+                'tipo_documento_id' => $tipoDocumento->id,
 
                 'serie' =>
                 strtoupper(
@@ -880,5 +904,23 @@ class CompraController extends Controller
                 'success',
                 'Estado de la compra actualizado correctamente.'
             );
+    }
+
+    private function obtenerTipoDocumento(int $tipoDocumentoId, ?Compra $compra = null): TipoDocumento
+    {
+        $tipoDocumento = TipoDocumento::whereKey($tipoDocumentoId)
+            ->lockForUpdate()
+            ->first();
+
+        $conservaTipoActual = $compra && (int) $compra->tipo_documento_id === $tipoDocumentoId;
+
+        if (!$tipoDocumento || $tipoDocumento->codigo !== 'FACT'
+            || (!$tipoDocumento->estado && !$conservaTipoActual)) {
+            throw ValidationException::withMessages([
+                'tipo_documento_id' => 'Solo se permite FACT activo o conservar el FACT inactivo ya asignado a esta compra.',
+            ]);
+        }
+
+        return $tipoDocumento;
     }
 }

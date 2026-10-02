@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\TipoDocumento;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class TipoDocumentoController extends Controller
@@ -96,24 +97,40 @@ class TipoDocumentoController extends Controller
             $request->merge(['codigo' => strtoupper(trim($request->codigo))]);
         }
 
-        $validated = $request->validate([
-            'codigo' => [
-                'required',
-                'string',
-                'max:10',
-                Rule::unique('tipos_documento', 'codigo')->ignore($tipoDocumento->id),
-            ],
-            'nombre' => 'required|string|max:100',
-            'descripcion' => 'nullable|string|max:255',
-            'estado' => 'nullable|boolean',
-        ]);
+        DB::transaction(function () use ($request, $tipoDocumento) {
+            $tipoDocumento = TipoDocumento::whereKey($tipoDocumento->id)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        $tipoDocumento->update([
-            'codigo' => $validated['codigo'],
-            'nombre' => $validated['nombre'],
-            'descripcion' => $validated['descripcion'] ?? null,
-            'estado' => $request->has('estado') ? (bool) $request->estado : false,
-        ]);
+            $validated = $request->validate([
+                'codigo' => [
+                    'required',
+                    'string',
+                    'max:10',
+                    Rule::unique('tipos_documento', 'codigo')->ignore($tipoDocumento->id),
+                    function ($attribute, $value, $fail) use ($tipoDocumento) {
+                        if ($tipoDocumento->codigo === 'FACT' && $value !== $tipoDocumento->codigo) {
+                            $fail('El código FACT es utilizado internamente por el sistema y no puede modificarse.');
+                            return;
+                        }
+
+                        if ($value !== $tipoDocumento->codigo && $tipoDocumento->compras()->exists()) {
+                            $fail('El código no puede modificarse porque este tipo de documento ya está siendo utilizado.');
+                        }
+                    },
+                ],
+                'nombre' => 'required|string|max:100',
+                'descripcion' => 'nullable|string|max:255',
+                'estado' => 'nullable|boolean',
+            ]);
+
+            $tipoDocumento->update([
+                'codigo' => $validated['codigo'],
+                'nombre' => $validated['nombre'],
+                'descripcion' => $validated['descripcion'] ?? null,
+                'estado' => $request->has('estado') ? (bool) $request->estado : false,
+            ]);
+        });
 
         return redirect()
             ->route('tipos_documento.index')

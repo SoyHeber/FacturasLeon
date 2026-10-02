@@ -47,7 +47,7 @@
                     </span>
 
                     <strong>
-                        {{ $detalleCompra->compra->tipo_dte ?? '' }}
+                        {{ $detalleCompra->compra->tipoDocumento->codigo }}
                         {{ $detalleCompra->compra->serie ?? '' }}
                         -
                         {{ $detalleCompra->compra->numero ?? '' }}

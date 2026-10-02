@@ -67,7 +67,7 @@
                             </th>
 
                             <th>
-                                <input form="filtros" type="text" name="tipo_dte" value="{{ request('tipo_dte') }}"
+                                <input form="filtros" type="text" name="tipo_documento" value="{{ request('tipo_documento') }}"
                                     class="form-control form-control-sm" placeholder="Tipo DTE">
                             </th>
 
@@ -154,7 +154,7 @@
 
                                 <td>
                                     <span class="badge bg-dark">
-                                        {{ $compra->tipo_dte }}
+                                        {{ $compra->tipoDocumento->codigo }} - {{ $compra->tipoDocumento->nombre }}
                                     </span>
                                 </td>
 

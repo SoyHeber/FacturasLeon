@@ -84,7 +84,8 @@ class DetalleCompraController extends Controller
 
     public function create()
     {
-        $compras = Compra::where('estado', true)
+        $compras = Compra::with('tipoDocumento')
+            ->where('estado', true)
             ->orderBy('fecha_emision', 'desc')
             ->get();
 
@@ -264,6 +265,7 @@ class DetalleCompraController extends Controller
     {
         $detalleCompra->load([
             'compra.proveedor',
+            'compra.tipoDocumento',
             'inventarioCompra',
         ]);
 
@@ -275,7 +277,8 @@ class DetalleCompraController extends Controller
 
     public function edit(DetalleCompra $detalleCompra)
     {
-        $compras = Compra::where('estado', true)
+        $compras = Compra::with('tipoDocumento')
+            ->where('estado', true)
             ->orWhere(
                 'id',
                 $detalleCompra->compra_id

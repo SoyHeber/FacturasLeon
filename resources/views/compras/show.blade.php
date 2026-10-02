@@ -72,7 +72,7 @@
                     </span>
 
                     <span class="badge bg-dark">
-                        {{ $compra->tipo_dte }}
+                        {{ $compra->tipoDocumento->codigo }} - {{ $compra->tipoDocumento->nombre }}
                     </span>
                 </div>
 

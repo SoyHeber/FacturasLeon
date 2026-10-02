@@ -117,17 +117,18 @@
 
                     <div class="col-md-6 mb-3">
 
-                        <label for="tipo_dte" class="form-label fw-semibold">
+                        <label for="tipo_documento_id" class="form-label fw-semibold">
                             Tipo DTE
                         </label>
 
-                        <select name="tipo_dte" id="tipo_dte" class="form-select" required>
+                        <select name="tipo_documento_id" id="tipo_documento_id" class="form-select" required>
 
-                            <option value="FACT" {{ old('tipo_dte', $compra->tipo_dte) === 'FACT' ? 'selected' : '' }}>
-
-                                FACT - Factura
-
-                            </option>
+                            @foreach ($tiposDocumento as $tipoDocumento)
+                                <option value="{{ $tipoDocumento->id }}"
+                                    {{ (string) old('tipo_documento_id', $compra->tipo_documento_id) === (string) $tipoDocumento->id ? 'selected' : '' }}>
+                                    {{ $tipoDocumento->codigo }} - {{ $tipoDocumento->nombre }}
+                                </option>
+                            @endforeach
 
                         </select>
 
