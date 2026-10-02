@@ -33,6 +33,7 @@ class SeguridadSeeder extends Seeder
             'paises' => ['Países', '🌎'],
             'departamentos' => ['Departamentos', '🗺️'],
             'municipios' => ['Municipios', '📍'],
+            'tipos_documento' => ['Tipos de Documento', '📄'],
         ]],
         'Operaciones' => ['📦', [
             'inventarios' => ['Inventarios', '📦'],

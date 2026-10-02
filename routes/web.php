@@ -9,6 +9,7 @@ use App\Http\Controllers\DepartamentoController;
 use App\Http\Controllers\MunicipioController;
 use App\Http\Controllers\MetodoPagoController;
 use App\Http\Controllers\TipoIdentificacionController;
+use App\Http\Controllers\TipoDocumentoController;
 use App\Http\Controllers\DireccionController;
 use App\Http\Controllers\ProveedorController;
 use App\Http\Controllers\ClienteController;
@@ -131,6 +132,15 @@ Route::middleware(['auth', 'permiso'])->group(function () {
     Route::get('/tipos-identificacion/{tipoIdentificacion}/edit', [TipoIdentificacionController::class, 'edit'])->name('tipos_identificacion.edit');
     Route::put('/tipos-identificacion/{tipoIdentificacion}', [TipoIdentificacionController::class, 'update'])->name('tipos_identificacion.update');
     Route::patch('/tipos-identificacion/{tipoIdentificacion}/estado', [TipoIdentificacionController::class, 'cambiarEstado'])->name('tipos_identificacion.cambiar-estado');
+
+    /*Rutas para Tipos_Documento*/
+    Route::get('/tipos-documento', [TipoDocumentoController::class, 'index'])->name('tipos_documento.index');
+    Route::get('/tipos-documento/create', [TipoDocumentoController::class, 'create'])->name('tipos_documento.create');
+    Route::post('/tipos-documento', [TipoDocumentoController::class, 'store'])->name('tipos_documento.store');
+    Route::get('/tipos-documento/{tipoDocumento}', [TipoDocumentoController::class, 'show'])->name('tipos_documento.show');
+    Route::get('/tipos-documento/{tipoDocumento}/edit', [TipoDocumentoController::class, 'edit'])->name('tipos_documento.edit');
+    Route::put('/tipos-documento/{tipoDocumento}', [TipoDocumentoController::class, 'update'])->name('tipos_documento.update');
+    Route::patch('/tipos-documento/{tipoDocumento}/estado', [TipoDocumentoController::class, 'cambiarEstado'])->name('tipos_documento.cambiar-estado');
 
     /*Rutas para Direcciones*/
     Route::get('/direcciones', [DireccionController::class, 'index'])->name('direcciones.index');
