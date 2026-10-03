@@ -2,11 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\InventarioCompra;
 use App\Models\MaterialProducto;
 use App\Models\Producto;
-use App\Models\InventarioCompra;
+use App\Services\CalculadoraProduccionService;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class MaterialProductoController extends Controller
 {
@@ -26,7 +28,7 @@ class MaterialProductoController extends Controller
                 $q->where(
                     'nombre',
                     'like',
-                    '%' . $request->producto . '%'
+                    '%'.$request->producto.'%'
                 );
             });
         }
@@ -36,7 +38,7 @@ class MaterialProductoController extends Controller
                 $q->where(
                     'nombre',
                     'like',
-                    '%' . $request->material . '%'
+                    '%'.$request->material.'%'
                 );
             });
         }
@@ -52,7 +54,7 @@ class MaterialProductoController extends Controller
             $query->where(
                 'observacion',
                 'like',
-                '%' . $request->observacion . '%'
+                '%'.$request->observacion.'%'
             );
         }
 
@@ -95,61 +97,12 @@ class MaterialProductoController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'producto_id' => [
-                'required',
-                'exists:productos,id',
-
-                Rule::unique('materiales_producto')
-                    ->where(function ($query) use ($request) {
-                        return $query
-                            ->where('producto_id', $request->producto_id)
-                            ->where(
-                                'inventario_compra_id',
-                                $request->inventario_compra_id
-                            );
-                    }),
-            ],
-
-            'inventario_compra_id' => [
-                'required',
-                'exists:inventarios_compra,id',
-            ],
-
-            'cantidad_requerida' => [
-                'required',
-                'numeric',
-                'gt:0',
-            ],
-
-            'observacion' => [
-                'nullable',
-                'string',
-                'max:255',
-            ],
-
-            'estado' => [
-                'nullable',
-                'boolean',
-            ],
-        ]);
-
-        MaterialProducto::create([
-            'producto_id' =>
-            $validated['producto_id'],
-
-            'inventario_compra_id' =>
-            $validated['inventario_compra_id'],
-
-            'cantidad_requerida' =>
-            $validated['cantidad_requerida'],
-
-            'observacion' =>
-            $validated['observacion'] ?? null,
-
-            'estado' =>
-            $request->has('estado'),
-        ]);
+        $validated = $this->validarMaterial($request);
+        DB::transaction(function () use ($validated) {
+            $this->bloquearProductos([(int) $validated['producto_id']]);
+            $this->exigirMaterialUnico($validated);
+            MaterialProducto::create($validated + ['estado' => true]);
+        });
 
         return redirect()
             ->route('materiales_producto.index')
@@ -201,75 +154,12 @@ class MaterialProductoController extends Controller
         Request $request,
         MaterialProducto $materialProducto
     ) {
-        $validated = $request->validate([
-            'producto_id' => [
-                'required',
-                'exists:productos,id',
-            ],
-
-            'inventario_compra_id' => [
-                'required',
-                'exists:inventarios_compra,id',
-            ],
-
-            'cantidad_requerida' => [
-                'required',
-                'numeric',
-                'gt:0',
-            ],
-
-            'observacion' => [
-                'nullable',
-                'string',
-                'max:255',
-            ],
-
-            'estado' => [
-                'nullable',
-                'boolean',
-            ],
-        ]);
-
-        $duplicado = MaterialProducto::where(
-            'producto_id',
-            $validated['producto_id']
-        )
-            ->where(
-                'inventario_compra_id',
-                $validated['inventario_compra_id']
-            )
-            ->where(
-                'id',
-                '!=',
-                $materialProducto->id
-            )
-            ->exists();
-
-        if ($duplicado) {
-            return back()
-                ->withErrors([
-                    'inventario_compra_id' =>
-                    'Este material ya está asignado al producto seleccionado.',
-                ])
-                ->withInput();
-        }
-
-        $materialProducto->update([
-            'producto_id' =>
-            $validated['producto_id'],
-
-            'inventario_compra_id' =>
-            $validated['inventario_compra_id'],
-
-            'cantidad_requerida' =>
-            $validated['cantidad_requerida'],
-
-            'observacion' =>
-            $validated['observacion'] ?? null,
-
-            'estado' =>
-            $request->has('estado'),
-        ]);
+        $validated = $this->validarMaterial($request);
+        DB::transaction(function () use ($validated, $materialProducto) {
+            $materialProducto = $this->bloquearReceta($materialProducto, (int) $validated['producto_id']);
+            $this->exigirMaterialUnico($validated, $materialProducto->id);
+            $materialProducto->update(array_replace(['observacion' => null, 'estado' => false], $validated));
+        });
 
         return redirect()
             ->route('materiales_producto.index')
@@ -282,9 +172,13 @@ class MaterialProductoController extends Controller
     public function cambiarEstado(
         MaterialProducto $materialProducto
     ) {
-        $materialProducto->update([
-            'estado' => !$materialProducto->estado,
-        ]);
+        DB::transaction(function () use ($materialProducto) {
+            $materialProducto = $this->bloquearReceta($materialProducto);
+            if (! $materialProducto->estado) {
+                (new CalculadoraProduccionService)->normalizarCantidadRequerida($materialProducto->getRawOriginal('cantidad_requerida'));
+            }
+            $materialProducto->update(['estado' => ! $materialProducto->estado]);
+        });
 
         return redirect()
             ->route('materiales_producto.index')
@@ -292,5 +186,64 @@ class MaterialProductoController extends Controller
                 'success',
                 'Estado actualizado correctamente.'
             );
+    }
+
+    private function validarMaterial(Request $request): array
+    {
+        $validated = $request->validate([
+            'producto_id' => ['required', 'integer', 'exists:productos,id'],
+            'inventario_compra_id' => ['required', 'integer', 'exists:inventarios_compra,id'],
+            'cantidad_requerida' => ['required'],
+            'observacion' => ['nullable', 'string', 'max:255'],
+            'estado' => ['nullable', 'boolean'],
+        ]);
+        $validated['cantidad_requerida'] = (new CalculadoraProduccionService)->normalizarCantidadRequerida($validated['cantidad_requerida']);
+        if (array_key_exists('estado', $validated)) {
+            $validated['estado'] = (bool) $validated['estado'];
+        }
+
+        return $validated;
+    }
+
+    private function bloquearProductos(array $ids): void
+    {
+        $ids = array_values(array_unique($ids));
+        sort($ids, SORT_NUMERIC);
+        foreach ($ids as $id) {
+            Producto::whereKey($id)->lockForUpdate()->firstOrFail();
+        }
+    }
+
+    private function bloquearReceta(MaterialProducto $material, ?int $productoDestino = null): MaterialProducto
+    {
+        $actual = MaterialProducto::findOrFail($material->id);
+        $ids = [(int) $actual->producto_id];
+        if ($productoDestino !== null) {
+            $ids[] = $productoDestino;
+        }
+        $this->bloquearProductos($ids);
+        $actual = MaterialProducto::whereKey($material->id)->lockForUpdate()->firstOrFail();
+
+        if (! in_array((int) $actual->producto_id, $ids, true)) {
+            throw ValidationException::withMessages([
+                'producto_id' => 'La receta cambió de producto mientras se editaba. Actualiza la página e intenta nuevamente.',
+            ]);
+        }
+
+        return $actual;
+    }
+
+    private function exigirMaterialUnico(array $datos, ?int $ignorarId = null): void
+    {
+        $query = MaterialProducto::where('producto_id', $datos['producto_id'])
+            ->where('inventario_compra_id', $datos['inventario_compra_id']);
+        if ($ignorarId !== null) {
+            $query->whereKeyNot($ignorarId);
+        }
+        if ($query->lockForUpdate()->first()) {
+            throw ValidationException::withMessages([
+                'inventario_compra_id' => 'Este material ya está asignado al producto seleccionado.',
+            ]);
+        }
     }
 }

@@ -14,9 +14,7 @@ use Illuminate\Validation\ValidationException;
 
 class MovimientoInventarioCompraController extends Controller
 {
-    public function __construct(private InventarioCompraService $inventarioCompraService)
-    {
-    }
+    public function __construct(private InventarioCompraService $inventarioCompraService) {}
 
     public function index(Request $request)
     {
@@ -37,7 +35,7 @@ class MovimientoInventarioCompraController extends Controller
                     $q->where(
                         'nombre',
                         'like',
-                        '%' . $request->inventario_compra . '%'
+                        '%'.$request->inventario_compra.'%'
                     );
                 }
             );
@@ -82,7 +80,7 @@ class MovimientoInventarioCompraController extends Controller
             $query->where(
                 'motivo',
                 'like',
-                '%' . $request->motivo . '%'
+                '%'.$request->motivo.'%'
             );
         }
 
@@ -90,7 +88,7 @@ class MovimientoInventarioCompraController extends Controller
             $query->where(
                 'observacion',
                 'like',
-                '%' . $request->observacion . '%'
+                '%'.$request->observacion.'%'
             );
         }
 
@@ -154,32 +152,23 @@ class MovimientoInventarioCompraController extends Controller
             );
 
             MovimientoInventarioCompra::create([
-                'inventario_compra_id' =>
-                $validated['inventario_compra_id'],
+                'inventario_compra_id' => $validated['inventario_compra_id'],
 
-                'detalle_compra_id' =>
-                null,
+                'detalle_compra_id' => null,
 
-                'produccion_id' =>
-                $validated['produccion_id'] ?? null,
+                'produccion_id' => $validated['produccion_id'] ?? null,
 
-                'tipo_movimiento' =>
-                $validated['tipo_movimiento'],
+                'tipo_movimiento' => $validated['tipo_movimiento'],
 
-                'cantidad' =>
-                $validated['cantidad'],
+                'cantidad' => $validated['cantidad'],
 
-                'fecha_movimiento' =>
-                $validated['fecha_movimiento'],
+                'fecha_movimiento' => $validated['fecha_movimiento'],
 
-                'motivo' =>
-                $validated['motivo'] ?? null,
+                'motivo' => $validated['motivo'] ?? null,
 
-                'observacion' =>
-                $validated['observacion'] ?? null,
+                'observacion' => $validated['observacion'] ?? null,
 
-                'estado' =>
-                $request->has('estado'),
+                'estado' => $request->has('estado'),
             ]);
 
             /*
@@ -313,32 +302,23 @@ class MovimientoInventarioCompraController extends Controller
              * 3. Actualizar movimiento.
              */
             $movimientoInventarioCompra->update([
-                'inventario_compra_id' =>
-                $validated['inventario_compra_id'],
+                'inventario_compra_id' => $validated['inventario_compra_id'],
 
-                'detalle_compra_id' =>
-                null,
+                'detalle_compra_id' => null,
 
-                'produccion_id' =>
-                $validated['produccion_id'] ?? null,
+                'produccion_id' => $validated['produccion_id'] ?? null,
 
-                'tipo_movimiento' =>
-                $validated['tipo_movimiento'],
+                'tipo_movimiento' => $validated['tipo_movimiento'],
 
-                'cantidad' =>
-                $validated['cantidad'],
+                'cantidad' => $validated['cantidad'],
 
-                'fecha_movimiento' =>
-                $validated['fecha_movimiento'],
+                'fecha_movimiento' => $validated['fecha_movimiento'],
 
-                'motivo' =>
-                $validated['motivo'] ?? null,
+                'motivo' => $validated['motivo'] ?? null,
 
-                'observacion' =>
-                $validated['observacion'] ?? null,
+                'observacion' => $validated['observacion'] ?? null,
 
-                'estado' =>
-                $request->has('estado'),
+                'estado' => $request->has('estado'),
             ]);
         });
 
@@ -383,8 +363,7 @@ class MovimientoInventarioCompraController extends Controller
             );
 
             $movimientoInventarioCompra->update([
-                'estado' =>
-                !$movimientoInventarioCompra->estado,
+                'estado' => ! $movimientoInventarioCompra->estado,
             ]);
         });
 
@@ -462,11 +441,10 @@ class MovimientoInventarioCompraController extends Controller
                 $validated['tipo_movimiento'],
                 ['ENTRADA', 'SALIDA']
             ) &&
-            !$cantidad->isPositive()
+            ! $cantidad->isPositive()
         ) {
             throw ValidationException::withMessages([
-                'cantidad' =>
-                'Las entradas y salidas deben utilizar una cantidad mayor a cero.',
+                'cantidad' => 'Las entradas y salidas deben utilizar una cantidad mayor a cero.',
             ]);
         }
 
@@ -475,6 +453,11 @@ class MovimientoInventarioCompraController extends Controller
 
     private function exigirMovimientoManual(MovimientoInventarioCompra $movimiento): void
     {
+        if ($movimiento->consumo_produccion_id !== null) {
+            throw ValidationException::withMessages([
+                'movimiento' => 'Los movimientos generados por una producción son históricos y no pueden modificarse manualmente.',
+            ]);
+        }
         if ($movimiento->detalle_compra_id !== null) {
             throw ValidationException::withMessages([
                 'movimiento' => 'Los movimientos generados por una compra son históricos y no pueden modificarse manualmente.',

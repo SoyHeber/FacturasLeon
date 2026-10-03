@@ -4,11 +4,22 @@ namespace App\Http\Controllers;
 
 use App\Models\Produccion;
 use App\Models\Producto;
+use App\Services\CalculadoraProduccionService;
+use App\Services\ProduccionInventarioService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class ProduccionController extends Controller
 {
+    private CalculadoraProduccionService $calculadora;
+
+    public function __construct(?CalculadoraProduccionService $calculadora = null)
+    {
+        $this->calculadora = $calculadora ?? new CalculadoraProduccionService;
+    }
+
     public function index(Request $request)
     {
         $query = Produccion::with([
@@ -25,7 +36,7 @@ class ProduccionController extends Controller
                 $q->where(
                     'nombre',
                     'like',
-                    '%' . $request->producto . '%'
+                    '%'.$request->producto.'%'
                 );
             });
         }
@@ -35,7 +46,7 @@ class ProduccionController extends Controller
                 $q->where(
                     'name',
                     'like',
-                    '%' . $request->usuario . '%'
+                    '%'.$request->usuario.'%'
                 );
             });
         }
@@ -58,14 +69,14 @@ class ProduccionController extends Controller
             $query->where(
                 'observacion',
                 'like',
-                '%' . $request->observacion . '%'
+                '%'.$request->observacion.'%'
             );
         }
 
-        if ($request->filled('estado')) {
+        if ($request->filled('estado_produccion')) {
             $query->where(
-                'estado',
-                $request->estado
+                'estado_produccion',
+                $request->estado_produccion
             );
         }
 
@@ -80,7 +91,7 @@ class ProduccionController extends Controller
         );
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $productos = Producto::where(
             'estado',
@@ -89,10 +100,10 @@ class ProduccionController extends Controller
             ->orderBy('nombre')
             ->get();
 
-        return view(
-            'producciones.create',
-            compact('productos')
-        );
+        $datosFormulario = $this->datosFormulario($request);
+        $estimacion = $this->estimarFormulario($datosFormulario);
+
+        return view('producciones.create', compact('productos', 'datosFormulario') + $estimacion);
     }
 
     public function store(Request $request)
@@ -107,6 +118,7 @@ class ProduccionController extends Controller
                 'required',
                 'integer',
                 'min:1',
+                'max:4294967295',
             ],
 
             'fecha_produccion' => [
@@ -119,31 +131,30 @@ class ProduccionController extends Controller
                 'string',
             ],
 
-            'estado' => [
-                'nullable',
-                'boolean',
-            ],
         ]);
 
-        Produccion::create([
-            'producto_id' =>
-            $validated['producto_id'],
+        $cantidad = $this->calculadora->normalizarCantidadProduccion($validated['cantidad']);
+        $produccion = new Produccion([
+            'producto_id' => $validated['producto_id'],
 
-            'user_id' =>
-            Auth::id(),
+            'user_id' => Auth::id(),
 
-            'cantidad' =>
-            $validated['cantidad'],
+            'cantidad' => $cantidad,
 
-            'fecha_produccion' =>
-            $validated['fecha_produccion'],
+            'fecha_produccion' => $validated['fecha_produccion'],
 
-            'observacion' =>
-            $validated['observacion'] ?? null,
+            'observacion' => $validated['observacion'] ?? null,
 
-            'estado' =>
-            $request->has('estado'),
+            'estado' => true,
         ]);
+        $produccion->forceFill([
+            'estado_produccion' => Produccion::BORRADOR,
+            'inventario_aplicado' => false,
+            'fecha_confirmacion' => null,
+            'confirmado_por_id' => null,
+            'fecha_anulacion' => null,
+            'anulado_por_id' => null,
+        ])->save();
 
         return redirect()
             ->route('producciones.index')
@@ -158,16 +169,24 @@ class ProduccionController extends Controller
         $produccion->load([
             'producto',
             'usuario',
+            'confirmadoPor',
+            'anuladoPor',
+            'consumos',
+            'movimientosInventarioCompra',
         ]);
 
-        return view(
-            'producciones.show',
-            compact('produccion')
-        );
+        $estimacion = $produccion->estado_produccion === Produccion::BORRADOR ? $this->estimarFormulario([
+            'producto_id' => $produccion->producto_id,
+            'cantidad' => $produccion->cantidad,
+        ]) : ['estimacion' => [], 'errorEstimacion' => null];
+
+        return view('producciones.show', compact('produccion') + $estimacion);
     }
 
-    public function edit(Produccion $produccion)
+    public function edit(Produccion $produccion, ?Request $request = null)
     {
+        $this->exigirBorrador($produccion);
+
         $productos = Producto::where(
             'estado',
             true
@@ -179,63 +198,56 @@ class ProduccionController extends Controller
             ->orderBy('nombre')
             ->get();
 
-        return view(
-            'producciones.edit',
-            compact(
-                'produccion',
-                'productos'
-            )
-        );
+        $datosFormulario = $this->datosFormulario($request ?? request(), $produccion);
+        $estimacion = $this->estimarFormulario($datosFormulario);
+
+        return view('producciones.edit', compact('produccion', 'productos', 'datosFormulario') + $estimacion);
     }
 
     public function update(
         Request $request,
         Produccion $produccion
     ) {
-        $validated = $request->validate([
-            'producto_id' => [
-                'required',
-                'exists:productos,id',
-            ],
+        DB::transaction(function () use ($request, $produccion) {
+            $produccion = Produccion::whereKey($produccion->id)->lockForUpdate()->firstOrFail();
+            $this->exigirBorrador($produccion);
 
-            'cantidad' => [
-                'required',
-                'integer',
-                'min:1',
-            ],
+            $validated = $request->validate([
+                'producto_id' => [
+                    'required',
+                    'exists:productos,id',
+                ],
 
-            'fecha_produccion' => [
-                'required',
-                'date',
-            ],
+                'cantidad' => [
+                    'required',
+                    'integer',
+                    'min:1',
+                    'max:4294967295',
+                ],
 
-            'observacion' => [
-                'nullable',
-                'string',
-            ],
+                'fecha_produccion' => [
+                    'required',
+                    'date',
+                ],
 
-            'estado' => [
-                'nullable',
-                'boolean',
-            ],
-        ]);
+                'observacion' => [
+                    'nullable',
+                    'string',
+                ],
 
-        $produccion->update([
-            'producto_id' =>
-            $validated['producto_id'],
+            ]);
 
-            'cantidad' =>
-            $validated['cantidad'],
+            $produccion->update([
+                'producto_id' => $validated['producto_id'],
 
-            'fecha_produccion' =>
-            $validated['fecha_produccion'],
+                'cantidad' => $this->calculadora->normalizarCantidadProduccion($validated['cantidad']),
 
-            'observacion' =>
-            $validated['observacion'] ?? null,
+                'fecha_produccion' => $validated['fecha_produccion'],
 
-            'estado' =>
-            $request->has('estado'),
-        ]);
+                'observacion' => $validated['observacion'] ?? null,
+
+            ]);
+        });
 
         return redirect()
             ->route('producciones.index')
@@ -248,15 +260,65 @@ class ProduccionController extends Controller
     public function cambiarEstado(
         Produccion $produccion
     ) {
-        $produccion->update([
-            'estado' => !$produccion->estado,
-        ]);
+        throw ValidationException::withMessages(['produccion' => 'Las producciones no pueden activarse, inactivarse ni reactivarse. Use cancelar o anular.']);
+    }
 
-        return redirect()
-            ->route('producciones.index')
-            ->with(
-                'success',
-                'Estado actualizado correctamente.'
-            );
+    public function confirmar(Produccion $produccion, ProduccionInventarioService $servicio)
+    {
+        $servicio->confirmarProduccion((int) $produccion->id, (int) Auth::id());
+
+        return redirect()->route('producciones.show', $produccion->id)
+            ->with('success', 'Producción confirmada. Se registraron los consumos y las salidas de materias primas.');
+    }
+
+    public function anular(Produccion $produccion, ProduccionInventarioService $servicio)
+    {
+        $resultado = $servicio->anularProduccion((int) $produccion->id, (int) Auth::id());
+
+        return redirect()->route('producciones.show', $produccion->id)->with('success', $resultado->inventario_aplicado
+            ? 'Producción anulada. Se devolvieron las materias primas al inventario.'
+            : 'Producción cancelada sin afectar inventario.');
+    }
+
+    private function datosFormulario(Request $request, ?Produccion $produccion = null): array
+    {
+        $datos = [
+            'producto_id' => old('producto_id', $request->input('producto_id', $produccion?->producto_id)),
+            'cantidad' => old('cantidad', $request->input('cantidad', $produccion?->cantidad ?? 1)),
+            'fecha_produccion' => old('fecha_produccion', $request->input('fecha_produccion', ($produccion?->fecha_produccion ?? now())->format('Y-m-d\\TH:i'))),
+            'observacion' => old('observacion', $request->input('observacion', $produccion?->observacion)),
+        ];
+
+        return array_map(fn ($valor) => is_scalar($valor) || $valor === null ? $valor : '', $datos);
+    }
+
+    private function estimarFormulario(array $datos): array
+    {
+        $resultado = ['estimacion' => [], 'errorEstimacion' => null];
+        if (empty($datos['producto_id'])) {
+            return $resultado;
+        }
+
+        try {
+            $entrada = new Request($datos);
+            $validados = $entrada->validate([
+                'producto_id' => ['required', 'integer', 'exists:productos,id'],
+                'cantidad' => ['required', 'integer', 'min:1', 'max:4294967295'],
+            ]);
+            $resultado['estimacion'] = $this->calculadora->calcular(new Produccion($validados));
+        } catch (ValidationException $exception) {
+            $resultado['errorEstimacion'] = implode(' ', array_merge(...array_values($exception->errors())));
+        }
+
+        return $resultado;
+    }
+
+    private function exigirBorrador(Produccion $produccion): void
+    {
+        if (! $produccion->esEditable()) {
+            throw ValidationException::withMessages([
+                'produccion' => 'Solo se pueden modificar producciones en BORRADOR sin inventario aplicado. Las LEGADA son únicamente históricas.',
+            ]);
+        }
     }
 }

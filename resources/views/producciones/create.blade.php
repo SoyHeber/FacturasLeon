@@ -47,7 +47,7 @@
 
                             @foreach ($productos as $producto)
                                 <option value="{{ $producto->id }}"
-                                    {{ old('producto_id') == $producto->id ? 'selected' : '' }}>
+                                    {{ $datosFormulario['producto_id'] == $producto->id ? 'selected' : '' }}>
                                     {{ $producto->nombre }}
                                 </option>
                             @endforeach
@@ -62,8 +62,8 @@
                             Cantidad
                         </label>
 
-                        <input type="number" name="cantidad" id="cantidad" class="form-control" min="1"
-                            value="{{ old('cantidad', 1) }}" required>
+                        <input type="number" name="cantidad" id="cantidad" class="form-control" min="1" max="4294967295" step="1"
+                            value="{{ $datosFormulario['cantidad'] }}" required>
 
                     </div>
 
@@ -74,7 +74,7 @@
                         </label>
 
                         <input type="datetime-local" name="fecha_produccion" id="fecha_produccion" class="form-control"
-                            value="{{ old('fecha_produccion', now()->format('Y-m-d\TH:i')) }}" required>
+                            value="{{ $datosFormulario['fecha_produccion'] }}" required>
 
                     </div>
 
@@ -86,20 +86,13 @@
                         Observación
                     </label>
 
-                    <textarea name="observacion" id="observacion" class="form-control" rows="4">{{ old('observacion') }}</textarea>
+                    <textarea name="observacion" id="observacion" class="form-control" rows="4">{{ $datosFormulario['observacion'] }}</textarea>
 
                 </div>
 
-                <div class="form-check mb-4">
+                <p><span class="badge bg-secondary">BORRADOR</span></p>
 
-                    <input class="form-check-input" type="checkbox" name="estado" id="estado" value="1"
-                        {{ old('estado', true) ? 'checked' : '' }}>
-
-                    <label class="form-check-label" for="estado">
-                        Activo
-                    </label>
-
-                </div>
+                @include('producciones._estimacion', ['rutaEstimacion' => route('producciones.create')])
 
                 <div class="d-flex gap-2">
 

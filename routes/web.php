@@ -241,7 +241,8 @@ Route::middleware(['auth', 'permiso'])->group(function () {
     Route::get('/producciones/{produccion}', [ProduccionController::class, 'show'])->name('producciones.show');
     Route::get('/producciones/{produccion}/edit', [ProduccionController::class, 'edit'])->name('producciones.edit');
     Route::put('/producciones/{produccion}', [ProduccionController::class, 'update'])->name('producciones.update');
-    Route::patch('/producciones/{produccion}/estado', [ProduccionController::class, 'cambiarEstado'])->name('producciones.cambiar-estado');
+    Route::patch('/producciones/{produccion}/confirmar', [ProduccionController::class, 'confirmar'])->name('producciones.confirmar');
+    Route::patch('/producciones/{produccion}/anular', [ProduccionController::class, 'anular'])->name('producciones.anular');
 
     /*Rutas para Movimientos de Inventario de Compra*/
     Route::get('/movimientos-inventario-compra', [MovimientoInventarioCompraController::class, 'index'])->name('movimientos_inventario_compra.index');

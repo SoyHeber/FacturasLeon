@@ -28,6 +28,14 @@
         </div>
     @endif
 
+    @if ($errors->any())
+        <div class="alert alert-danger">
+            @foreach ($errors->all() as $error)
+                <div>{{ $error }}</div>
+            @endforeach
+        </div>
+    @endif
+
     <div class="card shadow-sm border-0 rounded-4">
         <div class="card-body p-4">
 
@@ -83,19 +91,15 @@
                             </th>
 
                             <th>
-                                <select form="filtros" name="estado" class="form-select form-select-sm">
+                                <select form="filtros" name="estado_produccion" class="form-select form-select-sm">
 
                                     <option value="">
                                         Todos
                                     </option>
 
-                                    <option value="1" {{ request('estado') === '1' ? 'selected' : '' }}>
-                                        Activo
-                                    </option>
-
-                                    <option value="0" {{ request('estado') === '0' ? 'selected' : '' }}>
-                                        Inactivo
-                                    </option>
+                                    @foreach (['LEGADA', 'BORRADOR', 'CONFIRMADA', 'ANULADA'] as $estadoProduccion)
+                                        <option value="{{ $estadoProduccion }}" {{ request('estado_produccion') === $estadoProduccion ? 'selected' : '' }}>{{ $estadoProduccion }}</option>
+                                    @endforeach
 
                                 </select>
                             </th>
@@ -150,14 +154,10 @@
 
                                 <td>
 
-                                    @if ($produccion->estado)
-                                        <span class="badge rounded-pill bg-success-subtle text-success px-3 py-2">
-                                            Activo
-                                        </span>
-                                    @else
-                                        <span class="badge rounded-pill bg-danger-subtle text-danger px-3 py-2">
-                                            Inactivo
-                                        </span>
+                                    <span class="badge bg-secondary">{{ $produccion->estado_produccion }}</span>
+
+                                    @if ($produccion->estado_produccion === 'LEGADA')
+                                        <small class="text-muted d-block">Histórica / no conciliada</small>
                                     @endif
 
                                 </td>
@@ -173,33 +173,18 @@
                                             </a>
                                         @endcan
 
-                                        @can('producciones.modificar')
-                                            <a href="{{ route('producciones.edit', $produccion->id) }}"
-                                                class="btn btn-outline-warning btn-sm">
-                                                Editar
-                                            </a>
-                                        @endcan
+                                        @include('producciones._confirmar', ['claseConfirmar' => 'btn-sm'])
+                                        @include('producciones._anular', ['claseAnular' => 'btn-sm'])
 
-                                        @can('producciones.eliminar')
-                                            <form method="POST"
-                                                action="{{ route('producciones.cambiar-estado', $produccion->id) }}"
-                                                onsubmit="return confirm('¿Deseas cambiar el estado de esta producción?')">
+                                        @if ($produccion->esEditable())
+                                            @can('producciones.modificar')
+                                                <a href="{{ route('producciones.edit', $produccion->id) }}"
+                                                    class="btn btn-outline-warning btn-sm">
+                                                    Editar
+                                                </a>
+                                            @endcan
 
-                                                @csrf
-                                                @method('PATCH')
-
-                                                @if ($produccion->estado)
-                                                    <button type="submit" class="btn btn-outline-secondary btn-sm">
-                                                        Inactivar
-                                                    </button>
-                                                @else
-                                                    <button type="submit" class="btn btn-outline-success btn-sm">
-                                                        Activar
-                                                    </button>
-                                                @endif
-
-                                            </form>
-                                        @endcan
+                                        @endif
 
                                     </div>
 

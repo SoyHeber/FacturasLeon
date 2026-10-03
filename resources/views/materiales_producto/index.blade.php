@@ -68,7 +68,7 @@
                             </th>
 
                             <th>
-                                <input form="filtros" type="number" step="0.0001" name="cantidad_requerida"
+                                <input form="filtros" type="number" step="0.0000000001" name="cantidad_requerida"
                                     value="{{ request('cantidad_requerida') }}" class="form-control form-control-sm"
                                     placeholder="Cantidad">
                             </th>
@@ -138,7 +138,7 @@
                                 </td>
 
                                 <td class="fw-semibold">
-                                    {{ number_format($materialProducto->cantidad_requerida, 4) }}
+                                    {{ $materialProducto->cantidad_requerida }}
                                 </td>
 
                                 <td>

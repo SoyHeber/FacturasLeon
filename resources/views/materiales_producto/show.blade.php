@@ -59,7 +59,7 @@
                     </span>
 
                     <strong class="fs-5">
-                        {{ number_format($materialProducto->cantidad_requerida, 4) }}
+                        {{ $materialProducto->cantidad_requerida }}
                     </strong>
 
                 </div>

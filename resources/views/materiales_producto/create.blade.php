@@ -93,11 +93,11 @@
                             Cantidad requerida
                         </label>
 
-                        <input type="number" name="cantidad_requerida" id="cantidad_requerida" class="form-control"
-                            step="0.0001" min="0.0001" value="{{ old('cantidad_requerida') }}" required>
+                        <input type="text" inputmode="decimal" name="cantidad_requerida" id="cantidad_requerida" class="form-control"
+                            value="{{ old('cantidad_requerida') }}" required>
 
                         <small class="text-muted">
-                            Cantidad necesaria para fabricar una unidad del producto.
+                            Cantidad necesaria para fabricar una unidad del producto. Usa punto decimal y hasta 10 decimales.
                         </small>
 
                     </div>

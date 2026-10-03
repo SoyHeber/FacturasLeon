@@ -11,6 +11,18 @@
         </p>
     </div>
 
+    @if (session('success'))
+        <div class="alert alert-success">{{ session('success') }}</div>
+    @endif
+
+    @if ($errors->any())
+        <div class="alert alert-danger">
+            @foreach ($errors->all() as $error)
+                <div>{{ $error }}</div>
+            @endforeach
+        </div>
+    @endif
+
     <div class="card shadow-sm border-0 rounded-4">
         <div class="card-body p-4">
 
@@ -58,15 +70,8 @@
                         Estado
                     </span>
 
-                    @if ($produccion->estado)
-                        <span class="badge rounded-pill bg-success-subtle text-success px-3 py-2">
-                            Activo
-                        </span>
-                    @else
-                        <span class="badge rounded-pill bg-danger-subtle text-danger px-3 py-2">
-                            Inactivo
-                        </span>
-                    @endif
+                    <span class="badge bg-secondary">{{ $produccion->estado_produccion }}</span>
+
 
                 </div>
 
@@ -116,37 +121,39 @@
 
             </div>
 
+            @if ($produccion->estado_produccion === 'LEGADA')
+                <div class="alert alert-warning">Producción histórica / no conciliada. Solo consulta; no admite automatización ni conciliación de inventario desde este flujo.</div>
+            @endif
+
+            @if ($produccion->fecha_confirmacion)
+                <p><strong>Confirmada:</strong> {{ $produccion->fecha_confirmacion->format('d/m/Y H:i') }} por {{ $produccion->confirmadoPor?->name ?? 'Usuario no disponible' }}.</p>
+            @endif
+            @if ($produccion->fecha_anulacion)
+                <p><strong>Anulada:</strong> {{ $produccion->fecha_anulacion->format('d/m/Y H:i') }} por {{ $produccion->anuladoPor?->name ?? 'Usuario no disponible' }}.</p>
+            @endif
+
+            @if ($produccion->estado_produccion === 'BORRADOR')
+                @include('producciones._estimacion')
+            @endif
+            @include('producciones._historial')
+
             <div class="d-flex gap-2">
 
                 <a href="{{ route('producciones.index') }}" class="btn btn-outline-secondary">
                     Volver
                 </a>
 
-                @can('producciones.modificar')
-                    <a href="{{ route('producciones.edit', $produccion->id) }}" class="btn btn-warning">
-                        Editar
-                    </a>
-                @endcan
+                @include('producciones._confirmar')
+                @include('producciones._anular')
 
-                @can('producciones.eliminar')
-                    <form method="POST" action="{{ route('producciones.cambiar-estado', $produccion->id) }}"
-                        onsubmit="return confirm('¿Deseas cambiar el estado de esta producción?')">
+                @if ($produccion->esEditable())
+                    @can('producciones.modificar')
+                        <a href="{{ route('producciones.edit', $produccion->id) }}" class="btn btn-warning">
+                            Editar
+                        </a>
+                    @endcan
 
-                        @csrf
-                        @method('PATCH')
-
-                        @if ($produccion->estado)
-                            <button type="submit" class="btn btn-outline-secondary">
-                                Inactivar
-                            </button>
-                        @else
-                            <button type="submit" class="btn btn-outline-success">
-                                Activar
-                            </button>
-                        @endif
-
-                    </form>
-                @endcan
+                @endif
 
             </div>
 

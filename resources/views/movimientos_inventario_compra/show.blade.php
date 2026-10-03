@@ -97,7 +97,7 @@
                     </span>
 
                     <strong class="fs-5">
-                        {{ number_format($movimientoInventarioCompra->cantidad, 4) }}
+                        {{ $movimientoInventarioCompra->consumo_produccion_id !== null ? $movimientoInventarioCompra->cantidad : number_format($movimientoInventarioCompra->cantidad, 4) }}
                         {{ $movimientoInventarioCompra->inventarioCompra->unidad_medida ?? '' }}
                     </strong>
 
@@ -136,7 +136,10 @@
             </h5>
 
             <div class="mb-4">
-                @if ($movimientoInventarioCompra->detalle_compra_id !== null)
+                @if ($movimientoInventarioCompra->consumo_produccion_id !== null)
+                    <span class="badge bg-dark">Automático - Producción</span>
+                    <span class="text-muted">Consumo #{{ $movimientoInventarioCompra->consumo_produccion_id }}</span>
+                @elseif ($movimientoInventarioCompra->detalle_compra_id !== null)
                     <span class="badge bg-dark">Automático - Compra</span>
                 @else
                     <span class="badge bg-secondary">Manual</span>
@@ -233,7 +236,7 @@
                     Volver
                 </a>
 
-                @if ($movimientoInventarioCompra->detalle_compra_id === null)
+                @if ($movimientoInventarioCompra->detalle_compra_id === null && $movimientoInventarioCompra->consumo_produccion_id === null)
                     @can('movimientos_inventario_compra.modificar')
                         <a href="{{ route('movimientos_inventario_compra.edit', $movimientoInventarioCompra->id) }}"
                             class="btn btn-warning">

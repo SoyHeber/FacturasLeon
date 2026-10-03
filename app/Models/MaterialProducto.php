@@ -20,7 +20,7 @@ class MaterialProducto extends Model
     ];
 
     protected $casts = [
-        'cantidad_requerida' => 'decimal:4',
+        'cantidad_requerida' => 'decimal:10',
         'estado' => 'boolean',
     ];
 

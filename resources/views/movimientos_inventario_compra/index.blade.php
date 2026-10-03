@@ -184,7 +184,10 @@
                                 </td>
 
                                 <td>
-                                    @if ($movimiento->detalle_compra_id !== null)
+                                    @if ($movimiento->consumo_produccion_id !== null)
+                                        <span class="badge bg-dark">Automático - Producción</span>
+                                        <small class="text-muted d-block mt-1">Consumo #{{ $movimiento->consumo_produccion_id }}</small>
+                                    @elseif ($movimiento->detalle_compra_id !== null)
                                         <span class="badge bg-dark">Automático - Compra</span>
                                         <small class="text-muted d-block mt-1">Detalle #{{ $movimiento->detalle_compra_id }}</small>
                                         @if ($movimiento->detalleCompra?->compra)
@@ -226,7 +229,7 @@
                                 </td>
 
                                 <td class="fw-semibold">
-                                    {{ number_format($movimiento->cantidad, 4) }}
+                                    {{ $movimiento->consumo_produccion_id !== null ? $movimiento->cantidad : number_format($movimiento->cantidad, 4) }}
                                     <small class="text-muted">
                                         {{ $movimiento->inventarioCompra->unidad_medida ?? '' }}
                                     </small>
@@ -269,7 +272,7 @@
                                             </a>
                                         @endcan
 
-                                        @if ($movimiento->detalle_compra_id === null)
+                                        @if ($movimiento->detalle_compra_id === null && $movimiento->consumo_produccion_id === null)
                                             @can('movimientos_inventario_compra.modificar')
                                                 <a href="{{ route('movimientos_inventario_compra.edit', $movimiento->id) }}"
                                                     class="btn btn-outline-warning btn-sm">

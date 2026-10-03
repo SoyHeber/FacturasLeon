@@ -19,6 +19,8 @@ class VerificarPermiso
         'store' => 'crear',
         'edit' => 'modificar',
         'update' => 'modificar',
+        'confirmar' => 'modificar',
+        'anular' => 'eliminar',
         'permisos' => 'modificar',
         'guardar-permisos' => 'modificar',
         'destroy' => 'eliminar',
@@ -33,7 +35,7 @@ class VerificarPermiso
     {
         $nombreRuta = $request->route()?->getName();
 
-        if (!$nombreRuta || !str_contains($nombreRuta, '.')) {
+        if (! $nombreRuta || ! str_contains($nombreRuta, '.')) {
             abort(403, 'Ruta sin permiso configurado.');
         }
 
@@ -42,7 +44,7 @@ class VerificarPermiso
 
         $accion = self::ACCIONES_POR_METODO[$metodo] ?? null;
 
-        if (!$accion || !$request->user()?->tienePermiso($ruta, $accion)) {
+        if (! $accion || ! $request->user()?->tienePermiso($ruta, $accion)) {
             abort(403, 'No tienes permiso para realizar esta acción.');
         }
 
