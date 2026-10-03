@@ -66,16 +66,7 @@
 
                         </div>
 
-                        <div class="mb-3">
-
-                            <label for="cantidad" class="form-label">
-                                Cantidad actual
-                            </label>
-
-                            <input type="number" name="cantidad" id="cantidad" class="form-control"
-                                value="{{ old('cantidad', 0) }}" min="0" required>
-
-                        </div>
+                        <p class="text-muted">El inventario inicia en 0. Registre el stock inicial mediante un movimiento manual.</p>
 
                         <div class="mb-3">
 

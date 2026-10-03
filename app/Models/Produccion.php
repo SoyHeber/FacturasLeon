@@ -38,6 +38,7 @@ class Produccion extends Model
         'cantidad' => 'integer',
         'fecha_produccion' => 'datetime',
         'inventario_aplicado' => 'boolean',
+        'producto_terminado_aplicado' => 'boolean',
         'fecha_confirmacion' => 'datetime',
         'fecha_anulacion' => 'datetime',
         'confirmado_por_id' => 'integer',
@@ -89,6 +90,6 @@ class Produccion extends Model
 
     public function movimientosInventario()
     {
-        return $this->hasMany(MovimientoInventario::class);
+        return $this->hasMany(MovimientoInventario::class, 'produccion_id');
     }
 }

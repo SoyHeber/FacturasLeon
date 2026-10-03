@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Inventario;
 use App\Models\Producto;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class InventarioController extends Controller
 {
@@ -21,14 +20,14 @@ class InventarioController extends Controller
         // Filtro por producto
         if ($request->filled('producto')) {
             $query->whereHas('producto', function ($q) use ($request) {
-                $q->where('nombre', 'like', '%' . $request->producto . '%');
+                $q->where('nombre', 'like', '%'.$request->producto.'%');
             });
         }
 
         // Filtro por código del producto
         if ($request->filled('codigo')) {
             $query->whereHas('producto', function ($q) use ($request) {
-                $q->where('codigo', 'like', '%' . $request->codigo . '%');
+                $q->where('codigo', 'like', '%'.$request->codigo.'%');
             });
         }
 
@@ -49,7 +48,7 @@ class InventarioController extends Controller
 
         // Filtro por ubicación
         if ($request->filled('ubicacion')) {
-            $query->where('ubicacion', 'like', '%' . $request->ubicacion . '%');
+            $query->where('ubicacion', 'like', '%'.$request->ubicacion.'%');
         }
 
         // Filtro por estado del stock (bajo, sobre o normal)
@@ -100,12 +99,6 @@ class InventarioController extends Controller
                 'unique:inventarios,producto_id',
             ],
 
-            'cantidad' => [
-                'required',
-                'integer',
-                'min:0',
-            ],
-
             'stock_minimo' => [
                 'required',
                 'integer',
@@ -133,11 +126,10 @@ class InventarioController extends Controller
 
         Inventario::create([
             'producto_id' => $validated['producto_id'],
-            'cantidad' => $validated['cantidad'],
             'stock_minimo' => $validated['stock_minimo'],
             'stock_maximo' => $validated['stock_maximo'] ?? null,
             'ubicacion' => $validated['ubicacion'] ?? null,
-            'estado' => $request->has('estado'),
+            'estado' => $request->boolean('estado'),
         ]);
 
         return redirect()
@@ -154,17 +146,11 @@ class InventarioController extends Controller
 
     public function edit(Inventario $inventario)
     {
-        $productos = Producto::where('estado', true)
-            ->where(function ($query) use ($inventario) {
-                $query->whereDoesntHave('inventarios')
-                    ->orWhere('id', $inventario->producto_id);
-            })
-            ->orderBy('nombre')
-            ->get();
+        $inventario->load('producto');
 
         return view(
             'inventarios.edit',
-            compact('inventario', 'productos')
+            compact('inventario')
         );
     }
 
@@ -173,20 +159,6 @@ class InventarioController extends Controller
         Inventario $inventario
     ) {
         $validated = $request->validate([
-            'producto_id' => [
-                'required',
-                'exists:productos,id',
-
-                Rule::unique('inventarios', 'producto_id')
-                    ->ignore($inventario->id),
-            ],
-
-            'cantidad' => [
-                'required',
-                'integer',
-                'min:0',
-            ],
-
             'stock_minimo' => [
                 'required',
                 'integer',
@@ -213,12 +185,10 @@ class InventarioController extends Controller
         ]);
 
         $inventario->update([
-            'producto_id' => $validated['producto_id'],
-            'cantidad' => $validated['cantidad'],
             'stock_minimo' => $validated['stock_minimo'],
             'stock_maximo' => $validated['stock_maximo'] ?? null,
             'ubicacion' => $validated['ubicacion'] ?? null,
-            'estado' => $request->has('estado'),
+            'estado' => $request->boolean('estado'),
         ]);
 
         return redirect()
@@ -229,7 +199,7 @@ class InventarioController extends Controller
     public function cambiarEstado(Inventario $inventario)
     {
         $inventario->update([
-            'estado' => !$inventario->estado,
+            'estado' => ! $inventario->estado,
         ]);
 
         return redirect()

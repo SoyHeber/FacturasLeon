@@ -173,6 +173,7 @@ class ProduccionController extends Controller
             'anuladoPor',
             'consumos',
             'movimientosInventarioCompra',
+            'movimientosInventario',
         ]);
 
         $estimacion = $produccion->estado_produccion === Produccion::BORRADOR ? $this->estimarFormulario([
@@ -268,7 +269,7 @@ class ProduccionController extends Controller
         $servicio->confirmarProduccion((int) $produccion->id, (int) Auth::id());
 
         return redirect()->route('producciones.show', $produccion->id)
-            ->with('success', 'Producción confirmada. Se registraron los consumos y las salidas de materias primas.');
+            ->with('success', 'Producción confirmada. Se registraron los consumos, las salidas de materias primas y la entrada de producto terminado.');
     }
 
     public function anular(Produccion $produccion, ProduccionInventarioService $servicio)
@@ -276,7 +277,9 @@ class ProduccionController extends Controller
         $resultado = $servicio->anularProduccion((int) $produccion->id, (int) Auth::id());
 
         return redirect()->route('producciones.show', $produccion->id)->with('success', $resultado->inventario_aplicado
-            ? 'Producción anulada. Se devolvieron las materias primas al inventario.'
+            ? ($resultado->producto_terminado_aplicado
+                ? 'Producción anulada. Se retiró el producto terminado y se devolvieron las materias primas al inventario.'
+                : 'Producción anulada. Se devolvieron las materias primas al inventario.')
             : 'Producción cancelada sin afectar inventario.');
     }
 

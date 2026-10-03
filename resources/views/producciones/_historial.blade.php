@@ -55,3 +55,7 @@
 @else
     <p class="text-muted">Sin movimientos registrados.</p>
 @endif
+
+@if ($produccion->movimientosInventario->isNotEmpty())
+    @include('producciones._historial_producto_terminado')
+@endif

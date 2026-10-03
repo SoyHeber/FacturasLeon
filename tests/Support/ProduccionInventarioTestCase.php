@@ -6,6 +6,7 @@ use App\Models\MaterialProducto;
 use App\Models\Produccion;
 use App\Services\CalculadoraProduccionService;
 use App\Services\InventarioCompraService;
+use App\Services\InventarioService;
 use App\Services\ProduccionInventarioService;
 use Illuminate\Container\Container;
 use Illuminate\Database\Schema\Blueprint;
@@ -72,6 +73,7 @@ abstract class ProduccionInventarioTestCase extends CompraInventarioTestCase
             $table->timestamps();
         });
         (require dirname(__DIR__, 2).'/database/migrations/2026_10_02_000012_agregar_consumo_a_movimientos_inventario_compra.php')->up();
+        EsquemaProductoTerminado::crear();
         MaterialProducto::create(['producto_id' => 3, 'inventario_compra_id' => 7, 'cantidad_requerida' => '0.1234567890', 'estado' => true]);
         $this->produccion = Produccion::create(['producto_id' => 3, 'user_id' => 17, 'cantidad' => '3',
             'fecha_produccion' => '2026-10-01 08:00:00', 'observacion' => 'Borrador', 'estado' => true]);
@@ -86,9 +88,9 @@ abstract class ProduccionInventarioTestCase extends CompraInventarioTestCase
         $container->make('redirect')->getUrlGenerator()->setRoutes($router->getRoutes());
     }
 
-    protected function servicioProduccion(?InventarioCompraService $stock = null, ?CalculadoraProduccionService $calculadora = null): ProduccionInventarioService
+    protected function servicioProduccion(?InventarioCompraService $stock = null, ?CalculadoraProduccionService $calculadora = null, ?InventarioService $terminado = null): ProduccionInventarioService
     {
-        return new ProduccionInventarioService($stock ?? new InventarioCompraService, $calculadora ?? new CalculadoraProduccionService);
+        return new ProduccionInventarioService($stock ?? new InventarioCompraService, $calculadora ?? new CalculadoraProduccionService, $terminado ?? new InventarioService);
     }
 
     protected function confirmar(): Produccion
@@ -106,6 +108,6 @@ abstract class ProduccionInventarioTestCase extends CompraInventarioTestCase
         $this->assertSame(0, DB::connection()->transactionLevel());
 
         return array_map(fn ($tabla) => DB::table($tabla)->orderBy('id')->get()->map(fn ($fila) => (array) $fila)->all(),
-            ['producciones', 'consumos_produccion', 'movimientos_inventario_compra', 'inventarios_compra']);
+            ['producciones', 'consumos_produccion', 'movimientos_inventario_compra', 'inventarios_compra', 'inventarios', 'movimientos_inventario']);
     }
 }

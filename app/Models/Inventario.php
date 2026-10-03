@@ -11,9 +11,12 @@ class Inventario extends Model
 
     protected $table = 'inventarios';
 
+    protected $attributes = [
+        'cantidad' => '0',
+    ];
+
     protected $fillable = [
         'producto_id',
-        'cantidad',
         'stock_minimo',
         'stock_maximo',
         'ubicacion',
@@ -21,7 +24,7 @@ class Inventario extends Model
     ];
 
     protected $casts = [
-        'cantidad' => 'integer',
+        'cantidad' => 'string',
         'stock_minimo' => 'integer',
         'stock_maximo' => 'integer',
         'estado' => 'boolean',

@@ -42,39 +42,20 @@
 
                         <div class="mb-3">
 
-                            <label for="producto_id" class="form-label">
+                            <span class="form-label d-block">
                                 Producto
-                            </label>
-
-                            <select name="producto_id" id="producto_id" class="form-select" required>
-
-                                <option value="">
-                                    Seleccione un producto
-                                </option>
-
-                                @foreach ($productos as $producto)
-                                    <option value="{{ $producto->id }}"
-                                        {{ old('producto_id', $inventario->producto_id) == $producto->id ? 'selected' : '' }}>
-
-                                        {{ $producto->nombre }}
-                                        -
-                                        {{ $producto->codigo }}
-
-                                    </option>
-                                @endforeach
-
-                            </select>
+                            </span>
+                            <p>{{ $inventario->producto->nombre }} - {{ $inventario->producto->codigo }}</p>
 
                         </div>
 
                         <div class="mb-3">
 
-                            <label for="cantidad" class="form-label">
+                            <span class="form-label d-block">
                                 Cantidad actual
-                            </label>
-
-                            <input type="number" name="cantidad" id="cantidad" class="form-control"
-                                value="{{ old('cantidad', $inventario->cantidad) }}" min="0" required>
+                            </span>
+                            <p>{{ $inventario->cantidad }}</p>
+                            <small class="text-muted">El saldo se modifica mediante movimientos de inventario.</small>
 
                         </div>
 

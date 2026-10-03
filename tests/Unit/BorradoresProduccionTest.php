@@ -37,6 +37,7 @@ use Illuminate\View\Factory;
 use Illuminate\View\FileViewFinder;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\Support\CompraInventarioTestCase;
+use Tests\Support\EsquemaProductoTerminado;
 
 class BorradoresProduccionTest extends CompraInventarioTestCase
 {
@@ -80,6 +81,7 @@ class BorradoresProduccionTest extends CompraInventarioTestCase
         });
         (require dirname(__DIR__, 2).'/database/migrations/2026_10_02_000011_create_consumos_produccion_table.php')->up();
         (require dirname(__DIR__, 2).'/database/migrations/2026_10_02_000012_agregar_consumo_a_movimientos_inventario_compra.php')->up();
+        EsquemaProductoTerminado::crear();
         $this->crearMaterial();
 
         $container = Container::getInstance();
@@ -91,7 +93,7 @@ class BorradoresProduccionTest extends CompraInventarioTestCase
         $container->instance('request', $request);
         $container->instance('session', $session);
         $routes = new RouteCollection;
-        foreach (['producciones', 'materiales_producto', 'movimientos_inventario_compra'] as $nombre) {
+        foreach (['producciones', 'materiales_producto', 'movimientos_inventario_compra', 'movimientos_inventario'] as $nombre) {
             foreach (['index', 'create', 'store', 'edit', 'update', 'show', 'anular', 'confirmar', 'cambiar-estado'] as $metodo) {
                 $ruta = '/'.$nombre.'/'.$metodo.(in_array($metodo, ['edit', 'update', 'show', 'anular', 'confirmar', 'cambiar-estado']) ? '/{id}' : '');
                 $routes->add((new Route('GET', $ruta, fn () => null))->name($nombre.'.'.$metodo));
@@ -463,6 +465,34 @@ class BorradoresProduccionTest extends CompraInventarioTestCase
                 $this->assertStringNotContainsString('Inactivar', $html);
             }
         }
+    }
+
+    public function test_historial_muestra_entrada_y_salida_terminadas_como_automaticas_sin_edicion(): void
+    {
+        $this->prepararVistas();
+        $produccion = Produccion::create($this->datosProduccion() + ['user_id' => 17, 'estado' => true]);
+        $produccion->forceFill(['estado_produccion' => Produccion::CONFIRMADA, 'producto_terminado_aplicado' => true])->save();
+        $inventario = \App\Models\Inventario::create(['producto_id' => $produccion->producto_id, 'estado' => true]);
+        \App\Models\MovimientoInventario::create(['produccion_id' => $produccion->id, 'inventario_id' => $inventario->id,
+            'tipo_movimiento' => 'ENTRADA', 'cantidad' => 3, 'fecha_movimiento' => now(), 'estado' => true]);
+        $html = (new ProduccionController)->show($produccion)->render();
+        $this->assertStringContainsString('Movimientos de producto terminado', $html);
+        $this->assertStringContainsString('ENTRADA - Confirmación', $html);
+        $this->assertStringContainsString('Automático - Producción', $html);
+        $this->assertStringContainsString('stock suficiente del producto terminado', $html);
+        $this->assertStringNotContainsString('SALIDA - Anulación', $html);
+
+        $produccion->forceFill(['estado_produccion' => Produccion::ANULADA])->save();
+        \App\Models\MovimientoInventario::create(['produccion_id' => $produccion->id, 'inventario_id' => $inventario->id,
+            'tipo_movimiento' => 'SALIDA', 'cantidad' => 3, 'fecha_movimiento' => now(), 'estado' => true]);
+        $antes = $this->snapshot();
+        $html = (new ProduccionController)->show($produccion)->render();
+        foreach (['ENTRADA - Confirmación', 'SALIDA - Anulación', 'Automático - Producción', 'Solo lectura'] as $texto) {
+            $this->assertStringContainsString($texto, $html);
+        }
+        $this->assertStringNotContainsString('Editar', $html);
+        $this->assertStringNotContainsString('Inactivar', $html);
+        $this->assertSame($antes, $this->snapshot());
     }
 
     private function crearMaterial(string $cantidad = '0.1234567890', int $inventarioId = 7): MaterialProducto

@@ -145,31 +145,35 @@
                     Volver
                 </a>
 
-                @can('movimientos_inventario.modificar')
-                    <a href="{{ route('movimientos_inventario.edit', $movimiento->id) }}" class="btn btn-warning">
-                        Editar
-                    </a>
-                @endcan
+                @if ($movimiento->produccion_id === null)
+                    @can('movimientos_inventario.modificar')
+                        <a href="{{ route('movimientos_inventario.edit', $movimiento->id) }}" class="btn btn-warning">
+                            Editar
+                        </a>
+                    @endcan
 
-                @can('movimientos_inventario.eliminar')
-                    <form method="POST" action="{{ route('movimientos_inventario.cambiar-estado', $movimiento->id) }}"
-                        onsubmit="return confirm('¿Deseas cambiar el estado de este movimiento?')">
+                    @can('movimientos_inventario.eliminar')
+                        <form method="POST" action="{{ route('movimientos_inventario.cambiar-estado', $movimiento->id) }}"
+                            onsubmit="return confirm('¿Deseas cambiar el estado de este movimiento?')">
 
-                        @csrf
-                        @method('PATCH')
+                            @csrf
+                            @method('PATCH')
 
-                        @if ($movimiento->estado)
-                            <button type="submit" class="btn btn-outline-secondary">
-                                Inactivar
-                            </button>
-                        @else
-                            <button type="submit" class="btn btn-outline-success">
-                                Activar
-                            </button>
-                        @endif
+                            @if ($movimiento->estado)
+                                <button type="submit" class="btn btn-outline-secondary">
+                                    Inactivar
+                                </button>
+                            @else
+                                <button type="submit" class="btn btn-outline-success">
+                                    Activar
+                                </button>
+                            @endif
 
-                    </form>
-                @endcan
+                        </form>
+                    @endcan
+                @else
+                    <span class="text-muted">Producción #{{ $movimiento->produccion_id }} · Solo lectura</span>
+                @endif
 
             </div>
 
