@@ -1,0 +1,26 @@
+<env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/">
+  <env:Body>
+    <ns1:generaDocumentoResponse xmlns:ns1="http://dbguatefac/Guatefac.wsdl">
+      <result>&lt;Resultado&gt;&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;dte:GTDocumento xmlns:dte="http://www.sat.gob.gt/dte/fel/0.2.0" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" Version="0.1"&gt;
+  &lt;dte:SAT ClaseDocumento="dte"&gt;
+    &lt;dte:DTE ID="DatosCertificados"&gt;
+      &lt;dte:DatosEmision ID="DatosEmision"&gt;
+        &lt;dte:DatosGenerales Tipo="FACT" FechaHoraEmision="2026-10-03T14:00:00-06:00" CodigoMoneda="GTQ"/&gt;
+        &lt;dte:Emisor NITEmisor="1234567K" NombreEmisor="Emisor de prueba"/&gt;
+        &lt;dte:Totales&gt;&lt;dte:GranTotal&gt;201.60&lt;/dte:GranTotal&gt;&lt;/dte:Totales&gt;
+      &lt;/dte:DatosEmision&gt;
+      &lt;dte:Certificacion&gt;
+        &lt;dte:NITCertificador&gt;9876543K&lt;/dte:NITCertificador&gt;
+        &lt;dte:NombreCertificador&gt;Certificador &amp;amp; Pruebas&lt;/dte:NombreCertificador&gt;
+        &lt;dte:NumeroAutorizacion Serie="A001" Numero="000123"&gt;8e511596-ff36-49a8-9dc5-8f482cd2a3dc&lt;/dte:NumeroAutorizacion&gt;
+        &lt;dte:FechaHoraCertificacion&gt;2026-10-03T14:15:16-06:00&lt;/dte:FechaHoraCertificacion&gt;
+      &lt;/dte:Certificacion&gt;
+    &lt;/dte:DTE&gt;
+  &lt;/dte:SAT&gt;
+  &lt;ds:Signature&gt;&lt;ds:SignedInfo/&gt;&lt;ds:SignatureValue&gt;RklSTUEtREVMLUZJWFRVUkU=&lt;/ds:SignatureValue&gt;&lt;/ds:Signature&gt;
+&lt;/dte:GTDocumento&gt;
+&lt;/Resultado&gt;</result>
+    </ns1:generaDocumentoResponse>
+  </env:Body>
+</env:Envelope>

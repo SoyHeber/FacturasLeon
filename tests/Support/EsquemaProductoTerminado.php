@@ -26,6 +26,7 @@ class EsquemaProductoTerminado
         (require dirname(__DIR__, 2).'/database/migrations/2026_08_26_040638_create_movimientos_inventario_table.php')->up();
         Schema::table('movimientos_inventario', function (Blueprint $table) {
             $table->foreignId('produccion_id')->nullable()->constrained('producciones')->restrictOnDelete();
+            $table->foreignId('detalle_venta_id')->nullable();
             $table->index('produccion_id');
             $table->unique(['produccion_id', 'tipo_movimiento'], 'movimientos_inventario_produccion_tipo_unique');
         });

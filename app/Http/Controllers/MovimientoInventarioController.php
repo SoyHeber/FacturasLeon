@@ -75,6 +75,7 @@ class MovimientoInventarioController extends Controller
                 MovimientoInventario::create([
                     'inventario_id' => $validated['inventario_id'],
                     'produccion_id' => null,
+                    'detalle_venta_id' => null,
                     'tipo_movimiento' => $validated['tipo_movimiento'],
                     'cantidad' => $cantidad,
                     'fecha_movimiento' => $validated['fecha_movimiento'],
@@ -136,6 +137,7 @@ class MovimientoInventarioController extends Controller
                 $movimiento->update([
                     'inventario_id' => $nuevoInventarioId,
                     'produccion_id' => null,
+                    'detalle_venta_id' => null,
                     'tipo_movimiento' => $validated['tipo_movimiento'],
                     'cantidad' => $cantidad,
                     'fecha_movimiento' => $validated['fecha_movimiento'],
@@ -193,8 +195,8 @@ class MovimientoInventarioController extends Controller
 
     private function exigirManual(MovimientoInventario $movimiento): void
     {
-        if ($movimiento->produccion_id !== null) {
-            throw ValidationException::withMessages(['movimiento' => 'Los movimientos automáticos de Producción son de solo lectura.']);
+        if ($movimiento->esAutomatico()) {
+            throw ValidationException::withMessages(['movimiento' => 'Los movimientos automáticos de Producción o Venta son de solo lectura.']);
         }
     }
 

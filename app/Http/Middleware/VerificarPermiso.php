@@ -20,6 +20,8 @@ class VerificarPermiso
         'edit' => 'modificar',
         'update' => 'modificar',
         'confirmar' => 'modificar',
+        'certificar' => 'modificar',
+        'conciliar_respuesta' => 'modificar',
         'anular' => 'eliminar',
         'permisos' => 'modificar',
         'guardar-permisos' => 'modificar',

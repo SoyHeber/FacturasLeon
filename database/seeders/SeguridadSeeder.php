@@ -37,6 +37,7 @@ class SeguridadSeeder extends Seeder
             'tipos_documento' => ['Tipos de Documento', '📄'],
         ]],
         'Operaciones' => ['📦', [
+            'ventas' => ['Ventas', '🧾'],
             'inventarios' => ['Inventarios', '📦'],
             'movimientos_inventario' => ['Movimientos Inventario', '🔄'],
             'compras' => ['Compras', '🛒'],

@@ -140,6 +140,7 @@ abstract class InventarioProductoTerminadoTestCase extends TestCase
             $table->id();
             $table->foreignId('inventario_id')->constrained('inventarios')->restrictOnDelete();
             $table->foreignId('produccion_id')->nullable()->constrained('producciones')->restrictOnDelete();
+            $table->foreignId('detalle_venta_id')->nullable();
             $table->index('produccion_id', 'movimientos_inventario_produccion_id_index');
             $table->unique(['produccion_id', 'tipo_movimiento'], 'movimientos_inventario_produccion_tipo_unique');
             $table->string('tipo_movimiento');

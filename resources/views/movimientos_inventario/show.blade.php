@@ -145,7 +145,7 @@
                     Volver
                 </a>
 
-                @if ($movimiento->produccion_id === null)
+                @if (! $movimiento->esAutomatico())
                     @can('movimientos_inventario.modificar')
                         <a href="{{ route('movimientos_inventario.edit', $movimiento->id) }}" class="btn btn-warning">
                             Editar
@@ -171,6 +171,8 @@
 
                         </form>
                     @endcan
+                @elseif ($movimiento->detalle_venta_id !== null)
+                    <span class="text-muted">Automático - Venta · Detalle #{{ $movimiento->detalle_venta_id }} · Solo lectura</span>
                 @else
                     <span class="text-muted">Producción #{{ $movimiento->produccion_id }} · Solo lectura</span>
                 @endif

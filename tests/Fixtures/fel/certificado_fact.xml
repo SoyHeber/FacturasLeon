@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dte:GTDocumento xmlns:dte="http://www.sat.gob.gt/dte/fel/0.2.0" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" Version="0.1">
+  <dte:SAT ClaseDocumento="dte">
+    <dte:DTE ID="DatosCertificados">
+      <dte:DatosEmision ID="DatosEmision">
+        <dte:DatosGenerales Tipo="FACT" FechaHoraEmision="2026-10-03T14:00:00-06:00" CodigoMoneda="GTQ"/>
+        <dte:Emisor NITEmisor="1234567K" NombreEmisor="Emisor de prueba"/>
+        <dte:Totales><dte:GranTotal>201.60</dte:GranTotal></dte:Totales>
+      </dte:DatosEmision>
+      <dte:Certificacion>
+        <dte:NITCertificador>9876543K</dte:NITCertificador>
+        <dte:NombreCertificador>Certificador &amp; Pruebas</dte:NombreCertificador>
+        <dte:NumeroAutorizacion Serie="A001" Numero="000123">8e511596-ff36-49a8-9dc5-8f482cd2a3dc</dte:NumeroAutorizacion>
+        <dte:FechaHoraCertificacion>2026-10-03T14:15:16-06:00</dte:FechaHoraCertificacion>
+      </dte:Certificacion>
+    </dte:DTE>
+  </dte:SAT>
+  <ds:Signature><ds:SignedInfo/><ds:SignatureValue>RklSTUEtREVMLUZJWFRVUkU=</ds:SignatureValue></ds:Signature>
+</dte:GTDocumento>

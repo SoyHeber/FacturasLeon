@@ -30,6 +30,8 @@ use App\Http\Controllers\RolController;
 use App\Http\Controllers\ModuloController;
 use App\Http\Controllers\OpcionController;
 use App\Http\Controllers\AccionController;
+use App\Http\Controllers\VentaController;
+use App\Http\Controllers\FelController;
 
 /*
 |--------------------------------------------------------------------------
@@ -204,6 +206,17 @@ Route::middleware(['auth', 'permiso'])->group(function () {
     Route::get('/movimientos-inventario/{movimientoInventario}/edit', [MovimientoInventarioController::class, 'edit'])->name('movimientos_inventario.edit');
     Route::put('/movimientos-inventario/{movimientoInventario}', [MovimientoInventarioController::class, 'update'])->name('movimientos_inventario.update');
     Route::patch('/movimientos-inventario/{movimientoInventario}/estado', [MovimientoInventarioController::class, 'cambiarEstado'])->name('movimientos_inventario.cambiar-estado');
+
+    /*Rutas para Ventas*/
+    Route::get('/ventas', [VentaController::class, 'index'])->name('ventas.index');
+    Route::get('/ventas/create', [VentaController::class, 'create'])->name('ventas.create');
+    Route::post('/ventas', [VentaController::class, 'store'])->name('ventas.store');
+    Route::get('/ventas/{venta}', [VentaController::class, 'show'])->whereNumber('venta')->name('ventas.show');
+    Route::get('/ventas/{venta}/edit', [VentaController::class, 'edit'])->whereNumber('venta')->name('ventas.edit');
+    Route::put('/ventas/{venta}', [VentaController::class, 'update'])->whereNumber('venta')->name('ventas.update');
+    Route::patch('/ventas/{venta}/confirmar', [VentaController::class, 'confirmar'])->whereNumber('venta')->name('ventas.confirmar');
+    Route::post('/ventas/{venta}/certificar', [FelController::class, 'certificar'])->whereNumber('venta')->name('ventas.certificar');
+    Route::post('/ventas/{venta}/conciliar-respuesta', [FelController::class, 'conciliarRespuesta'])->whereNumber('venta')->name('ventas.conciliar_respuesta');
 
     /*Rutas para Compras*/
     Route::get('/compras', [CompraController::class, 'index'])->name('compras.index');
