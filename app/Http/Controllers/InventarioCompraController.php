@@ -3,10 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Models\InventarioCompra;
+use App\Services\InventarioCompraService;
+use Brick\Math\BigDecimal;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class InventarioCompraController extends Controller
 {
+    public function __construct(private InventarioCompraService $inventarioCompraService)
+    {
+    }
+
     public function index(Request $request)
     {
         $query = InventarioCompra::query();
@@ -112,12 +120,6 @@ class InventarioCompraController extends Controller
                 'max:30',
             ],
 
-            'cantidad' => [
-                'required',
-                'numeric',
-                'min:0',
-            ],
-
             'stock_minimo' => [
                 'required',
                 'numeric',
@@ -142,10 +144,12 @@ class InventarioCompraController extends Controller
             ],
         ]);
 
+        $validated = $this->normalizarCantidades($validated);
+
         if (
             isset($validated['stock_maximo']) &&
             $validated['stock_maximo'] !== null &&
-            $validated['stock_maximo'] < $validated['stock_minimo']
+            BigDecimal::of($validated['stock_maximo'])->isLessThan($validated['stock_minimo'])
         ) {
             return back()
                 ->withErrors([
@@ -155,7 +159,7 @@ class InventarioCompraController extends Controller
                 ->withInput();
         }
 
-        InventarioCompra::create([
+        $datos = [
             'nombre' =>
             $validated['nombre'],
 
@@ -164,9 +168,6 @@ class InventarioCompraController extends Controller
 
             'unidad_medida' =>
             strtoupper($validated['unidad_medida']),
-
-            'cantidad' =>
-            $validated['cantidad'],
 
             'stock_minimo' =>
             $validated['stock_minimo'],
@@ -179,7 +180,9 @@ class InventarioCompraController extends Controller
 
             'estado' =>
             $request->has('estado'),
-        ]);
+        ];
+
+        InventarioCompra::create($datos);
 
         return redirect()
             ->route('inventarios_compra.index')
@@ -228,12 +231,6 @@ class InventarioCompraController extends Controller
                 'max:30',
             ],
 
-            'cantidad' => [
-                'required',
-                'numeric',
-                'min:0',
-            ],
-
             'stock_minimo' => [
                 'required',
                 'numeric',
@@ -258,10 +255,12 @@ class InventarioCompraController extends Controller
             ],
         ]);
 
+        $validated = $this->normalizarCantidades($validated);
+
         if (
             isset($validated['stock_maximo']) &&
             $validated['stock_maximo'] !== null &&
-            $validated['stock_maximo'] < $validated['stock_minimo']
+            BigDecimal::of($validated['stock_maximo'])->isLessThan($validated['stock_minimo'])
         ) {
             return back()
                 ->withErrors([
@@ -271,7 +270,7 @@ class InventarioCompraController extends Controller
                 ->withInput();
         }
 
-        $inventarioCompra->update([
+        $datos = [
             'nombre' =>
             $validated['nombre'],
 
@@ -280,9 +279,6 @@ class InventarioCompraController extends Controller
 
             'unidad_medida' =>
             strtoupper($validated['unidad_medida']),
-
-            'cantidad' =>
-            $validated['cantidad'],
 
             'stock_minimo' =>
             $validated['stock_minimo'],
@@ -295,7 +291,12 @@ class InventarioCompraController extends Controller
 
             'estado' =>
             $request->has('estado'),
-        ]);
+        ];
+
+        DB::transaction(function () use ($datos, $inventarioCompra) {
+            $inventario = InventarioCompra::whereKey($inventarioCompra->id)->lockForUpdate()->firstOrFail();
+            $inventario->update($datos);
+        });
 
         return redirect()
             ->route('inventarios_compra.index')
@@ -303,6 +304,23 @@ class InventarioCompraController extends Controller
                 'success',
                 'Inventario de compra actualizado correctamente.'
             );
+    }
+
+    private function normalizarCantidades(array $validated): array
+    {
+        foreach (['stock_minimo', 'stock_maximo'] as $campo) {
+            if (!isset($validated[$campo])) {
+                continue;
+            }
+
+            $validated[$campo] = $this->inventarioCompraService->normalizarCantidad($validated[$campo], $campo);
+
+            if (BigDecimal::of($validated[$campo])->isNegative()) {
+                throw ValidationException::withMessages([$campo => 'La cantidad no puede ser negativa.']);
+            }
+        }
+
+        return $validated;
     }
 
     public function cambiarEstado(

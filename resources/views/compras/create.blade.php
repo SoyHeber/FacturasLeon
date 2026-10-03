@@ -381,17 +381,6 @@
 
                         <textarea name="observacion" id="observacion" class="form-control" rows="5">{{ old('observacion') }}</textarea>
 
-                        <div class="form-check mt-3">
-
-                            <input class="form-check-input" type="checkbox" name="estado" id="estado"
-                                value="1" {{ old('estado', true) ? 'checked' : '' }}>
-
-                            <label class="form-check-label" for="estado">
-                                Activo
-                            </label>
-
-                        </div>
-
                     </div>
 
                     <div class="col-lg-5">

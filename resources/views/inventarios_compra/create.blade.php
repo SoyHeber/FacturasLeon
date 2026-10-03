@@ -87,14 +87,9 @@
                 <div class="row">
 
                     <div class="col-md-4 mb-3">
-
-                        <label for="cantidad" class="form-label fw-semibold">
-                            Cantidad actual
-                        </label>
-
-                        <input type="number" name="cantidad" id="cantidad" class="form-control" step="0.0001"
-                            min="0" value="{{ old('cantidad', 0) }}" required>
-
+                        <span class="form-label fw-semibold d-block">Cantidad inicial</span>
+                        <p class="mb-1">0.0000000000</p>
+                        <small class="text-muted">Ingresa stock mediante un movimiento manual ENTRADA o AJUSTE.</small>
                     </div>
 
                     <div class="col-md-4 mb-3">

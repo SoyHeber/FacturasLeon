@@ -12,6 +12,16 @@
     </div>
 
 
+    @if ($errors->any())
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     {{-- ====================================================== --}}
     {{-- ENCABEZADO --}}
     {{-- ====================================================== --}}
@@ -229,10 +239,29 @@
                     </span>
                 @else
                     <span class="badge rounded-pill bg-danger-subtle text-danger px-3 py-2">
-                        Inactivo
+                        Anulada
                     </span>
                 @endif
+
+                @if (!$compra->inventario_aplicado)
+                    <small class="text-muted d-block mt-2">
+                        Compra histórica: sin inventario aplicado automáticamente. Requiere conciliación antes de anularse.
+                    </small>
+                @endif
             </div>
+
+            @if (!$compra->estado && $compra->fecha_anulacion)
+                <div class="row">
+                    <div class="col-md-6 mb-4">
+                        <span class="text-muted d-block">Fecha de anulación</span>
+                        <strong>{{ $compra->fecha_anulacion->format('d/m/Y H:i') }}</strong>
+                    </div>
+                    <div class="col-md-6 mb-4">
+                        <span class="text-muted d-block">Usuario que anuló</span>
+                        <strong>{{ $compra->anuladoPor?->name ?? 'Sin usuario' }}</strong>
+                    </div>
+                </div>
+            @endif
 
             <div class="d-flex gap-2">
 
@@ -240,31 +269,20 @@
                     Volver
                 </a>
 
-                @can('compras.modificar')
-                    <a href="{{ route('compras.edit', $compra->id) }}" class="btn btn-warning">
-                        Editar
-                    </a>
-                @endcan
+                @if ($compra->estado)
+                    @can('compras.eliminar')
+                        <form method="POST" action="{{ route('compras.cambiar-estado', $compra->id) }}"
+                            onsubmit="return confirm('¿Deseas anular definitivamente esta compra? Esta acción no puede revertirse.')">
 
-                @can('compras.eliminar')
-                    <form method="POST" action="{{ route('compras.cambiar-estado', $compra->id) }}"
-                        onsubmit="return confirm('¿Deseas cambiar el estado de esta compra?')">
+                            @csrf
+                            @method('PATCH')
 
-                        @csrf
-                        @method('PATCH')
-
-                        @if ($compra->estado)
-                            <button type="submit" class="btn btn-outline-secondary">
-                                Inactivar
+                            <button type="submit" class="btn btn-outline-danger">
+                                Anular
                             </button>
-                        @else
-                            <button type="submit" class="btn btn-outline-success">
-                                Activar
-                            </button>
-                        @endif
-
-                    </form>
-                @endcan
+                        </form>
+                    @endcan
+                @endif
 
             </div>
 
@@ -563,27 +581,20 @@
             Volver
         </a>
 
-        <a href="{{ route('compras.edit', $compra->id) }}" class="btn btn-warning">
-            Editar
-        </a>
+        @if ($compra->estado)
+            @can('compras.eliminar')
+                <form method="POST" action="{{ route('compras.cambiar-estado', $compra->id) }}"
+                    onsubmit="return confirm('¿Deseas anular definitivamente esta compra? Esta acción no puede revertirse.')">
 
-        <form method="POST" action="{{ route('compras.cambiar-estado', $compra->id) }}"
-            onsubmit="return confirm('¿Deseas cambiar el estado de esta compra?')">
+                    @csrf
+                    @method('PATCH')
 
-            @csrf
-            @method('PATCH')
-
-            @if ($compra->estado)
-                <button type="submit" class="btn btn-outline-secondary">
-                    Inactivar
-                </button>
-            @else
-                <button type="submit" class="btn btn-outline-success">
-                    Activar
-                </button>
-            @endif
-
-        </form>
+                    <button type="submit" class="btn btn-outline-danger">
+                        Anular
+                    </button>
+                </form>
+            @endcan
+        @endif
 
     </div>
 @endsection

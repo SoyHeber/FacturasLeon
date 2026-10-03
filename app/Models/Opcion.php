@@ -9,6 +9,11 @@ class Opcion extends Model
 {
     use HasFactory;
 
+    public const ACCIONES_POR_RUTA = [
+        'compras' => ['ver', 'crear', 'eliminar'],
+        'detalles_compra' => ['ver'],
+    ];
+
     protected $table = 'opciones';
 
     protected $fillable = [

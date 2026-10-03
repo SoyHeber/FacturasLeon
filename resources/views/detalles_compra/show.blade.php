@@ -249,31 +249,7 @@
                     Volver
                 </a>
 
-                @can('detalles_compra.modificar')
-                    <a href="{{ route('detalles_compra.edit', $detalleCompra->id) }}" class="btn btn-warning">
-                        Editar
-                    </a>
-                @endcan
 
-                @can('detalles_compra.eliminar')
-                    <form method="POST" action="{{ route('detalles_compra.cambiar-estado', $detalleCompra->id) }}"
-                        onsubmit="return confirm('¿Deseas cambiar el estado de este detalle?')">
-
-                        @csrf
-                        @method('PATCH')
-
-                        @if ($detalleCompra->estado)
-                            <button type="submit" class="btn btn-outline-secondary">
-                                Inactivar
-                            </button>
-                        @else
-                            <button type="submit" class="btn btn-outline-success">
-                                Activar
-                            </button>
-                        @endif
-
-                    </form>
-                @endcan
 
             </div>
 

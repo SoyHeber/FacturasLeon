@@ -91,14 +91,9 @@
                 <div class="row">
 
                     <div class="col-md-4 mb-3">
-
-                        <label for="cantidad" class="form-label fw-semibold">
-                            Cantidad actual
-                        </label>
-
-                        <input type="number" name="cantidad" id="cantidad" class="form-control" step="0.0001"
-                            min="0" value="{{ old('cantidad', $inventarioCompra->cantidad) }}" required>
-
+                        <span class="form-label fw-semibold d-block">Cantidad actual</span>
+                        <p class="mb-1">{{ $inventarioCompra->cantidad }}</p>
+                        <small class="text-muted">El stock se modifica mediante movimientos de inventario.</small>
                     </div>
 
                     <div class="col-md-4 mb-3">

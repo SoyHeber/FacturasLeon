@@ -11,6 +11,16 @@
         </p>
     </div>
 
+    @if ($errors->any())
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <div class="card shadow-sm border-0 rounded-4">
         <div class="card-body p-4">
 
@@ -125,6 +135,14 @@
                 Origen del Movimiento
             </h5>
 
+            <div class="mb-4">
+                @if ($movimientoInventarioCompra->detalle_compra_id !== null)
+                    <span class="badge bg-dark">Automático - Compra</span>
+                @else
+                    <span class="badge bg-secondary">Manual</span>
+                @endif
+            </div>
+
             <div class="row">
 
                 <div class="col-md-6 mb-4">
@@ -139,7 +157,15 @@
                         </strong>
 
                         <div class="text-muted small">
-                            Compra #{{ $movimientoInventarioCompra->detalleCompra->compra_id }}
+                            @if ($movimientoInventarioCompra->detalleCompra->compra)
+                                @can('compras.ver')
+                                    <a href="{{ route('compras.show', $movimientoInventarioCompra->detalleCompra->compra->id) }}">
+                                        Compra #{{ $movimientoInventarioCompra->detalleCompra->compra->id }}
+                                    </a>
+                                @else
+                                    Compra #{{ $movimientoInventarioCompra->detalleCompra->compra->id }}
+                                @endcan
+                            @endif
                         </div>
                     @else
                         <span>
@@ -207,34 +233,36 @@
                     Volver
                 </a>
 
-                @can('movimientos_inventario_compra.modificar')
-                    <a href="{{ route('movimientos_inventario_compra.edit', $movimientoInventarioCompra->id) }}"
-                        class="btn btn-warning">
-                        Editar
-                    </a>
-                @endcan
+                @if ($movimientoInventarioCompra->detalle_compra_id === null)
+                    @can('movimientos_inventario_compra.modificar')
+                        <a href="{{ route('movimientos_inventario_compra.edit', $movimientoInventarioCompra->id) }}"
+                            class="btn btn-warning">
+                            Editar
+                        </a>
+                    @endcan
 
-                @can('movimientos_inventario_compra.eliminar')
-                    <form method="POST"
-                        action="{{ route('movimientos_inventario_compra.cambiar-estado', $movimientoInventarioCompra->id) }}"
-                        onsubmit="return confirm('¿Deseas cambiar el estado de este movimiento?')">
+                    @can('movimientos_inventario_compra.eliminar')
+                        <form method="POST"
+                            action="{{ route('movimientos_inventario_compra.cambiar-estado', $movimientoInventarioCompra->id) }}"
+                            onsubmit="return confirm('¿Deseas cambiar el estado de este movimiento?')">
 
-                        @csrf
-                        @method('PATCH')
+                            @csrf
+                            @method('PATCH')
 
-                        @if ($movimientoInventarioCompra->estado)
-                            <button type="submit" class="btn btn-outline-secondary">
-                                Inactivar
-                            </button>
-                        @else
-                            <button type="submit" class="btn btn-outline-success">
-                                Activar
-                            </button>
-                        @endif
+                            @if ($movimientoInventarioCompra->estado)
+                                <button type="submit" class="btn btn-outline-secondary">
+                                    Inactivar
+                                </button>
+                            @else
+                                <button type="submit" class="btn btn-outline-success">
+                                    Activar
+                                </button>
+                            @endif
 
-                    </form>
-                @endcan
+                        </form>
+                    @endcan
 
+                @endif
             </div>
 
         </div>

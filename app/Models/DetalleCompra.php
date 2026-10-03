@@ -31,9 +31,9 @@ class DetalleCompra extends Model
 
     protected $casts = [
         'numero_linea' => 'integer',
-        'cantidad' => 'decimal:4',
-        'precio_unitario' => 'decimal:6',
-        'porcentaje_descuento' => 'decimal:4',
+        'cantidad' => 'decimal:10',
+        'precio_unitario' => 'decimal:10',
+        'porcentaje_descuento' => 'decimal:10',
         'importe_bruto' => 'decimal:2',
         'importe_descuento' => 'decimal:2',
         'importe_exento' => 'decimal:2',

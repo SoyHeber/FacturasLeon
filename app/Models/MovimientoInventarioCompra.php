@@ -24,7 +24,7 @@ class MovimientoInventarioCompra extends Model
     ];
 
     protected $casts = [
-        'cantidad' => 'decimal:4',
+        'cantidad' => 'decimal:10',
         'fecha_movimiento' => 'datetime',
         'estado' => 'boolean',
     ];

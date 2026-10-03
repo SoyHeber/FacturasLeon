@@ -13,7 +13,8 @@ use Illuminate\Support\Facades\DB;
 /**
  * Registra acciones, módulos y opciones del sistema y le da todos los permisos
  * al rol Administrador. Es idempotente: se puede correr cada vez que se agrega
- * una opción nueva sin duplicar datos ni sobrescribir cambios hechos desde la pantalla.
+ * una opción nueva sin duplicar datos. Conserva los metadatos configurados desde
+ * la pantalla y ajusta los permisos a las operaciones disponibles.
  */
 class SeguridadSeeder extends Seeder
 {
@@ -70,9 +71,8 @@ class SeguridadSeeder extends Seeder
                 Accion::firstOrCreate(['clave' => $accion['clave']], $accion);
             }
 
-            $accionIds = Accion::whereIn('clave', array_column(self::ACCIONES, 'clave'))
-                ->pluck('id')
-                ->all();
+            $acciones = Accion::whereIn('clave', array_column(self::ACCIONES, 'clave'))->get()->keyBy('clave');
+            $accionIds = $acciones->pluck('id')->all();
 
             $ordenModulo = 1;
 
@@ -95,7 +95,18 @@ class SeguridadSeeder extends Seeder
                         ]
                     );
 
-                    $opcion->acciones()->syncWithoutDetaching($accionIds);
+                    if (isset(Opcion::ACCIONES_POR_RUTA[$ruta])) {
+                        $admitidas = $acciones->filter(
+                            fn ($accion) => in_array($accion->clave, Opcion::ACCIONES_POR_RUTA[$ruta], true)
+                        )->pluck('id')->all();
+
+                        // Retira únicamente los permisos de operaciones que ya no existen.
+                        DB::table('roles_opciones_acciones')->where('opcion_id', $opcion->id)
+                            ->whereNotIn('accion_id', $admitidas)->delete();
+                        $opcion->acciones()->sync($admitidas);
+                    } else {
+                        $opcion->acciones()->syncWithoutDetaching($accionIds);
+                    }
 
                     $ordenOpcion++;
                 }

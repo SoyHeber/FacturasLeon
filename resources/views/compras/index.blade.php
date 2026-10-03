@@ -28,6 +28,16 @@
         </div>
     @endif
 
+    @if ($errors->any())
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <div class="card shadow-sm border-0 rounded-4">
 
         <div class="card-body p-4">
@@ -115,7 +125,7 @@
                                     </option>
 
                                     <option value="0" {{ request('estado') === '0' ? 'selected' : '' }}>
-                                        Inactivo
+                                        Anulada
                                     </option>
 
                                 </select>
@@ -191,8 +201,21 @@
                                         </span>
                                     @else
                                         <span class="badge rounded-pill bg-danger-subtle text-danger px-3 py-2">
-                                            Inactivo
+                                            Anulada
                                         </span>
+                                    @endif
+
+                                    @if (!$compra->estado && $compra->fecha_anulacion)
+                                        <small class="text-muted d-block mt-1">
+                                            {{ $compra->fecha_anulacion->format('d/m/Y H:i') }}
+                                            · {{ $compra->anuladoPor?->name ?? 'Sin usuario' }}
+                                        </small>
+                                    @endif
+
+                                    @if (!$compra->inventario_aplicado)
+                                        <small class="text-muted d-block mt-1">
+                                            Histórica: sin inventario automático.
+                                        </small>
                                     @endif
                                 </td>
 
@@ -207,33 +230,21 @@
                                             </a>
                                         @endcan
 
-                                        @can('compras.modificar')
-                                            <a href="{{ route('compras.edit', $compra->id) }}"
-                                                class="btn btn-outline-warning btn-sm">
-                                                Editar
-                                            </a>
-                                        @endcan
+                                        @if ($compra->estado)
+                                            @can('compras.eliminar')
+                                                <form method="POST"
+                                                    action="{{ route('compras.cambiar-estado', $compra->id) }}"
+                                                    onsubmit="return confirm('¿Deseas anular definitivamente esta compra? Esta acción no puede revertirse.')">
 
-                                        @can('compras.eliminar')
-                                            <form method="POST"
-                                                action="{{ route('compras.cambiar-estado', $compra->id) }}"
-                                                onsubmit="return confirm('¿Deseas cambiar el estado de esta compra?')">
+                                                    @csrf
+                                                    @method('PATCH')
 
-                                                @csrf
-                                                @method('PATCH')
-
-                                                @if ($compra->estado)
-                                                    <button type="submit" class="btn btn-outline-secondary btn-sm">
-                                                        Inactivar
+                                                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                        Anular
                                                     </button>
-                                                @else
-                                                    <button type="submit" class="btn btn-outline-success btn-sm">
-                                                        Activar
-                                                    </button>
-                                                @endif
-
-                                            </form>
-                                        @endcan
+                                                </form>
+                                            @endcan
+                                        @endif
 
                                     </div>
 

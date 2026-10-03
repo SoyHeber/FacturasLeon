@@ -90,7 +90,7 @@ class OpcionController extends Controller
             'orden' => 'nullable|integer|min:0',
             'estado' => 'nullable|boolean',
             'acciones' => 'nullable|array',
-            'acciones.*' => 'exists:acciones,id',
+            'acciones.*' => [$this->reglaAccionPermitida($request)],
         ], [
             'ruta.regex' => 'La ruta solo puede contener minúsculas, números y guion bajo (ej: metodos_pago).',
         ]);
@@ -133,6 +133,9 @@ class OpcionController extends Controller
             ->get();
 
         $acciones = Accion::where('estado', true)
+            ->when(isset(Opcion::ACCIONES_POR_RUTA[$opcion->ruta]), function ($query) use ($opcion) {
+                $query->whereIn('clave', Opcion::ACCIONES_POR_RUTA[$opcion->ruta]);
+            })
             ->orderBy('id')
             ->get();
 
@@ -159,7 +162,7 @@ class OpcionController extends Controller
             'orden' => 'nullable|integer|min:0',
             'estado' => 'nullable|boolean',
             'acciones' => 'nullable|array',
-            'acciones.*' => 'exists:acciones,id',
+            'acciones.*' => [$this->reglaAccionPermitida($request)],
         ], [
             'ruta.regex' => 'La ruta solo puede contener minúsculas, números y guion bajo (ej: metodos_pago).',
         ]);
@@ -200,5 +203,16 @@ class OpcionController extends Controller
         return redirect()
             ->route('opciones.index')
             ->with('success', 'Estado de la opción actualizado correctamente.');
+    }
+
+    private function reglaAccionPermitida(Request $request)
+    {
+        return Rule::exists('acciones', 'id')->where(function ($query) use ($request) {
+            $ruta = $request->input('ruta');
+
+            if (is_string($ruta) && isset(Opcion::ACCIONES_POR_RUTA[$ruta])) {
+                $query->whereIn('clave', Opcion::ACCIONES_POR_RUTA[$ruta]);
+            }
+        });
     }
 }

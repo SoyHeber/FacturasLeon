@@ -37,6 +37,8 @@ class Compra extends Model
 
         'fecha_emision' => 'datetime',
         'fecha_certificacion' => 'datetime',
+        'fecha_anulacion' => 'datetime',
+        'inventario_aplicado' => 'boolean',
 
         'importe_bruto' => 'decimal:2',
         'importe_descuento' => 'decimal:2',
@@ -57,6 +59,11 @@ class Compra extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function anuladoPor()
+    {
+        return $this->belongsTo(User::class, 'anulado_por_id');
     }
 
     public function detalles()

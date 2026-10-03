@@ -12,9 +12,26 @@ return new class extends Migration
                 ->where('codigo', 'FACT')
                 ->first();
 
+            if (!$tipoDocumento) {
+                $ahora = now();
+
+                DB::table('tipos_documento')->insertOrIgnore([
+                    'codigo' => 'FACT',
+                    'nombre' => 'Factura',
+                    'descripcion' => null,
+                    'estado' => true,
+                    'created_at' => $ahora,
+                    'updated_at' => $ahora,
+                ]);
+
+                $tipoDocumento = DB::table('tipos_documento')
+                    ->where('codigo', 'FACT')
+                    ->first();
+            }
+
             if (!$tipoDocumento || $tipoDocumento->codigo !== 'FACT') {
                 throw new RuntimeException(
-                    'No existe el tipo de documento FACT. Ejecute TipoDocumentoSeeder antes de migrar las compras.'
+                    'No se pudo obtener el tipo de documento FACT para migrar las compras.'
                 );
             }
 

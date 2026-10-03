@@ -106,35 +106,6 @@
 
                     <div class="col-md-4 mb-3">
 
-                        <label for="detalle_compra_id" class="form-label fw-semibold">
-                            Detalle de Compra
-                        </label>
-
-                        <select name="detalle_compra_id" id="detalle_compra_id" class="form-select">
-
-                            <option value="">
-                                Sin detalle de compra
-                            </option>
-
-                            @foreach ($detallesCompra as $detalleCompra)
-                                <option value="{{ $detalleCompra->id }}"
-                                    {{ old('detalle_compra_id', $movimientoInventarioCompra->detalle_compra_id) == $detalleCompra->id
-                                        ? 'selected'
-                                        : '' }}>
-
-                                    Detalle #{{ $detalleCompra->id }}
-                                    -
-                                    Compra #{{ $detalleCompra->compra_id }}
-
-                                </option>
-                            @endforeach
-
-                        </select>
-
-                    </div>
-
-                    <div class="col-md-4 mb-3">
-
                         <label for="produccion_id" class="form-label fw-semibold">
                             Producción
                         </label>

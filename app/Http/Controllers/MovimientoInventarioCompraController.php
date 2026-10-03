@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\DetalleCompra;
 use App\Models\InventarioCompra;
 use App\Models\MovimientoInventarioCompra;
 use App\Models\Produccion;
+use App\Services\InventarioCompraService;
+use Brick\Math\BigDecimal;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -13,11 +14,15 @@ use Illuminate\Validation\ValidationException;
 
 class MovimientoInventarioCompraController extends Controller
 {
+    public function __construct(private InventarioCompraService $inventarioCompraService)
+    {
+    }
+
     public function index(Request $request)
     {
         $query = MovimientoInventarioCompra::with([
             'inventarioCompra',
-            'detalleCompra',
+            'detalleCompra.compra',
             'produccion',
         ]);
 
@@ -116,13 +121,6 @@ class MovimientoInventarioCompraController extends Controller
             ->orderBy('nombre')
             ->get();
 
-        $detallesCompra = DetalleCompra::where(
-            'estado',
-            true
-        )
-            ->orderBy('id', 'desc')
-            ->get();
-
         $producciones = Produccion::where(
             'estado',
             true
@@ -134,7 +132,6 @@ class MovimientoInventarioCompraController extends Controller
             'movimientos_inventario_compra.create',
             compact(
                 'inventariosCompra',
-                'detallesCompra',
                 'producciones'
             )
         );
@@ -146,33 +143,22 @@ class MovimientoInventarioCompraController extends Controller
 
         DB::transaction(function () use ($validated, $request) {
 
-            $inventario = InventarioCompra::where(
-                'id',
-                $validated['inventario_compra_id']
-            )
-                ->lockForUpdate()
-                ->firstOrFail();
-
             $delta = $this->calcularDelta(
                 $validated['tipo_movimiento'],
                 $validated['cantidad']
             );
 
-            $nuevoStock = (float) $inventario->cantidad + $delta;
-
-            if ($nuevoStock < 0) {
-                throw ValidationException::withMessages([
-                    'cantidad' =>
-                    'El movimiento dejaría el inventario con una cantidad negativa.',
-                ]);
-            }
+            $this->inventarioCompraService->comprobarAjuste(
+                (int) $validated['inventario_compra_id'],
+                $delta
+            );
 
             MovimientoInventarioCompra::create([
                 'inventario_compra_id' =>
                 $validated['inventario_compra_id'],
 
                 'detalle_compra_id' =>
-                $validated['detalle_compra_id'] ?? null,
+                null,
 
                 'produccion_id' =>
                 $validated['produccion_id'] ?? null,
@@ -201,9 +187,10 @@ class MovimientoInventarioCompraController extends Controller
              * se registra como activo.
              */
             if ($request->has('estado')) {
-                $inventario->update([
-                    'cantidad' => $nuevoStock,
-                ]);
+                $this->inventarioCompraService->ajustar(
+                    (int) $validated['inventario_compra_id'],
+                    $delta
+                );
             }
         });
 
@@ -220,7 +207,7 @@ class MovimientoInventarioCompraController extends Controller
     ) {
         $movimientoInventarioCompra->load([
             'inventarioCompra',
-            'detalleCompra',
+            'detalleCompra.compra',
             'produccion.producto',
         ]);
 
@@ -233,6 +220,9 @@ class MovimientoInventarioCompraController extends Controller
     public function edit(
         MovimientoInventarioCompra $movimientoInventarioCompra
     ) {
+        $movimientoInventarioCompra = MovimientoInventarioCompra::findOrFail($movimientoInventarioCompra->id);
+        $this->exigirMovimientoManual($movimientoInventarioCompra);
+
         $inventariosCompra = InventarioCompra::where(
             'estado',
             true
@@ -242,17 +232,6 @@ class MovimientoInventarioCompraController extends Controller
                 $movimientoInventarioCompra->inventario_compra_id
             )
             ->orderBy('nombre')
-            ->get();
-
-        $detallesCompra = DetalleCompra::where(
-            'estado',
-            true
-        )
-            ->orWhere(
-                'id',
-                $movimientoInventarioCompra->detalle_compra_id
-            )
-            ->orderBy('id', 'desc')
             ->get();
 
         $producciones = Produccion::where(
@@ -271,7 +250,6 @@ class MovimientoInventarioCompraController extends Controller
             compact(
                 'movimientoInventarioCompra',
                 'inventariosCompra',
-                'detallesCompra',
                 'producciones'
             )
         );
@@ -281,45 +259,38 @@ class MovimientoInventarioCompraController extends Controller
         Request $request,
         MovimientoInventarioCompra $movimientoInventarioCompra
     ) {
-        $validated = $this->validarMovimiento($request);
-
         DB::transaction(function () use (
-            $validated,
             $request,
             $movimientoInventarioCompra
         ) {
+
+            $movimientoInventarioCompra = MovimientoInventarioCompra::whereKey($movimientoInventarioCompra->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $this->exigirMovimientoManual($movimientoInventarioCompra);
+            $validated = $this->validarMovimiento($request);
+
+            // Bloquea ambos inventarios en el mismo orden cuando cambia el destino.
+            InventarioCompra::whereIn('id', [
+                $movimientoInventarioCompra->inventario_compra_id,
+                $validated['inventario_compra_id'],
+            ])->orderBy('id')->lockForUpdate()->get();
 
             /*
              * 1. Revertir el movimiento anterior si estaba activo.
              */
             if ($movimientoInventarioCompra->estado) {
 
-                $inventarioAnterior = InventarioCompra::where(
-                    'id',
-                    $movimientoInventarioCompra->inventario_compra_id
-                )
-                    ->lockForUpdate()
-                    ->firstOrFail();
-
                 $deltaAnterior = $this->calcularDelta(
                     $movimientoInventarioCompra->tipo_movimiento,
                     $movimientoInventarioCompra->cantidad
                 );
 
-                $stockRevertido =
-                    (float) $inventarioAnterior->cantidad
-                    - $deltaAnterior;
-
-                if ($stockRevertido < 0) {
-                    throw ValidationException::withMessages([
-                        'cantidad' =>
-                        'No es posible modificar este movimiento porque su reversión dejaría el inventario negativo.',
-                    ]);
-                }
-
-                $inventarioAnterior->update([
-                    'cantidad' => $stockRevertido,
-                ]);
+                $this->inventarioCompraService->ajustar(
+                    (int) $movimientoInventarioCompra->inventario_compra_id,
+                    (string) BigDecimal::of($deltaAnterior)->negated()
+                );
             }
 
             /*
@@ -327,32 +298,15 @@ class MovimientoInventarioCompraController extends Controller
              */
             if ($request->has('estado')) {
 
-                $inventarioNuevo = InventarioCompra::where(
-                    'id',
-                    $validated['inventario_compra_id']
-                )
-                    ->lockForUpdate()
-                    ->firstOrFail();
-
                 $deltaNuevo = $this->calcularDelta(
                     $validated['tipo_movimiento'],
                     $validated['cantidad']
                 );
 
-                $nuevoStock =
-                    (float) $inventarioNuevo->cantidad
-                    + $deltaNuevo;
-
-                if ($nuevoStock < 0) {
-                    throw ValidationException::withMessages([
-                        'cantidad' =>
-                        'El movimiento dejaría el inventario con una cantidad negativa.',
-                    ]);
-                }
-
-                $inventarioNuevo->update([
-                    'cantidad' => $nuevoStock,
-                ]);
+                $this->inventarioCompraService->ajustar(
+                    (int) $validated['inventario_compra_id'],
+                    $deltaNuevo
+                );
             }
 
             /*
@@ -363,7 +317,7 @@ class MovimientoInventarioCompraController extends Controller
                 $validated['inventario_compra_id'],
 
                 'detalle_compra_id' =>
-                $validated['detalle_compra_id'] ?? null,
+                null,
 
                 'produccion_id' =>
                 $validated['produccion_id'] ?? null,
@@ -403,12 +357,11 @@ class MovimientoInventarioCompraController extends Controller
             $movimientoInventarioCompra
         ) {
 
-            $inventario = InventarioCompra::where(
-                'id',
-                $movimientoInventarioCompra->inventario_compra_id
-            )
+            $movimientoInventarioCompra = MovimientoInventarioCompra::whereKey($movimientoInventarioCompra->id)
                 ->lockForUpdate()
                 ->firstOrFail();
+
+            $this->exigirMovimientoManual($movimientoInventarioCompra);
 
             $delta = $this->calcularDelta(
                 $movimientoInventarioCompra->tipo_movimiento,
@@ -421,28 +374,13 @@ class MovimientoInventarioCompraController extends Controller
              */
             if ($movimientoInventarioCompra->estado) {
 
-                $nuevoStock =
-                    (float) $inventario->cantidad - $delta;
-            } else {
-
-                /*
-                 * Si está inactivo:
-                 * lo estamos activando nuevamente.
-                 */
-                $nuevoStock =
-                    (float) $inventario->cantidad + $delta;
+                $delta = (string) BigDecimal::of($delta)->negated();
             }
 
-            if ($nuevoStock < 0) {
-                throw ValidationException::withMessages([
-                    'cantidad' =>
-                    'No es posible cambiar el estado porque el inventario quedaría negativo.',
-                ]);
-            }
-
-            $inventario->update([
-                'cantidad' => $nuevoStock,
-            ]);
+            $this->inventarioCompraService->ajustar(
+                (int) $movimientoInventarioCompra->inventario_compra_id,
+                $delta
+            );
 
             $movimientoInventarioCompra->update([
                 'estado' =>
@@ -464,11 +402,6 @@ class MovimientoInventarioCompraController extends Controller
             'inventario_compra_id' => [
                 'required',
                 'exists:inventarios_compra,id',
-            ],
-
-            'detalle_compra_id' => [
-                'nullable',
-                'exists:detalles_compra,id',
             ],
 
             'produccion_id' => [
@@ -513,6 +446,13 @@ class MovimientoInventarioCompraController extends Controller
             ],
         ]);
 
+        $validated['cantidad'] = $this->inventarioCompraService->normalizarCantidad($validated['cantidad']);
+        $cantidad = BigDecimal::of($validated['cantidad']);
+
+        if ($cantidad->isZero()) {
+            throw ValidationException::withMessages(['cantidad' => 'La cantidad debe ser distinta de cero.']);
+        }
+
         /*
          * ENTRADA y SALIDA deben utilizar cantidades positivas.
          * AJUSTE puede ser positivo o negativo.
@@ -522,7 +462,7 @@ class MovimientoInventarioCompraController extends Controller
                 $validated['tipo_movimiento'],
                 ['ENTRADA', 'SALIDA']
             ) &&
-            $validated['cantidad'] <= 0
+            !$cantidad->isPositive()
         ) {
             throw ValidationException::withMessages([
                 'cantidad' =>
@@ -530,34 +470,28 @@ class MovimientoInventarioCompraController extends Controller
             ]);
         }
 
-        /*
-         * Evitamos tener dos orígenes distintos
-         * simultáneamente.
-         */
-        if (
-            !empty($validated['detalle_compra_id']) &&
-            !empty($validated['produccion_id'])
-        ) {
+        return $validated;
+    }
+
+    private function exigirMovimientoManual(MovimientoInventarioCompra $movimiento): void
+    {
+        if ($movimiento->detalle_compra_id !== null) {
             throw ValidationException::withMessages([
-                'detalle_compra_id' =>
-                'El movimiento no puede pertenecer a una compra y a una producción al mismo tiempo.',
+                'movimiento' => 'Los movimientos generados por una compra son históricos y no pueden modificarse manualmente.',
             ]);
         }
-
-        return $validated;
     }
 
     private function calcularDelta(
         string $tipoMovimiento,
         $cantidad
-    ): float {
-        $cantidad = (float) $cantidad;
+    ): string {
+        $cantidad = BigDecimal::of($this->inventarioCompraService->normalizarCantidad($cantidad));
 
         return match ($tipoMovimiento) {
-            'ENTRADA' => abs($cantidad),
-            'SALIDA' => -abs($cantidad),
-            'AJUSTE' => $cantidad,
-            default => 0,
+            'ENTRADA' => (string) $cantidad->abs(),
+            'SALIDA' => (string) $cantidad->abs()->negated(),
+            'AJUSTE' => (string) $cantidad,
         };
     }
 }

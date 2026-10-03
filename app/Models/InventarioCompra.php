@@ -15,7 +15,6 @@ class InventarioCompra extends Model
         'nombre',
         'descripcion',
         'unidad_medida',
-        'cantidad',
         'stock_minimo',
         'stock_maximo',
         'ubicacion',
@@ -23,9 +22,9 @@ class InventarioCompra extends Model
     ];
 
     protected $casts = [
-        'cantidad' => 'decimal:4',
-        'stock_minimo' => 'decimal:4',
-        'stock_maximo' => 'decimal:4',
+        'cantidad' => 'decimal:10',
+        'stock_minimo' => 'decimal:10',
+        'stock_maximo' => 'decimal:10',
         'estado' => 'boolean',
     ];
 

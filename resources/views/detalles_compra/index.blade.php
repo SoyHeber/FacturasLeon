@@ -8,15 +8,10 @@
             </h1>
 
             <p class="text-muted mb-0">
-                Administra los materiales e insumos asociados a cada compra.
+                Consulta el historial de materiales e insumos asociados a cada compra.
             </p>
         </div>
 
-        @can('detalles_compra.crear')
-            <a href="{{ route('detalles_compra.create') }}" class="btn btn-warning fw-bold px-4 py-2">
-                + Nuevo detalle
-            </a>
-        @endcan
     </div>
 
     @if (session('success'))
@@ -200,33 +195,7 @@
                                             </a>
                                         @endcan
 
-                                        @can('detalles_compra.modificar')
-                                            <a href="{{ route('detalles_compra.edit', $detalleCompra->id) }}"
-                                                class="btn btn-outline-warning btn-sm">
-                                                Editar
-                                            </a>
-                                        @endcan
 
-                                        @can('detalles_compra.eliminar')
-                                            <form method="POST"
-                                                action="{{ route('detalles_compra.cambiar-estado', $detalleCompra->id) }}"
-                                                onsubmit="return confirm('¿Deseas cambiar el estado de este detalle?')">
-
-                                                @csrf
-                                                @method('PATCH')
-
-                                                @if ($detalleCompra->estado)
-                                                    <button type="submit" class="btn btn-outline-secondary btn-sm">
-                                                        Inactivar
-                                                    </button>
-                                                @else
-                                                    <button type="submit" class="btn btn-outline-success btn-sm">
-                                                        Activar
-                                                    </button>
-                                                @endif
-
-                                            </form>
-                                        @endcan
 
                                     </div>
 

@@ -184,10 +184,20 @@
                                 </td>
 
                                 <td>
-                                    @if ($movimiento->detalle_compra_id)
-                                        #{{ $movimiento->detalle_compra_id }}
+                                    @if ($movimiento->detalle_compra_id !== null)
+                                        <span class="badge bg-dark">Automático - Compra</span>
+                                        <small class="text-muted d-block mt-1">Detalle #{{ $movimiento->detalle_compra_id }}</small>
+                                        @if ($movimiento->detalleCompra?->compra)
+                                            @can('compras.ver')
+                                                <a href="{{ route('compras.show', $movimiento->detalleCompra->compra->id) }}" class="small">
+                                                    Compra #{{ $movimiento->detalleCompra->compra->id }}
+                                                </a>
+                                            @else
+                                                <small class="text-muted">Compra #{{ $movimiento->detalleCompra->compra->id }}</small>
+                                            @endcan
+                                        @endif
                                     @else
-                                        -
+                                        <span class="badge bg-secondary">Manual</span>
                                     @endif
                                 </td>
 
@@ -259,34 +269,36 @@
                                             </a>
                                         @endcan
 
-                                        @can('movimientos_inventario_compra.modificar')
-                                            <a href="{{ route('movimientos_inventario_compra.edit', $movimiento->id) }}"
-                                                class="btn btn-outline-warning btn-sm">
-                                                Editar
-                                            </a>
-                                        @endcan
+                                        @if ($movimiento->detalle_compra_id === null)
+                                            @can('movimientos_inventario_compra.modificar')
+                                                <a href="{{ route('movimientos_inventario_compra.edit', $movimiento->id) }}"
+                                                    class="btn btn-outline-warning btn-sm">
+                                                    Editar
+                                                </a>
+                                            @endcan
 
-                                        @can('movimientos_inventario_compra.eliminar')
-                                            <form method="POST"
-                                                action="{{ route('movimientos_inventario_compra.cambiar-estado', $movimiento->id) }}"
-                                                onsubmit="return confirm('¿Deseas cambiar el estado de este movimiento?')">
+                                            @can('movimientos_inventario_compra.eliminar')
+                                                <form method="POST"
+                                                    action="{{ route('movimientos_inventario_compra.cambiar-estado', $movimiento->id) }}"
+                                                    onsubmit="return confirm('¿Deseas cambiar el estado de este movimiento?')">
 
-                                                @csrf
-                                                @method('PATCH')
+                                                    @csrf
+                                                    @method('PATCH')
 
-                                                @if ($movimiento->estado)
-                                                    <button type="submit" class="btn btn-outline-secondary btn-sm">
-                                                        Inactivar
-                                                    </button>
-                                                @else
-                                                    <button type="submit" class="btn btn-outline-success btn-sm">
-                                                        Activar
-                                                    </button>
-                                                @endif
+                                                    @if ($movimiento->estado)
+                                                        <button type="submit" class="btn btn-outline-secondary btn-sm">
+                                                            Inactivar
+                                                        </button>
+                                                    @else
+                                                        <button type="submit" class="btn btn-outline-success btn-sm">
+                                                            Activar
+                                                        </button>
+                                                    @endif
 
-                                            </form>
-                                        @endcan
+                                                </form>
+                                            @endcan
 
+                                        @endif
                                     </div>
 
                                 </td>

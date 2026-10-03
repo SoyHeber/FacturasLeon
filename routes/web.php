@@ -210,8 +210,6 @@ Route::middleware(['auth', 'permiso'])->group(function () {
     Route::get('/compras/create', [CompraController::class, 'create'])->name('compras.create');
     Route::post('/compras', [CompraController::class, 'store'])->name('compras.store');
     Route::get('/compras/{compra}', [CompraController::class, 'show'])->name('compras.show');
-    Route::get('/compras/{compra}/edit', [CompraController::class, 'edit'])->name('compras.edit');
-    Route::put('/compras/{compra}', [CompraController::class, 'update'])->name('compras.update');
     Route::patch('/compras/{compra}/estado', [CompraController::class, 'cambiarEstado'])->name('compras.cambiar-estado');
 
     /*Rutas para Inventarios de Compra*/
@@ -225,12 +223,7 @@ Route::middleware(['auth', 'permiso'])->group(function () {
 
     /*Rutas para Detalles de Compra*/
     Route::get('/detalles-compra', [DetalleCompraController::class, 'index'])->name('detalles_compra.index');
-    Route::get('/detalles-compra/create', [DetalleCompraController::class, 'create'])->name('detalles_compra.create');
-    Route::post('/detalles-compra', [DetalleCompraController::class, 'store'])->name('detalles_compra.store');
-    Route::get('/detalles-compra/{detalleCompra}', [DetalleCompraController::class, 'show'])->name('detalles_compra.show');
-    Route::get('/detalles-compra/{detalleCompra}/edit', [DetalleCompraController::class, 'edit'])->name('detalles_compra.edit');
-    Route::put('/detalles-compra/{detalleCompra}', [DetalleCompraController::class, 'update'])->name('detalles_compra.update');
-    Route::patch('/detalles-compra/{detalleCompra}/estado', [DetalleCompraController::class, 'cambiarEstado'])->name('detalles_compra.cambiar-estado');
+    Route::get('/detalles-compra/{detalleCompra}', [DetalleCompraController::class, 'show'])->whereNumber('detalleCompra')->name('detalles_compra.show');
 
     /*Rutas para Materiales de Producto*/
     Route::get('/materiales-producto', [MaterialProductoController::class, 'index'])->name('materiales_producto.index');
