@@ -15,6 +15,7 @@ abstract class FelTestCase extends VentasInventarioTestCase
     protected function setUp(): void
     {
         parent::setUp();
+        \Illuminate\Support\Facades\Cache::swap(new \Illuminate\Cache\Repository(new \Illuminate\Cache\ArrayStore));
         $this->configuracionFel = [
             'endpoint' => 'https://ainnova.invalid/soap',
             'basic_usuario' => 'basic-usuario-solo-prueba', 'basic_password' => 'basic-password-solo-prueba',

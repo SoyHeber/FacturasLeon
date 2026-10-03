@@ -217,6 +217,9 @@ Route::middleware(['auth', 'permiso'])->group(function () {
     Route::patch('/ventas/{venta}/confirmar', [VentaController::class, 'confirmar'])->whereNumber('venta')->name('ventas.confirmar');
     Route::post('/ventas/{venta}/certificar', [FelController::class, 'certificar'])->whereNumber('venta')->name('ventas.certificar');
     Route::post('/ventas/{venta}/conciliar-respuesta', [FelController::class, 'conciliarRespuesta'])->whereNumber('venta')->name('ventas.conciliar_respuesta');
+    Route::post('/ventas/{venta}/reintentar-certificacion', [FelController::class, 'reintentarCertificacion'])->whereNumber('venta')->name('ventas.reintentar_certificacion');
+    Route::post('/ventas/{venta}/recuperar-certificacion', [FelController::class, 'recuperarCertificacion'])->whereNumber('venta')->name('ventas.recuperar_certificacion');
+    Route::get('/ventas/{venta}/fel/{tipo}', [FelController::class, 'consultarRepresentacion'])->whereNumber('venta')->where('tipo', 'pdf|xml')->name('ventas.consultar_representacion');
 
     /*Rutas para Compras*/
     Route::get('/compras', [CompraController::class, 'index'])->name('compras.index');

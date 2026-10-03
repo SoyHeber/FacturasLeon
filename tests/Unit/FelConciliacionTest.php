@@ -30,6 +30,39 @@ class FelConciliacionTest extends FelTestCase
         Log::swap($this->logger);
     }
 
+    public function test_concilia_datos_reales_150_sin_zona_desde_raw_sin_reenvio_ni_cambiar_datos_congelados(): void
+    {
+        config(['fel.ainnova.nit_emisor' => '8363137']);
+        $venta = $this->confirmacion->confirmarVenta($this->crearVenta(['detalles' => [$this->linea([
+            'cantidad' => '1', 'precio_unitario' => '150', 'porcentaje_descuento' => '0',
+        ])]])->id, 7);
+        $this->assertSame('150.00', $venta->importe_total);
+        $xml = file_get_contents(dirname(__DIR__).'/Fixtures/fel/certificado_fact_150.xml');
+        $raw = '<env:Envelope xmlns:env="http://schemas.xmlsoap.org/soap/envelope/"><env:Body><generaDocumentoResponse><result>'
+            .htmlspecialchars('<Resultado>'.$xml.'</Resultado>', ENT_QUOTES | ENT_XML1, 'UTF-8')
+            .'</result></generaDocumentoResponse></env:Body></env:Envelope>';
+        $intento = IntentoFel::create(['documento_fel_id' => $venta->documentoFel->id, 'usuario_id' => 7,
+            'resultado' => 'INCIERTA', 'fecha_inicio' => now(), 'fecha_fin' => now(), 'respuesta_raw' => $raw,
+            'error_tecnico' => 'La fecha de certificación no es válida.']);
+        $venta->documentoFel->forceFill(['estado_fel' => 'INCIERTA', 'nit_emisor' => '8363137'])->save();
+        $congelados = $this->congelados($venta);
+        $protegidas = $this->protegidas();
+        config(['fel.ainnova' => ['nit_emisor' => '8363137']]);
+
+        $documento = $this->servicioLocal()->conciliarDesdeRespuestaExistente($venta->documentoFel->id, 7);
+
+        $this->assertSame('CERTIFICADA', $documento->estado_fel);
+        $this->assertSame('BADD0C1D-1ABD-4414-8447-7F9C81D756A8', $documento->fel_uuid);
+        $this->assertSame('BADD0C1D', $documento->fel_serie);
+        $this->assertSame('448611348', $documento->fel_numero);
+        $this->assertSame('2026-10-03 16:33:36', $documento->fecha_certificacion->toDateTimeString());
+        $this->assertSame('INCIERTA', $intento->fresh()->resultado);
+        $this->assertSame($raw, $intento->fresh()->respuesta_raw);
+        $this->assertSame(1, IntentoFel::count());
+        $this->assertSame($congelados, $this->congelados($venta));
+        $this->assertSame($protegidas, $this->protegidas());
+    }
+
     public function test_concilia_respuesta_existente_sin_cliente_soap_y_conserva_historia_stock_y_solicitud(): void
     {
         [$venta, $intento] = $this->preparar();
@@ -52,7 +85,7 @@ class FelConciliacionTest extends FelTestCase
         $this->assertSame('Certificador & Pruebas', $documento->nombre_certificador);
         $this->assertSame(trim(preg_replace('/^<\?xml[^>]*>\s*/', '', $this->certificado())), $documento->xml_certificado);
         $intento->refresh();
-        $this->assertSame('CERTIFICADA', $intento->resultado);
+        $this->assertSame('INCIERTA', $intento->resultado);
         $this->assertSame($raw, $intento->respuesta_raw);
         $this->assertSame($fin, $intento->fecha_fin->toDateTimeString());
         $this->assertSame($diagnostico, $intento->error_tecnico);
@@ -99,8 +132,9 @@ class FelConciliacionTest extends FelTestCase
     public function test_en_proceso_con_respuesta_del_intento_actual_es_recuperable_localmente(): void
     {
         [$venta, $intento] = $this->preparar(estado: 'EN_PROCESO');
+        $intento->update(['fecha_inicio' => now()->subMinutes(\App\Models\DocumentoFel::minutosIntentoExpirado() + 1)]);
         $this->assertNull($intento->fecha_fin);
-        $documento = $this->servicioLocal()->conciliarDesdeRespuestaExistente($venta->documentoFel->id, 7);
+        $documento = $this->servicioLocal()->recuperarCertificacion($venta->documentoFel->id, 7);
         $this->assertSame('CERTIFICADA', $documento->estado_fel);
         $this->assertNotNull($intento->fresh()->fecha_fin);
     }
@@ -114,7 +148,7 @@ class FelConciliacionTest extends FelTestCase
         $this->assertStringContainsString('Conciliar respuesta', $this->controller->show($venta->fresh())->render());
         $documento = $this->servicioLocal()->conciliarDesdeRespuestaExistente($venta->documentoFel->id, 7);
         $this->assertSame('CERTIFICADA', $documento->estado_fel);
-        $this->assertSame('CERTIFICADA', $conRespuesta->fresh()->resultado);
+        $this->assertSame('INCIERTA', $conRespuesta->fresh()->resultado);
         $this->assertSame('INCIERTA', $sinRespuesta->fresh()->resultado);
         $this->assertSame(2, IntentoFel::count());
     }
@@ -174,7 +208,7 @@ class FelConciliacionTest extends FelTestCase
     {
         [$venta] = $this->preparar();
         $antes = $this->snapshot();
-        IntentoFel::updating(fn () => false);
+        DocumentoFel::updating(fn () => false);
         $this->rechaza(fn () => $this->servicioLocal()->conciliarDesdeRespuestaExistente($venta->documentoFel->id, 7), RuntimeException::class);
         $this->assertSame($antes, $this->snapshot());
         $this->logger->shouldNotHaveReceived('info');

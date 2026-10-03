@@ -13,6 +13,8 @@ return [
     ],
     'ainnova' => [
         'endpoint' => env('FEL_AINNOVA_ENDPOINT'),
+        'endpoint_rest' => env('FEL_AINNOVA_ENDPOINT_REST'),
+        'intento_expirado_minutos' => env('FEL_AINNOVA_INTENTO_EXPIRADO_MINUTOS', 5),
         'basic_usuario' => env('FEL_AINNOVA_BASIC_USUARIO'),
         'basic_password' => env('FEL_AINNOVA_BASIC_PASSWORD'),
         'ws_usuario' => env('FEL_AINNOVA_WS_USUARIO'),

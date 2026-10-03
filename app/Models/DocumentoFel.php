@@ -86,4 +86,26 @@ class DocumentoFel extends Model
     {
         return $this->hasOne(IntentoFel::class)->ofMany(['id' => 'max'], fn ($query) => $query->whereNotNull('respuesta_raw')->where('respuesta_raw', '<>', ''));
     }
+
+    public static function minutosIntentoExpirado(): int
+    {
+        $minutos = filter_var(config('fel.ainnova.intento_expirado_minutos', 5), FILTER_VALIDATE_INT,
+            ['options' => ['min_range' => 1, 'max_range' => 1440]]);
+        // La recuperación siempre espera más que los tiempos máximos de transporte.
+        $transporte = (int) config('fel.ainnova.timeout', 60) + (int) config('fel.ainnova.connect_timeout', 10) + 60;
+
+        return max($minutos === false ? 5 : $minutos, intdiv($transporte + 59, 60));
+    }
+
+    public function intentoExpirado(IntentoFel $intento): bool
+    {
+        return $this->estado_fel === 'EN_PROCESO' && $intento->resultado === 'EN_PROCESO'
+            && $intento->fecha_fin === null && $intento->fecha_inicio !== null
+            && $intento->fecha_inicio->lt(now()->subMinutes(self::minutosIntentoExpirado()));
+    }
+
+    public function puedeRecuperarCertificacion(): bool
+    {
+        return $this->ultimoIntento !== null && $this->intentoExpirado($this->ultimoIntento);
+    }
 }

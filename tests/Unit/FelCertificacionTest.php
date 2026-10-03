@@ -535,7 +535,11 @@ class FelCertificacionTest extends FelTestCase
             DB::table('documentos_fel')->where('venta_id', $venta->id)->update(['estado_fel' => $estado]);
             $html = $this->controller->show($venta->fresh())->render();
             $this->assertStringNotContainsString('Certificar FEL', $html);
-            $this->assertStringNotContainsString('Reintentar', $html);
+            if ($estado === 'INCIERTA') {
+                $this->assertStringContainsString('Reintentar certificación', $html);
+            } else {
+                $this->assertStringNotContainsString('Reintentar', $html);
+            }
             if ($estado === 'ERROR') {
                 $this->assertStringContainsString('&lt;script&gt;', $html);
                 $this->assertStringNotContainsString('<script>alert(1)</script>', $html);

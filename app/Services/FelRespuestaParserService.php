@@ -218,11 +218,13 @@ class FelRespuestaParserService
 
     private function fechaValida(string $fecha): ?DateTimeImmutable
     {
-        if (! preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-](?:0\d|1[0-3]):[0-5]\d|[+-]14:00)$/D', $fecha)) {
+        if (! preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-](?:0\d|1[0-3]):[0-5]\d|[+-]14:00)?$/D', $fecha)) {
             return null;
         }
-        $formato = str_contains($fecha, '.') ? '!Y-m-d\TH:i:s.uP' : '!Y-m-d\TH:i:sP';
-        $valor = DateTimeImmutable::createFromFormat($formato, $fecha);
+        $conZona = preg_match('/(?:Z|[+-]\d{2}:\d{2})$/D', $fecha) === 1;
+        $formato = (str_contains($fecha, '.') ? '!Y-m-d\TH:i:s.u' : '!Y-m-d\TH:i:s').($conZona ? 'P' : '');
+        // Ainnova también devuelve fechas locales de Guatemala sin zona explícita.
+        $valor = DateTimeImmutable::createFromFormat($formato, $fecha, new DateTimeZone('America/Guatemala'));
         $errores = DateTimeImmutable::getLastErrors();
 
         return $valor !== false && ($errores === false || ($errores['warning_count'] === 0 && $errores['error_count'] === 0)) ? $valor : null;

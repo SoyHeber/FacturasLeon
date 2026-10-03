@@ -99,9 +99,10 @@ class VentaController extends Controller
 
     public function show(Venta $venta)
     {
-        $venta->load(['detalles', 'documentoFel.ultimoIntento', 'documentoFel.ultimoIntentoConRespuesta', 'tipoDocumento', 'metodoPago', 'usuarioCreador', 'usuarioModificador']);
+        $venta->load(['detalles', 'documentoFel.ultimoIntento', 'documentoFel.ultimoIntentoConRespuesta', 'documentoFel.intentos.usuario', 'tipoDocumento', 'metodoPago', 'usuarioCreador', 'usuarioModificador']);
+        $protectorFel = new \App\Services\AinnovaFelClient;
 
-        return view('ventas.show', compact('venta'));
+        return view('ventas.show', compact('venta', 'protectorFel'));
     }
 
     public function edit(Venta $venta)

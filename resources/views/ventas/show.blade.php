@@ -70,21 +70,54 @@
                 <div class="col-md-6"><strong>Fecha certificación</strong><div>{{ $venta->documentoFel->fecha_certificacion?->timezone('America/Guatemala')->format('d/m/Y H:i:s') }}</div></div>
                 <div class="col-md-6"><strong>Certificador</strong><div>{{ $venta->documentoFel->nombre_certificador }} · {{ $venta->documentoFel->nit_certificador }}</div></div>
             </div>
+            @can('ventas.ver')
+                <div class="d-flex gap-2 mb-3">
+                    <a class="btn btn-outline-primary" href="{{ route('ventas.consultar_representacion', [$venta, 'tipo' => 'pdf']) }}" target="_blank" rel="noopener noreferrer">Ver PDF</a>
+                    <a class="btn btn-outline-secondary" href="{{ route('ventas.consultar_representacion', [$venta, 'tipo' => 'xml']) }}" target="_blank" rel="noopener noreferrer">Consultar XML</a>
+                </div>
+            @endcan
         @elseif ($venta->documentoFel?->estado_fel === 'ERROR')
-            <div class="alert alert-danger">{{ $venta->documentoFel->ultimoIntento?->mensaje_error ?: 'Ainnova rechazó el documento.' }}</div>
+            <div class="alert alert-danger">{{ $protectorFel->protegerTexto($venta->documentoFel->ultimoIntento?->mensaje_error) ?: 'Ainnova rechazó el documento.' }}</div>
         @elseif ($venta->documentoFel?->estado_fel === 'INCIERTA')
-            <div class="alert alert-warning">La certificación requiere conciliación. No vuelva a enviar el documento hasta verificar el resultado.</div>
-            @if ($venta->estado_venta === 'CONFIRMADA' && trim($venta->documentoFel->ultimoIntentoConRespuesta?->respuesta_raw ?? '') !== '')
+            <div class="alert alert-warning">La certificación requiere conciliación. El reintento verifica primero las respuestas guardadas y usa exactamente la misma referencia y XML; no crea otra Venta ni descuenta inventario.</div>
+            @if ($venta->estado_venta === 'CONFIRMADA' && !$venta->documentoFel->intentos->contains(fn ($intento) => $intento->resultado === 'EN_PROCESO' && $intento->fecha_fin === null))
                 @can('ventas.modificar')
-                    <p class="text-muted">Esta acción reprocesa la respuesta guardada localmente. No realiza una nueva llamada a Ainnova.</p>
-                    <form method="POST" action="{{ route('ventas.conciliar_respuesta', $venta) }}" class="mb-3" onsubmit="this.querySelector('button').disabled = true">
+                    @if (trim($venta->documentoFel->ultimoIntentoConRespuesta?->respuesta_raw ?? '') !== '')
+                        <p class="text-muted">Esta acción reprocesa la respuesta guardada localmente. No realiza una nueva llamada a Ainnova.</p>
+                        <form method="POST" action="{{ route('ventas.conciliar_respuesta', $venta) }}" class="mb-3" onsubmit="this.querySelector('button').disabled = true">
+                            @csrf
+                            <button class="btn btn-outline-warning rounded-3 fw-bold" type="submit">Conciliar respuesta</button>
+                        </form>
+                    @endif
+                    <form method="POST" action="{{ route('ventas.reintentar_certificacion', $venta) }}" class="mb-3"
+                        onsubmit="if (!confirm('¿Reintentar FEL usando la misma referencia y el mismo XML congelado?')) return false; this.querySelector('button').disabled = true">
                         @csrf
-                        <button class="btn btn-outline-warning rounded-3 fw-bold" type="submit">Conciliar respuesta</button>
+                        <input type="hidden" name="ultimo_intento_id" value="{{ $venta->documentoFel->ultimoIntento?->id ?? 0 }}">
+                        <button class="btn btn-warning" type="submit">Reintentar certificación</button>
                     </form>
                 @endcan
             @endif
         @elseif ($venta->documentoFel?->estado_fel === 'EN_PROCESO')
             <div class="alert alert-info">Certificación en proceso. Si la operación se interrumpió, requiere revisión antes de otro envío.</div>
+            @if ($venta->estado_venta === 'CONFIRMADA' && $venta->documentoFel->puedeRecuperarCertificacion())
+                @can('ventas.modificar')
+                    <form method="POST" action="{{ route('ventas.recuperar_certificacion', $venta) }}" class="mb-3" onsubmit="this.querySelector('button').disabled = true">
+                        @csrf
+                        <button class="btn btn-outline-warning" type="submit">Recuperar certificación</button>
+                    </form>
+                @endcan
+            @endif
+        @endif
+        @if ($venta->documentoFel?->intentos->isNotEmpty())
+            <h3 class="h6 mt-4">Historial de intentos FEL</h3>
+            <div class="table-responsive mb-3"><table class="table table-bordered">
+                <thead><tr><th>Intento</th><th>Inicio</th><th>Fin</th><th>Resultado</th><th>Mensaje</th><th>Error técnico</th><th>Usuario</th></tr></thead>
+                <tbody>
+                    @foreach ($venta->documentoFel->intentos->sortBy('id')->values() as $intento)
+                        <tr><td>Intento {{ $loop->iteration }}</td><td>{{ $intento->fecha_inicio?->timezone('America/Guatemala')->format('d/m/Y H:i:s') }}</td><td>{{ $intento->fecha_fin?->timezone('America/Guatemala')->format('d/m/Y H:i:s') ?? 'Sin finalizar' }}</td><td>{{ $intento->resultado }}</td><td>{{ $protectorFel->protegerTexto($intento->mensaje_error) }}</td><td>{{ $protectorFel->protegerTexto($intento->error_tecnico) }}</td><td>{{ $intento->usuario?->name ?? 'Sin usuario' }}</td></tr>
+                    @endforeach
+                </tbody>
+            </table></div>
         @endif
         <p class="mb-0 text-muted">Creada por {{ $venta->usuarioCreador->name }} el {{ $venta->created_at->format('d/m/Y H:i') }}@if ($venta->usuarioModificador) · Última actualización por {{ $venta->usuarioModificador->name }} el {{ $venta->updated_at->format('d/m/Y H:i') }}@endif</p>
     </div></div>

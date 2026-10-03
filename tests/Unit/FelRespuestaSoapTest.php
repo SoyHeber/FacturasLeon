@@ -8,6 +8,52 @@ use PHPUnit\Framework\TestCase;
 
 class FelRespuestaSoapTest extends TestCase
 {
+    public function test_datos_de_respuesta_real_con_total_entero_y_fecha_sin_zona_son_certificados(): void
+    {
+        $xml = file_get_contents(dirname(__DIR__).'/Fixtures/fel/certificado_fact_150.xml');
+        $resultado = (new FelRespuestaParserService)->procesar($xml, '8363137', '150.00');
+        $this->assertSame('CERTIFICADA', $resultado['estado'], $resultado['error_tecnico'] ?? '');
+        $this->assertSame('BADD0C1D-1ABD-4414-8447-7F9C81D756A8', $resultado['campos']['fel_uuid']);
+        $this->assertSame('BADD0C1D', $resultado['campos']['fel_serie']);
+        $this->assertSame('448611348', $resultado['campos']['fel_numero']);
+        $this->assertSame('2026-10-03 16:33:36', $resultado['campos']['fecha_certificacion']);
+        $this->assertSame($xml, $resultado['campos']['xml_certificado']);
+    }
+
+    /** @dataProvider fechasCertificacion */
+    public function test_fecha_local_o_con_zona_se_valida_estrictamente(string $fecha, ?string $utc): void
+    {
+        $xml = str_replace('2026-10-03T10:33:36', $fecha,
+            file_get_contents(dirname(__DIR__).'/Fixtures/fel/certificado_fact_150.xml'));
+        $resultado = (new FelRespuestaParserService)->procesar($xml, '8363137', '150.00');
+        $this->assertSame($utc === null ? 'INCIERTA' : 'CERTIFICADA', $resultado['estado']);
+        if ($utc !== null) {
+            $this->assertSame($utc, $resultado['campos']['fecha_certificacion']);
+        } else {
+            $this->assertSame('La fecha de certificación no es válida.', $resultado['error_tecnico']);
+        }
+    }
+
+    public static function fechasCertificacion(): array
+    {
+        return [
+            ['2026-10-03T10:33:36.123456', '2026-10-03 16:33:36'],
+            ['2026-10-03T10:33:36-06:00', '2026-10-03 16:33:36'],
+            ['2026-10-03T10:33:36Z', '2026-10-03 10:33:36'],
+            ['2026-10-03T10:33:36.123+02:00', '2026-10-03 08:33:36'],
+            ['2026-02-30T10:33:36', null], ['2026-10-03T25:33:36', null],
+            ['2026-10-03T10:33:36+15:00', null], ['tomorrow', null],
+        ];
+    }
+
+    public function test_total_diferente_sigue_incierto_con_fecha_local(): void
+    {
+        $xml = file_get_contents(dirname(__DIR__).'/Fixtures/fel/certificado_fact_150.xml');
+        $resultado = (new FelRespuestaParserService)->procesar($xml, '8363137', '150.01');
+        $this->assertSame('INCIERTA', $resultado['estado']);
+        $this->assertSame('El total certificado no coincide exactamente con la Venta.', $resultado['error_tecnico']);
+    }
+
     public function test_formato_soap_observado_aisla_gt_documento_y_extrae_certificacion(): void
     {
         $resultado = $this->procesar(file_get_contents(dirname(__DIR__).'/Fixtures/fel/respuesta_soap_ainnova.xml'));
