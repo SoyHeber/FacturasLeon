@@ -6,6 +6,7 @@ use App\Models\Venta;
 use App\Services\AinnovaFelConsultaClient;
 use App\Services\FelCertificacionService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class FelController extends Controller
 {
@@ -57,7 +58,12 @@ class FelController extends Controller
 
     public function consultarRepresentacion(Request $request, Venta $venta, string $tipo, AinnovaFelConsultaClient $consulta)
     {
-        $url = $consulta->consultar((int) $venta->documentoFel()->firstOrFail()->id, strtoupper($tipo));
+        try {
+            $url = $consulta->consultar((int) $venta->documentoFel()->firstOrFail()->id, strtoupper($tipo));
+        } catch (ValidationException $excepcion) {
+            return redirect()->route('ventas.show', $venta)->with('warning',
+                $excepcion->errors()['fel'][0] ?? 'No se pudo consultar PDF/XML. La factura continúa CERTIFICADA.');
+        }
 
         return redirect()->away($url)->withHeaders(['Referrer-Policy' => 'no-referrer', 'Cache-Control' => 'no-store']);
     }

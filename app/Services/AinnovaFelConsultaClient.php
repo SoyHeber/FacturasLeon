@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\DocumentoFel;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Throwable;
 
@@ -46,26 +47,60 @@ class AinnovaFelConsultaClient
                     'p_emisor' => $this->configuracion['nit_emisor'], 'p_serie' => $datos['serie'],
                     'p_numero' => $datos['numero'], 'p_tipo' => $tipo])
                 ->timeout($timeout)->connectTimeout($conexion)
-                ->withOptions(['allow_redirects' => false, 'verify' => true])->get($this->configuracion['endpoint_rest']);
-        } catch (Throwable) {
+                ->withOptions(['allow_redirects' => false, 'verify' => true])
+                ->bodyFormat('body')->send('POST', $this->configuracion['endpoint_rest']);
+        } catch (Throwable $excepcion) {
+            $this->registrarDiagnostico($documentoFelId, $tipo, 'EXCEPCION', excepcion: $excepcion);
             $this->rechazar('No se pudo consultar la representación FEL. La factura continúa CERTIFICADA.');
         }
         if (! $respuesta->successful()) {
+            $this->registrarDiagnostico($documentoFelId, $tipo, 'HTTP_NO_EXITOSO', $respuesta);
             $this->rechazar('Ainnova no pudo entregar la representación FEL. La factura continúa CERTIFICADA.');
         }
         $texto = trim($respuesta->body());
         $protector = new AinnovaFelClient($this->configuracion);
         if (str_starts_with(strtoupper($texto), 'ERROR:')) {
+            $this->registrarDiagnostico($documentoFelId, $tipo, 'ERROR_FUNCIONAL', $respuesta);
             $this->rechazar(mb_substr($protector->protegerTexto($texto), 0, 500));
+        }
+        // La redacción protege el diagnóstico; no decide si la URL recibida es válida.
+        if ($this->urlSegura($texto)) {
+            $this->registrarDiagnostico($documentoFelId, $tipo, 'EXITO', $respuesta);
+
+            return $texto;
         }
         if (strlen($texto) <= 8192) {
             $json = json_decode($texto, true);
             $url = is_string($json) ? $json : (is_array($json) ? ($json['url'] ?? null) : $texto);
-            if (is_string($url) && $this->urlSegura($url) && $protector->protegerTexto($url) === $url) {
+            if (is_string($url) && $this->urlSegura($url)) {
+                $this->registrarDiagnostico($documentoFelId, $tipo, 'EXITO', $respuesta);
+
                 return $url;
             }
         }
+        $this->registrarDiagnostico($documentoFelId, $tipo, 'URL_INVALIDA', $respuesta);
         $this->rechazar('Ainnova no devolvió una URL segura de PDF/XML. La factura continúa CERTIFICADA.');
+    }
+
+    private function registrarDiagnostico(int $documentoFelId, string $tipo, string $causa,
+        ?\Illuminate\Http\Client\Response $respuesta = null, ?Throwable $excepcion = null): void
+    {
+        $protector = new AinnovaFelClient($this->configuracion);
+        $contexto = [
+            'documento_fel_id' => $documentoFelId,
+            'tipo' => $tipo,
+            'causa' => $causa,
+            'http_status' => $respuesta?->status(),
+            'content_type' => $protector->protegerTexto($respuesta?->header('Content-Type')),
+            'body' => $protector->protegerTexto($respuesta !== null ? trim($respuesta->body()) : null),
+            'tipo_excepcion' => $excepcion !== null ? get_class($excepcion) : null,
+            'excepcion_tecnica' => $protector->protegerTexto($excepcion?->getMessage()),
+        ];
+        if ($causa === 'EXITO') {
+            Log::info('Consulta REST FEL/Ainnova.', $contexto);
+        } else {
+            Log::warning('Consulta REST FEL/Ainnova.', $contexto);
+        }
     }
 
     private function tiempoEspera(string $campo, int $defecto): int
@@ -83,9 +118,9 @@ class AinnovaFelConsultaClient
     {
         $partes = parse_url($url);
 
-        return strlen($url) <= 4096 && ! preg_match('/[\x00-\x20\x7f]/', $url)
+        return ! preg_match('/[\x00-\x20\x7f]/', $url)
             && filter_var($url, FILTER_VALIDATE_URL) !== false && is_array($partes)
-            && ($partes['scheme'] ?? '') === 'https' && ! empty($partes['host'])
+            && strtolower($partes['scheme'] ?? '') === 'https' && ! empty($partes['host'])
             && ! isset($partes['user']) && ! isset($partes['pass']);
     }
 
