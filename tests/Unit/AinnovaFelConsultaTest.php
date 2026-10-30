@@ -5,8 +5,10 @@ namespace Tests\Unit;
 use App\Data\RespuestaAinnova;
 use App\Http\Controllers\FelController;
 use App\Models\DocumentoFel;
+use App\Services\AnulacionVentaService;
 use App\Services\AinnovaFelConsultaClient;
 use Illuminate\Http\Client\Factory;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
@@ -68,8 +70,98 @@ class AinnovaFelConsultaTest extends FelTestCase
         return [['PDF', 200], ['XML', 200], ['PDF', 201], ['XML', 206]];
     }
 
+    /** @dataProvider tipos */
+    public function test_venta_anulada_permite_consultar_pdf_y_xml_con_la_identidad_original_sin_mutaciones(string $tipo, int $status): void
+    {
+        $documento = $this->anular();
+        $antes = $this->snapshot();
+        $historial = $documento->venta->anulacion->getAttributes();
+        $url = 'https://dte.guatefacturas.com/archivo/anulada.'.strtolower($tipo);
+        Http::fake([$this->configuracionFel['endpoint_rest'] => function ($request) use ($documento, $tipo, $status, $url) {
+            $this->assertSame(0, DB::connection()->transactionLevel());
+            $this->assertSame('POST', $request->method());
+            $this->assertTrue($request->hasHeader('p_serie', $documento->fel_serie));
+            $this->assertTrue($request->hasHeader('p_numero', $documento->fel_numero));
+            $this->assertTrue($request->hasHeader('p_tipo', $tipo));
+
+            return Http::response($url, $status);
+        }]);
+        $controller = new FelController($this->servicio($this->cliente()));
+        $respuesta = $controller->consultarRepresentacion($this->request([], 'GET'), $documento->venta, strtolower($tipo), new AinnovaFelConsultaClient);
+        $this->assertSame($url, $respuesta->getTargetUrl());
+        $this->assertSame('no-referrer', $respuesta->headers->get('Referrer-Policy'));
+        $this->assertSame($antes, $this->snapshot());
+        $this->assertSame($historial, $documento->venta->anulacion()->firstOrFail()->getAttributes());
+        $this->assertSame('ANULADA', $documento->fresh()->estado_fel);
+        $this->assertSame('ANULADA', $documento->venta->fresh()->estado_venta);
+        Http::assertSentCount(1);
+        $html = $this->controller->show($documento->venta)->render();
+        foreach (['pdf', 'xml'] as $representacion) {
+            $this->assertStringContainsString(route('ventas.consultar_representacion', [$documento->venta, 'tipo' => $representacion]), $html);
+        }
+    }
+
+    /** @dataProvider fallosConsulta */
+    public function test_error_al_consultar_factura_anulada_conserva_su_anulacion_e_inventario(string $body, int $status): void
+    {
+        $documento = $this->anular();
+        $antes = $this->snapshot();
+        $historial = $documento->venta->anulacion->getAttributes();
+        Http::fake([$this->configuracionFel['endpoint_rest'] => Http::response($body, $status)]);
+        $controller = new FelController($this->servicio($this->cliente()));
+        $respuesta = $controller->consultarRepresentacion($this->request([], 'GET'), $documento->venta, 'pdf', new AinnovaFelConsultaClient);
+        $this->assertSame(route('ventas.show', $documento->venta), $respuesta->getTargetUrl());
+        $this->assertNotEmpty(session('warning'));
+        $this->assertStringNotContainsString('CERTIFICADA', session('warning'));
+        $this->assertSame($antes, $this->snapshot());
+        $this->assertSame($historial, $documento->venta->anulacion()->firstOrFail()->getAttributes());
+        Http::assertSentCount(1);
+    }
+
+    public function test_anulada_sin_serie_o_numero_y_cancelacion_sin_emision_no_consultan_ainnova(): void
+    {
+        $documento = $this->anular();
+        Http::fake();
+        foreach (['fel_serie', 'fel_numero'] as $campo) {
+            $original = $documento->$campo;
+            $documento->forceFill([$campo => null])->save();
+            $antes = $this->snapshot();
+            $this->rechaza(fn () => (new AinnovaFelConsultaClient)->consultar($documento->id, 'PDF'), ValidationException::class);
+            $this->assertSame($antes, $this->snapshot());
+            $html = $this->controller->show($documento->venta)->render();
+            $this->assertStringNotContainsString('Ver PDF', $html);
+            $this->assertStringNotContainsString('Consultar XML', $html);
+            $documento->forceFill([$campo => $original])->save();
+        }
+        $ventaLocal = $this->crearVenta();
+        $cliente = $this->cliente();
+        $cliente->shouldNotReceive('generarDocumento');
+        $cliente->shouldNotReceive('anularDocumento');
+        (new AnulacionVentaService($cliente))->anular($ventaLocal->id, 7, [
+            'fecha_anulacion' => $ventaLocal->fecha->toDateString(), 'motivo' => 'Cancelación de prueba sin emisión', 'ultimo_intento_anulacion_id' => 0,
+        ]);
+        $this->assertSame('ANULADA', $ventaLocal->fresh()->estado_venta);
+        $this->rechaza(fn () => (new AinnovaFelConsultaClient)->consultar($ventaLocal->documentoFel->id, 'XML'), ValidationException::class);
+        $html = $this->controller->show($ventaLocal)->render();
+        $this->assertStringNotContainsString('Ver PDF', $html);
+        $this->assertStringNotContainsString('Consultar XML', $html);
+        Http::assertNothingSent();
+    }
+
+    public function test_botones_de_factura_anulada_conservan_el_permiso_de_ver_ventas(): void
+    {
+        $documento = $this->anular();
+        $opcion = DB::table('opciones')->where('ruta', 'ventas')->value('id');
+        $accion = DB::table('acciones')->where('clave', 'ver')->value('id');
+        DB::table('roles_opciones_acciones')->where('opcion_id', $opcion)->where('accion_id', $accion)->delete();
+        $html = $this->controller->show($documento->venta)->render();
+        $this->assertStringNotContainsString('Ver PDF', $html);
+        $this->assertStringNotContainsString('Consultar XML', $html);
+        Http::assertNothingSent();
+    }
+
     /** @dataProvider estadosNoCertificados */
-    public function test_pdf_y_xml_solo_para_certificada(string $estado, string $tipo): void
+    public function test_pdf_y_xml_rechazan_documentos_sin_emision_confirmada(string $estado, string $tipo): void
     {
         $documento = $this->ventaConfirmada()->documentoFel;
         $documento->forceFill(['estado_fel' => $estado])->save();
@@ -83,7 +175,7 @@ class AinnovaFelConsultaTest extends FelTestCase
     public static function estadosNoCertificados(): array
     {
         $casos = [];
-        foreach (['PENDIENTE', 'INCIERTA', 'EN_PROCESO', 'ERROR', 'ANULADA'] as $estado) {
+        foreach (['PENDIENTE', 'INCIERTA', 'EN_PROCESO', 'ERROR'] as $estado) {
             foreach (['PDF', 'XML'] as $tipo) {
                 $casos[] = [$estado, $tipo];
             }
@@ -103,8 +195,8 @@ class AinnovaFelConsultaTest extends FelTestCase
             $this->fail('Debe rechazar el error de consulta.');
         } catch (ValidationException $e) {
             $this->assertSame($status < 200 || $status >= 300
-                ? 'Ainnova no pudo entregar la representación FEL. La factura continúa CERTIFICADA.'
-                : (str_starts_with($texto, 'ERROR:') ? $texto : 'Ainnova no devolvió una URL segura de PDF/XML. La factura continúa CERTIFICADA.'),
+                ? 'Ainnova no pudo entregar la representación FEL. El estado de la factura se conserva.'
+                : (str_starts_with($texto, 'ERROR:') ? $texto : 'Ainnova no devolvió una URL segura de PDF/XML. El estado de la factura se conserva.'),
                 $e->errors()['fel'][0]);
         }
         $this->assertSame($antes, $this->snapshot());
@@ -132,7 +224,7 @@ class AinnovaFelConsultaTest extends FelTestCase
             (new AinnovaFelConsultaClient)->consultar($documento->id, 'XML');
             $this->fail('Debe rechazar un fallo de transporte.');
         } catch (ValidationException $e) {
-            $this->assertSame('No se pudo consultar la representación FEL. La factura continúa CERTIFICADA.', $e->errors()['fel'][0]);
+            $this->assertSame('No se pudo consultar la representación FEL. El estado de la factura se conserva.', $e->errors()['fel'][0]);
             $this->assertStringNotContainsString($this->configuracionFel['ws_password'], json_encode($e->errors()));
         }
         $this->assertSame($antes, $this->snapshot());
@@ -270,6 +362,21 @@ class AinnovaFelConsultaTest extends FelTestCase
         config(['fel.ainnova.endpoint_rest' => 'http://dte.guatefacturas.com/pdf']);
         $this->rechaza(fn () => (new AinnovaFelConsultaClient)->consultar($documento->id, 'PDF'), ValidationException::class);
         Http::assertNothingSent();
+    }
+
+    private function anular(): DocumentoFel
+    {
+        $documento = $this->certificar();
+        $cliente = $this->cliente();
+        $cliente->shouldNotReceive('generarDocumento');
+        $acuse = '<RESULTADO><ESTADO>ANULADO</ESTADO><EMISOR>1234567K</EMISOR><COMPRADOR>1234567K</COMPRADOR><SERIE>A001</SERIE><PREIMPRESO>000123</PREIMPRESO></RESULTADO>';
+        $cliente->shouldReceive('anularDocumento')->once()->andReturn(new RespuestaAinnova(RespuestaAinnova::RESPUESTA, $acuse));
+        (new AnulacionVentaService($cliente))->anular($documento->venta_id, 7, [
+            'fecha_anulacion' => $documento->venta->fecha->toDateString(), 'motivo' => 'Anulación de prueba', 'ultimo_intento_anulacion_id' => 0,
+        ]);
+        $this->assertSame('ANULADA', $documento->fresh()->estado_fel);
+
+        return $documento->fresh();
     }
 
     private function certificar(): DocumentoFel

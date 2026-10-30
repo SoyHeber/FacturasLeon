@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AnulacionVenta;
 use App\Models\Cliente;
 use App\Models\MetodoPago;
 use App\Models\Producto;
 use App\Models\TipoDocumento;
 use App\Models\Venta;
+use App\Services\AnulacionVentaService;
 use App\Services\CalculadoraVentaService;
+use App\Services\FelAnulacionRespuestaParserService;
 use App\Services\VentaInventarioService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -45,7 +48,7 @@ class VentaController extends Controller
             $reglas[$filtro] = ['nullable', 'string', 'max:700'];
         }
         $request->validate($reglas);
-        $query = Venta::with(['tipoDocumento', 'metodoPago', 'usuarioCreador', 'documentoFel']);
+        $query = Venta::with(['tipoDocumento', 'metodoPago', 'usuarioCreador', 'documentoFel', 'anulacion']);
         foreach (['id', 'estado_venta', 'moneda'] as $campo) {
             if ($request->filled($campo)) {
                 $query->where($campo, $request->input($campo));
@@ -99,7 +102,7 @@ class VentaController extends Controller
 
     public function show(Venta $venta)
     {
-        $venta->load(['detalles', 'documentoFel.ultimoIntento', 'documentoFel.ultimoIntentoConRespuesta', 'documentoFel.intentos.usuario', 'tipoDocumento', 'metodoPago', 'usuarioCreador', 'usuarioModificador']);
+        $venta->load(['detalles', 'documentoFel.ultimoIntento', 'documentoFel.ultimoIntentoConRespuesta', 'documentoFel.intentos.usuario', 'tipoDocumento', 'metodoPago', 'usuarioCreador', 'usuarioModificador', 'anulacion.ultimoIntento', 'anulacion.intentos.usuario', 'anulacion.usuario', 'anulacion.confirmadoPor']);
         $protectorFel = new \App\Services\AinnovaFelClient;
 
         return view('ventas.show', compact('venta', 'protectorFel'));
@@ -118,6 +121,61 @@ class VentaController extends Controller
         $this->confirmacion->confirmarVenta((int) $venta->id, (int) $request->user()->id);
 
         return redirect()->route('ventas.show', $venta)->with('success', 'Venta confirmada. Inventario actualizado y documento FEL PENDIENTE.');
+    }
+
+    /**
+     * Solicita la cancelación total; el servicio decide si requiere anulaDocumento.
+     * Las cantidades y la identidad fiscal siempre se reconstruyen desde la venta.
+     */
+    public function anular(Request $request, Venta $venta, AnulacionVentaService $anulacion)
+    {
+        $datos = $request->validate([
+            'fecha_anulacion' => ['required', 'date_format:Y-m-d'],
+            'motivo' => ['required', 'string', 'max:200'],
+            'ultimo_intento_anulacion_id' => ['required', 'integer', 'min:0'],
+        ]);
+
+        return $this->respuestaAnulacion($venta, $anulacion->anular((int) $venta->id, (int) $request->user()->id, $datos));
+    }
+
+    /** Completa el reintegro respaldado por un acuse guardado, sin solicitar otra anulación fiscal. */
+    public function aplicarAnulacion(Request $request, Venta $venta, AnulacionVentaService $anulacion)
+    {
+        return $this->respuestaAnulacion($venta, $anulacion->aplicarConfirmada((int) $venta->id, (int) $request->user()->id));
+    }
+
+    /**
+     * Recibe un acuse obtenido del certificador y la declaración de procedencia del operador.
+     * La conciliación no consulta ni reenvía al web service; conserva la referencia de soporte.
+     */
+    public function conciliarAnulacion(Request $request, Venta $venta, AnulacionVentaService $anulacion)
+    {
+        try {
+            $datos = $request->validate([
+                'respuesta_ainnova' => ['required', 'string', 'max:'.FelAnulacionRespuestaParserService::MAXIMO_BYTES],
+                'referencia_soporte' => ['required', 'string', 'min:5', 'max:200'],
+                'confirmacion_ainnova' => ['accepted'],
+                'ultimo_intento_anulacion_id' => ['required', 'integer', 'min:1'],
+            ]);
+
+            return $this->respuestaAnulacion($venta, $anulacion->conciliarManual((int) $venta->id, (int) $request->user()->id, $datos));
+        } finally {
+            // El XML aportado no debe copiarse a la sesión al redirigir por un error.
+            $request->replace($request->except('respuesta_ainnova'));
+            $request->query->remove('respuesta_ainnova');
+        }
+    }
+
+    private function respuestaAnulacion(Venta $venta, AnulacionVenta $anulacion)
+    {
+        $mensaje = match ($anulacion->estado) {
+            'APLICADA' => $anulacion->tipo === 'FEL' ? 'Anulación confirmada por Ainnova e inventario reintegrado.' : 'Venta cancelada sin emisión FEL.',
+            'CONFIRMADA' => 'La anulación está confirmada, pero el reintegro local está pendiente. Revise el historial y vuelva a aplicar.',
+            'RECHAZADA' => 'Ainnova rechazó la solicitud de anulación. No se modificó el inventario.',
+            default => 'Resultado de anulación incierto. Obtenga evidencia de Ainnova antes de conciliar; no se reintegró inventario.',
+        };
+
+        return redirect()->route('ventas.show', $venta)->with($anulacion->estado === 'APLICADA' ? 'success' : 'warning', $mensaje);
     }
 
     public function update(Request $request, Venta $venta)

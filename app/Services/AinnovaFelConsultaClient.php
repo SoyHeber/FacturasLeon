@@ -18,6 +18,13 @@ class AinnovaFelConsultaClient
         $this->configuracion = $configuracion ?? config('fel.ainnova', []);
     }
 
+    /**
+     * Obtiene la URL de PDF o XML de una factura emitida, incluso después de su anulación.
+     * Requiere estado CERTIFICADA o ANULADA con la serie y el número fiscales originales.
+     * La llamada REST ocurre fuera de la transacción y devuelve solo una URL HTTPS válida.
+     * La consulta registra un diagnóstico sin credenciales; tanto el éxito como los fallos
+     * conservan el estado fiscal, el historial y el inventario existentes.
+     */
     public function consultar(int $documentoFelId, string $tipo): string
     {
         if (! in_array($tipo, ['PDF', 'XML'], true)) {
@@ -25,8 +32,8 @@ class AinnovaFelConsultaClient
         }
         $datos = DB::transaction(function () use ($documentoFelId) {
             $documento = DocumentoFel::whereKey($documentoFelId)->lockForUpdate()->firstOrFail();
-            if ($documento->estado_fel !== 'CERTIFICADA' || ! $documento->fel_serie || ! $documento->fel_numero) {
-                $this->rechazar('La consulta PDF/XML requiere un documento FEL CERTIFICADA con serie y número.');
+            if (! in_array($documento->estado_fel, ['CERTIFICADA', 'ANULADA'], true) || ! $documento->fel_serie || ! $documento->fel_numero) {
+                $this->rechazar('La consulta PDF/XML requiere una factura certificada o anulada con serie y número fiscales.');
             }
 
             return ['serie' => $documento->fel_serie, 'numero' => $documento->fel_numero];
@@ -51,11 +58,11 @@ class AinnovaFelConsultaClient
                 ->bodyFormat('body')->send('POST', $this->configuracion['endpoint_rest']);
         } catch (Throwable $excepcion) {
             $this->registrarDiagnostico($documentoFelId, $tipo, 'EXCEPCION', excepcion: $excepcion);
-            $this->rechazar('No se pudo consultar la representación FEL. La factura continúa CERTIFICADA.');
+            $this->rechazar('No se pudo consultar la representación FEL. El estado de la factura se conserva.');
         }
         if (! $respuesta->successful()) {
             $this->registrarDiagnostico($documentoFelId, $tipo, 'HTTP_NO_EXITOSO', $respuesta);
-            $this->rechazar('Ainnova no pudo entregar la representación FEL. La factura continúa CERTIFICADA.');
+            $this->rechazar('Ainnova no pudo entregar la representación FEL. El estado de la factura se conserva.');
         }
         $texto = trim($respuesta->body());
         $protector = new AinnovaFelClient($this->configuracion);
@@ -79,7 +86,7 @@ class AinnovaFelConsultaClient
             }
         }
         $this->registrarDiagnostico($documentoFelId, $tipo, 'URL_INVALIDA', $respuesta);
-        $this->rechazar('Ainnova no devolvió una URL segura de PDF/XML. La factura continúa CERTIFICADA.');
+        $this->rechazar('Ainnova no devolvió una URL segura de PDF/XML. El estado de la factura se conserva.');
     }
 
     private function registrarDiagnostico(int $documentoFelId, string $tipo, string $causa,

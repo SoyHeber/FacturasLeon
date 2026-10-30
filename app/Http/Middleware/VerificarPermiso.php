@@ -26,6 +26,8 @@ class VerificarPermiso
         'recuperar_certificacion' => 'modificar',
         'consultar_representacion' => 'ver',
         'anular' => 'eliminar',
+        'aplicar_anulacion' => 'eliminar',
+        'conciliar_anulacion' => 'eliminar',
         'permisos' => 'modificar',
         'guardar-permisos' => 'modificar',
         'destroy' => 'eliminar',

@@ -181,6 +181,7 @@ abstract class VentasTestCase extends TestCase
             '2026_09_26_000007_create_roles_opciones_acciones_table', '2026_10_02_000001_create_tipos_documento_table',
             '2026_10_03_000004_create_ventas_table', '2026_10_03_000005_create_detalles_ventas_table',
             '2026_10_03_000006_create_documentos_fel_table', '2026_10_03_000007_create_intentos_fel_table',
+            '2026_10_30_000001_create_anulaciones_venta_table',
         ];
         foreach ($migraciones as $migracion) {
             (require dirname(__DIR__, 2).'/database/migrations/'.$migracion.'.php')->up();

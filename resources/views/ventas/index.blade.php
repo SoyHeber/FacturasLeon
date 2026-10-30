@@ -40,7 +40,7 @@
                     <tr>
                         <td class="fw-semibold">#{{ $venta->id }}</td><td>{{ $venta->fecha->format('d/m/Y') }}</td><td class="fw-bold">{{ $venta->receptor_nombre }}</td><td>{{ $venta->receptor_identificacion }}</td>
                         <td>{{ $venta->tipoDocumento->codigo }}</td><td>{{ $venta->metodoPago->nombre }}</td><td>{{ $venta->moneda }}</td><td class="text-end">{{ $venta->importe_total }}</td>
-                        <td><span class="badge rounded-pill {{ $venta->estado_venta === 'BORRADOR' ? 'bg-secondary' : ($venta->estado_venta === 'CONFIRMADA' ? 'bg-success' : 'bg-danger') }}">{{ $venta->estado_venta }}</span></td>
+                        <td><span class="badge rounded-pill {{ $venta->estado_venta === 'BORRADOR' ? 'bg-secondary' : ($venta->estado_venta === 'CONFIRMADA' ? 'bg-success' : 'bg-danger') }}">{{ $venta->estado_venta }}</span>@if ($venta->anulacion && $venta->anulacion->estado !== 'APLICADA')<div class="small text-warning">Anulación: {{ $venta->anulacion->estado }}</div>@endif</td>
                         <td>{{ $venta->documentoFel?->referencia }}</td><td>{{ \Illuminate\Support\Str::limit($venta->observacion, 60) }}</td><td>{{ $venta->usuarioCreador->name }}</td><td>{{ $venta->created_at->format('d/m/Y H:i') }}</td>
                         <td><div class="d-flex gap-2">
                             @can('ventas.ver')<a href="{{ route('ventas.show', $venta) }}" class="btn btn-outline-info btn-sm">Ver</a>@endcan

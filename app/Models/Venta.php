@@ -80,6 +80,11 @@ class Venta extends Model
         return $this->hasOne(DocumentoFel::class);
     }
 
+    public function anulacion()
+    {
+        return $this->hasOne(AnulacionVenta::class);
+    }
+
     public function usuarioCreador()
     {
         return $this->belongsTo(User::class, 'usuario_creador_id');

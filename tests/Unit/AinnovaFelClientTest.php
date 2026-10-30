@@ -14,6 +14,7 @@ use Illuminate\Translation\ArrayLoader;
 use Illuminate\Translation\Translator;
 use Illuminate\Validation\Factory;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use SoapFault;
 use Throwable;
 
@@ -209,6 +210,34 @@ class AinnovaFelClientTest extends TestCase
         $this->assertTrue(stream_context_get_options($cliente->opciones['stream_context'])['ssl']['verify_peer']);
     }
 
+    public function test_anulacion_soap_serializa_ocho_parametros_string_y_no_usa_id_local(): void
+    {
+        $cliente = $this->cliente('<RESULTADO><ESTADO>ANULADO</ESTADO></RESULTADO>');
+        $respuesta = $cliente->anularDocumento('A001', '000123', 'CF', '20261030', 'Error de captura & devolución');
+        $this->assertSame(RespuestaAinnova::RESPUESTA, $respuesta->tipo);
+        $this->assertSame(AinnovaFelClient::SOAP_ACTION_ANULACION, $cliente->soap->accion);
+        $dom = new DOMDocument;
+        $this->assertTrue($dom->loadXML($cliente->soap->requestXml, LIBXML_NONET));
+        $xpath = new DOMXPath($dom);
+        $nodos = $xpath->query('//*[local-name()="anulaDocumento"]/*');
+        $this->assertSame(8, $nodos->length);
+        $this->assertSame(['pUsuario', 'pPassword', 'pNitEmisor', 'pSerie', 'pPreimpreso', 'pNitComprador', 'pFechaAnulacion', 'pMotivoAnulacion'],
+            array_map(fn ($nodo) => $nodo->localName, iterator_to_array($nodos)));
+        $this->assertSame('000123', $nodos->item(4)->textContent);
+        $this->assertSame('Error de captura & devolución', $nodos->item(7)->textContent);
+        $this->assertFalse($cliente->opciones['trace']);
+    }
+
+    public function test_anulacion_timeout_y_secretos_se_protegen_como_en_emision(): void
+    {
+        $cliente = $this->cliente('sin respuesta', new RuntimeException('timeout'));
+        $this->assertSame(RespuestaAinnova::TIMEOUT, $cliente->anularDocumento('A', '1', 'CF', '20261030', 'Motivo')->tipo);
+        $cliente = $this->cliente('ERROR: '.$this->configuracion['ws_password']);
+        $respuesta = $cliente->anularDocumento('A', '1', 'CF', '20261030', 'Motivo');
+        $this->assertSame(RespuestaAinnova::TRANSPORTE, $respuesta->tipo);
+        $this->assertStringNotContainsString($this->configuracion['ws_password'], json_encode($respuesta));
+    }
+
     private function cliente(?string $texto, ?Throwable $fallo = null, array $cambios = []): AinnovaFelClient
     {
         return new class(array_replace($this->configuracion, $cambios), $texto, $fallo) extends AinnovaFelClient
@@ -269,7 +298,8 @@ class AinnovaFelClientTest extends TestCase
                             $fault->appendChild($dom->createElement('faultcode', 'Server'));
                             $fault->appendChild($dom->createElement('faultstring', 'Resultado ambiguo'));
                         } else {
-                            $respuesta = $body->appendChild($dom->createElementNS(AinnovaFelClient::NAMESPACE, 'a:generaDocumentoResponse'));
+                            $nombreRespuesta = str_ends_with($action, '/anulaDocumento') ? 'anulaDocumentoResponse' : 'generaDocumentoResponse';
+                            $respuesta = $body->appendChild($dom->createElementNS(AinnovaFelClient::NAMESPACE, 'a:'.$nombreRespuesta));
                             $retorno = $respuesta->appendChild($dom->createElement('return'));
                             $retorno->appendChild($dom->createTextNode($this->texto));
                         }

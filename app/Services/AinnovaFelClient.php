@@ -15,6 +15,8 @@ class AinnovaFelClient
 
     public const SOAP_ACTION = 'http://dbguatefac/Guatefac.wsdl/generaDocumento';
 
+    public const SOAP_ACTION_ANULACION = 'http://dbguatefac/Guatefac.wsdl/anulaDocumento';
+
     private array $configuracion;
 
     public function __construct(?array $configuracion = null)
@@ -61,15 +63,43 @@ class AinnovaFelClient
 
     public function generarDocumento(string $xml, int $tipoDocumento, string $tipoRespuesta): RespuestaAinnova
     {
+        if ($tipoDocumento !== 1 || $tipoRespuesta !== 'D') {
+            return new RespuestaAinnova(RespuestaAinnova::CONFIGURACION, mensajeTecnico: 'Solo se admite FACT con respuesta D.');
+        }
+
+        return $this->ejecutarSoap('generaDocumento', [
+            'pEstablecimiento' => $this->configuracion['establecimiento'] ?? '', 'pTipoDoc' => $tipoDocumento,
+            'pIdMaquina' => $this->configuracion['id_maquina'] ?? '', 'pTipoRespuesta' => $tipoRespuesta, 'pXml' => $xml,
+        ], self::SOAP_ACTION);
+    }
+
+    /**
+     * Solicita la anulación del documento identificado por su serie y número fiscales.
+     * Los datos provienen de la factura histórica; la fecha usa AAAAMMDD. La respuesta
+     * conserva la distinción entre respuesta funcional y fallo de transporte: este
+     * método no decide el estado local de la venta ni modifica inventario.
+     */
+    public function anularDocumento(string $serie, string $numero, string $comprador, string $fecha, string $motivo): RespuestaAinnova
+    {
+        return $this->ejecutarSoap('anulaDocumento', [
+            'pSerie' => $serie, 'pPreimpreso' => $numero, 'pNitComprador' => $comprador,
+            'pFechaAnulacion' => $fecha, 'pMotivoAnulacion' => $motivo,
+        ], self::SOAP_ACTION_ANULACION);
+    }
+
+    /**
+     * Comparte el transporte SOAP de emisión y anulación sin guardar el request con claves.
+     * Restaura el timeout y el manejador de errores incluso ante fallos. Una interrupción
+     * devuelve un resultado de transporte que el servicio debe conciliar antes de reenviar.
+     */
+    private function ejecutarSoap(string $operacion, array $parametros, string $accion): RespuestaAinnova
+    {
         $inicio = hrtime(true);
         $cliente = null;
         $handlerInstalado = false;
         $timeoutAnterior = ini_get('default_socket_timeout');
         try {
             $this->validarConfiguracion();
-            if ($tipoDocumento !== 1 || $tipoRespuesta !== 'D') {
-                $this->rechazar('Este cliente admite únicamente FACT con respuesta D.');
-            }
             // Las advertencias nativas de SOAP pueden incluir valores del request.
             set_error_handler(function (int $nivel, string $mensaje): never {
                 $mensaje = strtolower($mensaje);
@@ -91,15 +121,15 @@ class AinnovaFelClient
             ]);
             // SoapClient utiliza default_socket_timeout para la espera de respuesta.
             ini_set('default_socket_timeout', (string) $this->configuracion['timeout']);
-            $resultado = $cliente->__soapCall('generaDocumento', [
+            $argumentos = [
                 new SoapParam($this->configuracion['ws_usuario'], 'pUsuario'),
                 new SoapParam($this->configuracion['ws_password'], 'pPassword'),
                 new SoapParam($this->configuracion['nit_emisor'], 'pNitEmisor'),
-                new SoapParam($this->configuracion['establecimiento'], 'pEstablecimiento'),
-                new SoapParam($tipoDocumento, 'pTipoDoc'),
-                new SoapParam($this->configuracion['id_maquina'], 'pIdMaquina'),
-                new SoapParam($tipoRespuesta, 'pTipoRespuesta'), new SoapParam($xml, 'pXml'),
-            ], ['soapaction' => self::SOAP_ACTION]);
+            ];
+            foreach ($parametros as $nombre => $valor) {
+                $argumentos[] = new SoapParam($valor, $nombre);
+            }
+            $resultado = $cliente->__soapCall($operacion, $argumentos, ['soapaction' => $accion]);
             $texto = $this->extraerTexto($resultado);
             $inicioTexto = $texto === null ? '' : ltrim(preg_replace('/^\xEF\xBB\xBF/', '', $texto));
 
@@ -187,7 +217,7 @@ class AinnovaFelClient
                 return null;
             }
             $encontrado = false;
-            foreach (['return', 'generaDocumentoReturn', 'generaDocumentoResult', 'Resultado'] as $clave) {
+            foreach (['return', 'generaDocumentoReturn', 'generaDocumentoResult', 'anulaDocumentoReturn', 'anulaDocumentoResult', 'Resultado'] as $clave) {
                 if (array_key_exists($clave, $datos)) {
                     $resultado = $datos[$clave];
                     $encontrado = true;

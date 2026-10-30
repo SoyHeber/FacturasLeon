@@ -359,7 +359,7 @@ class BorradoresVentaTest extends VentasTestCase
         $opcion = Opcion::where('ruta', 'ventas')->sole();
         $this->assertSame('Operaciones', $opcion->modulo->nombre);
         $this->assertSame(['crear', 'eliminar', 'modificar', 'ver'], $opcion->acciones->pluck('clave')->sort()->values()->all());
-        foreach (['index', 'create', 'store', 'show', 'edit', 'update'] as $metodo) {
+        foreach (['index', 'create', 'store', 'show', 'edit', 'update', 'anular', 'aplicar_anulacion', 'conciliar_anulacion'] as $metodo) {
             $ruta = $this->router->getRoutes()->getByName('ventas.'.$metodo);
             $this->assertNotNull($ruta);
             $this->assertContains('auth', $ruta->gatherMiddleware());
@@ -369,7 +369,7 @@ class BorradoresVentaTest extends VentasTestCase
             $request->setUserResolver(fn () => User::findOrFail(7));
             $this->assertSame(200, (new VerificarPermiso)->handle($request, fn () => new Response)->getStatusCode());
         }
-        foreach (['destroy', 'cambiar-estado', 'anular'] as $metodo) {
+        foreach (['destroy', 'cambiar-estado'] as $metodo) {
             $this->assertNull($this->router->getRoutes()->getByName('ventas.'.$metodo));
         }
         $ruta = $this->router->getRoutes()->getByName('ventas.update');

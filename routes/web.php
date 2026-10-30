@@ -215,6 +215,9 @@ Route::middleware(['auth', 'permiso'])->group(function () {
     Route::get('/ventas/{venta}/edit', [VentaController::class, 'edit'])->whereNumber('venta')->name('ventas.edit');
     Route::put('/ventas/{venta}', [VentaController::class, 'update'])->whereNumber('venta')->name('ventas.update');
     Route::patch('/ventas/{venta}/confirmar', [VentaController::class, 'confirmar'])->whereNumber('venta')->name('ventas.confirmar');
+    Route::patch('/ventas/{venta}/anular', [VentaController::class, 'anular'])->whereNumber('venta')->name('ventas.anular');
+    Route::post('/ventas/{venta}/aplicar-anulacion', [VentaController::class, 'aplicarAnulacion'])->whereNumber('venta')->name('ventas.aplicar_anulacion');
+    Route::post('/ventas/{venta}/conciliar-anulacion', [VentaController::class, 'conciliarAnulacion'])->whereNumber('venta')->name('ventas.conciliar_anulacion');
     Route::post('/ventas/{venta}/certificar', [FelController::class, 'certificar'])->whereNumber('venta')->name('ventas.certificar');
     Route::post('/ventas/{venta}/conciliar-respuesta', [FelController::class, 'conciliarRespuesta'])->whereNumber('venta')->name('ventas.conciliar_respuesta');
     Route::post('/ventas/{venta}/reintentar-certificacion', [FelController::class, 'reintentarCertificacion'])->whereNumber('venta')->name('ventas.reintentar_certificacion');

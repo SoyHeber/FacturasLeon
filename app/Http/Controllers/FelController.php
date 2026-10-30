@@ -56,13 +56,17 @@ class FelController extends Controller
             $documento->estado_fel === 'CERTIFICADA' ? 'Certificación recuperada sin nuevo envío.' : 'Intento abandonado cerrado como INCIERTA. Ahora puede conciliar o reintentar con la misma referencia y XML.');
     }
 
+    /**
+     * Abre la representación original de una factura certificada o anulada.
+     * Si Ainnova no la entrega, vuelve al detalle con una advertencia sin cambiar estados.
+     */
     public function consultarRepresentacion(Request $request, Venta $venta, string $tipo, AinnovaFelConsultaClient $consulta)
     {
         try {
             $url = $consulta->consultar((int) $venta->documentoFel()->firstOrFail()->id, strtoupper($tipo));
         } catch (ValidationException $excepcion) {
             return redirect()->route('ventas.show', $venta)->with('warning',
-                $excepcion->errors()['fel'][0] ?? 'No se pudo consultar PDF/XML. La factura continúa CERTIFICADA.');
+                $excepcion->errors()['fel'][0] ?? 'No se pudo consultar PDF/XML. El estado de la factura se conserva.');
         }
 
         return redirect()->away($url)->withHeaders(['Referrer-Policy' => 'no-referrer', 'Cache-Control' => 'no-store']);

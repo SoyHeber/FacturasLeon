@@ -34,6 +34,7 @@
     @if ($errors->any())
         <div class="alert alert-danger">{{ $errors->first() }}</div>
     @endif
+    @include('ventas._anulacion')
     <div class="module-card mb-4"><div class="module-card-body">
         <h2 class="h5 fw-bold">Cliente</h2>
         <div class="row g-3">
@@ -61,8 +62,11 @@
     <div class="module-card"><div class="module-card-body">
         <h2 class="h5 fw-bold">Datos del documento</h2>
         <p>Referencia: <span class="text-break">{{ $venta->documentoFel?->referencia }}</span></p>
-        <p>Estado FEL: {{ $venta->documentoFel?->estado_fel }}</p>
-        @if ($venta->documentoFel?->estado_fel === 'CERTIFICADA')
+        <p>Estado FEL: {{ $venta->anulacion?->tipo === 'LOCAL' && $venta->estado_venta === 'ANULADA' ? 'Cancelada sin emisión' : $venta->documentoFel?->estado_fel }}</p>
+        @if ($venta->anulacion?->tipo === 'FEL' && $venta->anulacion->estado === 'CONFIRMADA')
+            <p class="text-warning">Ainnova confirmó la anulación. La aplicación local está pendiente.</p>
+        @endif
+        @if (in_array($venta->documentoFel?->estado_fel, ['CERTIFICADA', 'ANULADA']))
             <div class="row g-3 mb-3">
                 <div class="col-md-6"><strong>UUID / Número de autorización</strong><div class="text-break">{{ $venta->documentoFel->fel_uuid }}</div></div>
                 <div class="col-md-3"><strong>Serie</strong><div>{{ $venta->documentoFel->fel_serie }}</div></div>
@@ -71,10 +75,12 @@
                 <div class="col-md-6"><strong>Certificador</strong><div>{{ $venta->documentoFel->nombre_certificador }} · {{ $venta->documentoFel->nit_certificador }}</div></div>
             </div>
             @can('ventas.ver')
+                @if ($venta->documentoFel->fel_serie && $venta->documentoFel->fel_numero)
                 <div class="d-flex gap-2 mb-3">
                     <a class="btn btn-outline-primary" href="{{ route('ventas.consultar_representacion', [$venta, 'tipo' => 'pdf']) }}" target="_blank" rel="noopener noreferrer">Ver PDF</a>
                     <a class="btn btn-outline-secondary" href="{{ route('ventas.consultar_representacion', [$venta, 'tipo' => 'xml']) }}" target="_blank" rel="noopener noreferrer">Consultar XML</a>
                 </div>
+                @endif
             @endcan
         @elseif ($venta->documentoFel?->estado_fel === 'ERROR')
             <div class="alert alert-danger">{{ $protectorFel->protegerTexto($venta->documentoFel->ultimoIntento?->mensaje_error) ?: 'Ainnova rechazó el documento.' }}</div>
