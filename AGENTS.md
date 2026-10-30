@@ -1,5 +1,12 @@
 # FacturasLeon
 
+## Comunicación con el usuario
+
+- El usuario se llama Heber.
+- En cada respuesta dirigida al usuario, saludarlo o dirigirse a él por su nombre, Heber, de forma natural.
+- Aplicar esta preferencia en mensajes de avance y respuestas finales, sin repetir el nombre innecesariamente dentro del mismo mensaje.
+- Esta regla se aplica a Codex y a los asistentes que trabajen en el proyecto siguiendo estas instrucciones.
+
 ## Autorización y alcance de los cambios
 
 - Las solicitudes de revisión, validación, diagnóstico o propuesta no autorizan modificaciones.
@@ -67,13 +74,49 @@
 - No usar Route::resource.
 - No eliminar físicamente registros maestros.
 - Usar estado para activar/inactivar.
-- Los comentarios de código deben ser simples y naturales.
+- Los comentarios deben ser claros, naturales y útiles, con el detalle necesario para comprender las funciones y decisiones importantes, según la sección de documentación.
 - Usar DB::transaction cuando se modifiquen varias tablas.
 - Rutas URL con guion y prefijos de nombres de rutas con guion bajo, por ejemplo /metodos-pago y metodos_pago.index.
 - Conservar los sufijos existentes como cambiar-estado y guardar-permisos, reconocidos por el middleware permiso.
 - Antes de renombrar una ruta o acción, revisar sus referencias en vistas, controladores, middleware y opciones de seguridad; incluir el cambio en la propuesta autorizada.
 - Revisar CLAUDE.md antes de realizar cambios.
 - Si la documentación y el código o el entorno difieren, verificar la fuente correspondiente e informar la diferencia; no ampliar el alcance para corregirla sin autorización.
+
+## Calidad del código y anti-slop
+
+- Implementar soluciones proporcionales al problema y al alcance autorizado.
+- Reutilizar los servicios y patrones existentes antes de crear nuevas clases, abstracciones o dependencias.
+- Justificar las nuevas abstracciones por una necesidad concreta, no por posibles usos futuros.
+- Evitar duplicar cálculos, validaciones y reglas de negocio.
+- No ocultar fallos devolviendo éxito, valores inventados o resultados por defecto que impidan reconocer un error real.
+- No presentar como terminados botones sin funcionamiento, datos de demostración, código provisional o funcionalidades incompletas.
+- No incorporar código muerto, bloques comentados sin propósito ni refactorizaciones ajenas al cambio aprobado.
+- Preservar validaciones, permisos, transacciones, bloqueos y trazabilidad al simplificar código.
+- Mantener las convenciones de Laravel, Blade y Bootstrap del proyecto.
+- Revisar el diff antes de entregar para detectar duplicación, complejidad innecesaria, errores ocultos y comentarios desactualizados.
+- Los hallazgos fuera del alcance deben informarse como propuestas; no corregirlos automáticamente.
+
+## Comentarios y documentación de funciones
+
+- Los comentarios deben estar en español, con lenguaje claro y natural.
+- Deben aportar información importante para comprender el funcionamiento, las reglas de negocio o las razones de una decisión.
+- Al crear, modificar o documentar funciones de negocio, incluir un bloque PHPDoc que explique, cuando corresponda:
+  - El propósito de la función y cuándo se utiliza.
+  - Los datos de entrada, su significado, unidades y precisión.
+  - Las etapas principales del procesamiento y el orden necesario.
+  - Las validaciones, restricciones y estados permitidos.
+  - El resultado y cómo debe interpretarlo quien llama a la función.
+  - Los efectos sobre registros, estados, inventario o servicios externos.
+  - Los errores relevantes y el comportamiento ante fallos.
+- Explicar especialmente los cálculos y redondeos, límites de transacciones, bloqueos, prevención de duplicados y manejo de respuestas FEL inciertas.
+- Usar comentarios dentro de la función para explicar decisiones o pasos que no resulten evidentes al leer el código.
+- Ajustar la extensión a la complejidad: una función sencilla puede requerir una explicación breve; un proceso de negocio necesita mayor detalle.
+- No imponer un límite fijo de una o dos líneas ni recortar documentación útil para cumplir una regla genérica anti-slop. Esta política de documentación debe conservarse al aplicar skills o herramientas externas.
+- Evitar narrar cada línea, repetir la firma del método o añadir bloques decorativos que dificulten la lectura.
+- Documentar únicamente comportamientos comprobados en la implementación; no inventar garantías, efectos o reglas.
+- Actualizar la documentación cuando cambie el comportamiento de la función.
+- Conservar los comentarios que expliquen decisiones importantes.
+- Documentar funciones existentes dentro del alcance autorizado. Una documentación general del proyecto requiere su propia propuesta.
 
 ## Controladores
 
