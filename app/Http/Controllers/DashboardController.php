@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\ConsultasOperativasService;
 use Brick\Math\BigDecimal;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Query\Builder;
@@ -79,14 +80,7 @@ class DashboardController extends Controller
      */
     private function ventas(array $periodo): array
     {
-        $filas = DB::table('ventas as v')->join('documentos_fel as d', 'd.venta_id', '=', 'v.id')
-            ->leftJoin('anulaciones_venta as a', function ($join) {
-                $join->on('a.venta_id', '=', 'v.id')->where('a.tipo', 'FEL')->whereIn('a.estado', ['CONFIRMADA', 'APLICADA'])->whereNotNull('a.fecha_confirmacion');
-            })
-            ->whereIn('v.estado_venta', ['CONFIRMADA', 'ANULADA'])->whereIn('d.estado_fel', ['CERTIFICADA', 'ANULADA'])
-            ->whereNotNull('d.fel_uuid')->where('d.fel_uuid', '<>', '')
-            ->whereNotNull('d.xml_certificado')->where('d.xml_certificado', '<>', '')
-            ->whereNotNull('d.fecha_certificacion')->whereNotNull('d.fecha_hora_emision')
+        $filas = (new ConsultasOperativasService)->ventasCertificadas()
             ->where(function (Builder $query) use ($periodo) {
                 $query->where(fn ($q) => $q->where('d.fecha_hora_emision', '>=', $periodo['inicio_utc'])->where('d.fecha_hora_emision', '<', $periodo['fin_utc']))
                     ->orWhere(fn ($q) => $q->where('a.fecha_anulacion', '>=', $periodo['desde']->toDateString())->where('a.fecha_anulacion', '<=', $periodo['hasta']->toDateString()));
@@ -137,8 +131,7 @@ class DashboardController extends Controller
                 ->orWhere(fn ($q) => $q->where('c.fecha_anulacion', '>=', $periodo['inicio_utc'])->where('c.fecha_anulacion', '<', $periodo['fin_utc']));
         });
         $historicas = (clone $query)->where('c.inventario_aplicado', false)->count();
-        $filas = $query->where('c.inventario_aplicado', true)
-            ->whereExists(fn ($q) => $q->selectRaw('1')->from('detalles_compra as dc')->whereColumn('dc.compra_id', 'c.id')->where('dc.estado', true))
+        $filas = (new ConsultasOperativasService)->comprasValidadas($query)
             ->get(['c.id', 'c.importe_total', 'c.moneda', 'c.fecha_emision', 'c.fecha_anulacion', 'c.estado']);
         $eventos = [];
         foreach ($filas as $fila) {
@@ -158,8 +151,7 @@ class DashboardController extends Controller
      */
     private function produccion(array $periodo): array
     {
-        $filas = DB::table('producciones')->whereIn('estado_produccion', ['CONFIRMADA', 'ANULADA'])
-            ->where('inventario_aplicado', true)->where('producto_terminado_aplicado', true)->whereNotNull('fecha_confirmacion')
+        $filas = (new ConsultasOperativasService)->produccionesConfirmadas()
             ->where(function ($query) use ($periodo) {
                 $query->where(fn ($q) => $q->where('fecha_confirmacion', '>=', $periodo['inicio_utc'])->where('fecha_confirmacion', '<', $periodo['fin_utc']))
                     ->orWhere(fn ($q) => $q->where('fecha_anulacion', '>=', $periodo['inicio_utc'])->where('fecha_anulacion', '<', $periodo['fin_utc']));

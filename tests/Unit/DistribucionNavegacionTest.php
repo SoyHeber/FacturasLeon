@@ -69,7 +69,7 @@ class DistribucionNavegacionTest extends CompraInventarioTestCase
 
         (new DistribucionNavegacionSeeder)->run();
 
-        $this->assertSame(['Operaciones', 'Inventario', 'Producción', 'Personas', 'Catálogos', 'Seguridad'],
+        $this->assertSame(['Operaciones', 'Inventario', 'Producción', 'Reportes Generales', 'Personas', 'Catálogos', 'Seguridad'],
             DB::table('modulos')->orderBy('orden')->pluck('nombre')->all());
         $this->assertSame($permisos, $this->fotoPermisos());
         $this->assertSame($efectivos, User::findOrFail(17)->permisos());
@@ -131,11 +131,11 @@ class DistribucionNavegacionTest extends CompraInventarioTestCase
     public function test_instalacion_nueva_registra_la_misma_distribucion_y_las_acciones_permitidas(): void
     {
         (new SeguridadSeeder)->run();
-        $this->assertSame(6, DB::table('modulos')->count());
-        $this->assertSame(26, DB::table('opciones')->count());
+        $this->assertSame(7, DB::table('modulos')->count());
+        $this->assertSame(34, DB::table('opciones')->count());
         $this->assertSame(['ver', 'crear', 'eliminar'], Opcion::where('ruta', 'compras')->firstOrFail()->acciones()->orderBy('acciones.id')->pluck('clave')->all());
         $this->assertSame(['ver'], Opcion::where('ruta', 'detalles_compra')->firstOrFail()->acciones()->pluck('clave')->all());
-        $this->assertSame(['Operaciones', 'Inventario', 'Producción', 'Personas', 'Catálogos', 'Seguridad'],
+        $this->assertSame(['Operaciones', 'Inventario', 'Producción', 'Reportes Generales', 'Personas', 'Catálogos', 'Seguridad'],
             User::findOrFail(17)->menu()->pluck('nombre')->all());
         $this->assertSame('Inventario', Opcion::with('modulo')->where('ruta', 'inventarios_compra')->firstOrFail()->modulo->nombre);
         $this->assertSame('Personas', Opcion::with('modulo')->where('ruta', 'direcciones')->firstOrFail()->modulo->nombre);

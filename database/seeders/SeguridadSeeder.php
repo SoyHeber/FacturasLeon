@@ -42,6 +42,7 @@ class SeguridadSeeder extends Seeder
             'producciones' => ['Producciones', '🛠️'],
             'materiales_producto' => ['Recetas por producto', '🧩'],
         ]],
+        'Reportes Generales' => ['📊', Opcion::REPORTES],
         'Personas' => ['👥', [
             'clientes' => ['Clientes', '👥'],
             'proveedores' => ['Proveedores', '🚚'],

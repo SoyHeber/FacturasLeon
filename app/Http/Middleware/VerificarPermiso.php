@@ -15,6 +15,7 @@ class VerificarPermiso
     public const ACCIONES_POR_METODO = [
         'index' => 'ver',
         'show' => 'ver',
+        'exportar' => 'ver',
         'create' => 'crear',
         'store' => 'crear',
         'edit' => 'modificar',

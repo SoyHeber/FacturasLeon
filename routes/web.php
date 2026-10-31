@@ -30,6 +30,7 @@ use App\Http\Controllers\OpcionController;
 use App\Http\Controllers\AccionController;
 use App\Http\Controllers\VentaController;
 use App\Http\Controllers\FelController;
+use App\Http\Controllers\ReportesGeneralesController;
 
 /*
 |--------------------------------------------------------------------------
@@ -59,6 +60,13 @@ Route::middleware('auth')->group(function () {
 | roles_opciones_acciones (ver App\Http\Middleware\VerificarPermiso).
 */
 Route::middleware(['auth', 'permiso'])->group(function () {
+    /* Consultas y descargas de Reportes Generales: familias cerradas en servidor. */
+    foreach (array_keys(\App\Services\ReportesGeneralesService::VISTAS) as $reporte) {
+        Route::get('/reportes/'.$reporte, [ReportesGeneralesController::class, 'index'])
+            ->defaults('reporte', $reporte)->name('reportes_'.$reporte.'.index');
+        Route::get('/reportes/'.$reporte.'/exportar', [ReportesGeneralesController::class, 'exportar'])
+            ->defaults('reporte', $reporte)->name('reportes_'.$reporte.'.exportar');
+    }
     /*Rutas de Categorias*/
     Route::get('/categorias', [CategoriaController::class, 'index'])->name('categorias.index');
     Route::get('/categorias/create', [CategoriaController::class, 'create'])->name('categorias.create');
