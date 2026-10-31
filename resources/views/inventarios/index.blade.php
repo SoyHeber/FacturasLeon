@@ -5,7 +5,7 @@
 
         <div>
             <h1 class="fw-bold mb-1">
-                Inventarios
+                Productos terminados
             </h1>
 
             <p class="text-muted mb-0">
@@ -15,7 +15,7 @@
 
         @can('inventarios.crear')
             <a href="{{ route('inventarios.create') }}" class="btn btn-warning fw-bold px-4 py-2">
-                + Nuevo inventario
+                + Registrar en inventario
             </a>
         @endcan
 

@@ -452,7 +452,7 @@ class BorradoresProduccionTest extends CompraInventarioTestCase
         $datos['materiales'][1]['observacion'] = '<script>alert(1)</script>';
         session()->flashInput($datos);
         $html = (new MaterialProductoController)->create()->render();
-        $this->assertStringContainsString('Agregar materiales al producto', $html);
+        $this->assertStringContainsString('Agregar materiales a la receta', $html);
         $this->assertStringContainsString('name="materiales[0][inventario_compra_id]"', $html);
         $this->assertStringContainsString('name="materiales[1][cantidad_requerida]" value="0.1234567891"', $html);
         $this->assertStringContainsString('value="0.0000000001"', $html);

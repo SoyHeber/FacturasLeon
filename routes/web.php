@@ -15,9 +15,7 @@ use App\Http\Controllers\ProveedorController;
 use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\ProductoController;
 use App\Http\Controllers\InventarioController;
-use App\Models\Categoria;
-use App\Models\Marca;
-use App\Models\Producto;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\MovimientoInventarioController;
 use App\Http\Controllers\CompraController;
@@ -48,17 +46,8 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/dashboard', function () {
-    $totalCategorias = Categoria::where('estado', 1)->count();
-    $totalMarcas = Marca::where('estado', 1)->count();
-    $totalProductos = Producto::where('estado', 1)->count();
-
-    return view('dashboard', compact(
-        'totalCategorias',
-        'totalMarcas',
-        'totalProductos'
-    ));
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', [DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

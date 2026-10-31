@@ -4,7 +4,7 @@
     <div class="d-flex justify-content-between align-items-start mb-4">
         <div>
             <h1 class="fw-bold mb-1">
-                Inventarios de Compra
+                Materias primas
             </h1>
 
             <p class="text-muted mb-0">
@@ -14,7 +14,7 @@
 
         @can('inventarios_compra.crear')
             <a href="{{ route('inventarios_compra.create') }}" class="btn btn-warning fw-bold px-4 py-2">
-                + Nuevo inventario
+                + Nueva materia prima
             </a>
         @endcan
     </div>

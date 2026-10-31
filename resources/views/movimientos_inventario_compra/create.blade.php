@@ -4,7 +4,7 @@
 
     <div class="mb-4">
         <h1 class="fw-bold mb-1">
-            Nuevo Movimiento de Inventario de Compra
+            Nuevo movimiento de materias primas
         </h1>
 
         <p class="text-muted mb-0">

@@ -9,7 +9,7 @@
 
                 <div class="card-header">
                     <h1 class="h4 mb-0">
-                        Editar Inventario
+                        Editar inventario de producto terminado
                     </h1>
                 </div>
 

@@ -3,7 +3,7 @@
 @section('content')
     <div class="d-flex justify-content-between align-items-start mb-4">
         <div>
-            <h1 class="fw-bold mb-1">Materiales por Producto</h1>
+            <h1 class="fw-bold mb-1">Recetas por producto</h1>
             <p class="text-muted mb-0">Consulta y administra la receta completa de cada producto.</p>
         </div>
         @can('materiales_producto.crear')

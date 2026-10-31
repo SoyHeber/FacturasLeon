@@ -9,7 +9,7 @@
 
                 <div class="card-header">
                     <h1 class="h4 mb-0">
-                        Detalle de Inventario
+                        Detalle del inventario de producto terminado
                     </h1>
                 </div>
 

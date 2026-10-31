@@ -3,7 +3,7 @@
 @section('content')
     <div class="mb-4">
         <h1 class="fw-bold mb-1">
-            Detalle del Inventario de Compra
+            Detalle de materia prima
         </h1>
 
         <p class="text-muted mb-0">

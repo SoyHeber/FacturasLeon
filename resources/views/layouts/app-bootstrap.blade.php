@@ -387,6 +387,9 @@
             @endisset
 
             <section class="page-content">
+                @auth
+                    @include('layouts.ubicacion-modulo')
+                @endauth
                 {{ $slot ?? '' }}
                 @yield('content')
             </section>

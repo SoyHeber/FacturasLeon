@@ -1,0 +1,10 @@
+{
+  "detector": {
+    "extensions": [
+      {
+        "ext": ".blade.php",
+        "engine": "html"
+      }
+    ]
+  }
+}

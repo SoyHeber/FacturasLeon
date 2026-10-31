@@ -25,36 +25,38 @@ class SeguridadSeeder extends Seeder
         ['nombre' => 'Eliminar', 'clave' => 'eliminar', 'descripcion' => 'Activar o inactivar registros.'],
     ];
 
-    // Módulo => [icono, [ruta => [nombre, icono]]]
-    private const MODULOS = [
+    // Distribución compartida por las instalaciones nuevas y la reorganización del menú existente.
+    public const MODULOS = [
+        'Operaciones' => ['📦', [
+            'ventas' => ['Ventas', '🧾'],
+            'compras' => ['Compras', '🛒'],
+            'detalles_compra' => ['Detalles de Compra', '📋'],
+        ]],
+        'Inventario' => ['🏬', [
+            'inventarios' => ['Productos terminados', '📦'],
+            'movimientos_inventario' => ['Movimientos de productos', '🔄'],
+            'inventarios_compra' => ['Materias primas', '🧱'],
+            'movimientos_inventario_compra' => ['Movimientos de materias primas', '🔁'],
+        ]],
+        'Producción' => ['🛠️', [
+            'producciones' => ['Producciones', '🛠️'],
+            'materiales_producto' => ['Recetas por producto', '🧩'],
+        ]],
+        'Personas' => ['👥', [
+            'clientes' => ['Clientes', '👥'],
+            'proveedores' => ['Proveedores', '🚚'],
+            'direcciones' => ['Direcciones', '🏘️'],
+        ]],
         'Catálogos' => ['📚', [
+            'productos' => ['Productos', '💍'],
             'categorias' => ['Categorías', '📂'],
             'marcas' => ['Marcas', '🏷️'],
-            'productos' => ['Productos', '💍'],
+            'metodos_pago' => ['Métodos de Pago', '💳'],
+            'tipos_documento' => ['Tipos de Documento', '📄'],
+            'tipos_identificacion' => ['Tipos de Identificación', '🪪'],
             'paises' => ['Países', '🌎'],
             'departamentos' => ['Departamentos', '🗺️'],
             'municipios' => ['Municipios', '📍'],
-            'tipos_documento' => ['Tipos de Documento', '📄'],
-        ]],
-        'Operaciones' => ['📦', [
-            'ventas' => ['Ventas', '🧾'],
-            'inventarios' => ['Inventarios', '📦'],
-            'movimientos_inventario' => ['Movimientos Inventario', '🔄'],
-            'compras' => ['Compras', '🛒'],
-            'detalles_compra' => ['Detalles Compra', '📋'],
-            'inventarios_compra' => ['Inventarios Compra', '🧱'],
-            'movimientos_inventario_compra' => ['Movimientos Inventario Compra', '🔁'],
-        ]],
-        'Producción' => ['🛠️', [
-            'materiales_producto' => ['Materiales Producto', '🧩'],
-            'producciones' => ['Producciones', '🛠️'],
-            'direcciones' => ['Direcciones', '🏘️'],
-            'metodos_pago' => ['Métodos de Pago', '💳'],
-            'tipos_identificacion' => ['Tipos de Identificación', '🪪'],
-        ]],
-        'Personas' => ['👥', [
-            'proveedores' => ['Proveedores', '🚚'],
-            'clientes' => ['Clientes', '👥'],
         ]],
         'Seguridad' => ['🔒', [
             'users' => ['Usuarios', '👤'],

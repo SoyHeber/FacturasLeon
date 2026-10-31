@@ -4,7 +4,7 @@
 
     <div class="mb-4">
         <h1 class="fw-bold mb-1">
-            Editar Inventario de Compra
+            Editar materia prima
         </h1>
 
         <p class="text-muted mb-0">
