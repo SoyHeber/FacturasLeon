@@ -27,6 +27,7 @@ abstract class ProduccionInventarioTestCase extends CompraInventarioTestCase
             $table->id();
             $table->string('nombre');
             $table->boolean('estado')->default(true);
+            $table->timestamps();
         });
         DB::table('productos')->insert(['id' => 3, 'nombre' => 'Anillo']);
         Schema::drop('producciones');
@@ -58,6 +59,7 @@ abstract class ProduccionInventarioTestCase extends CompraInventarioTestCase
             $table->unique(['producto_id', 'inventario_compra_id']);
             $table->timestamps();
         });
+        (require dirname(__DIR__, 2).'/database/migrations/2026_10_30_000002_agregar_estado_general_recetas.php')->up();
         // SQLite conserva los decimales como texto para probar cantidades exactas.
         Schema::create('consumos_produccion', function (Blueprint $table) {
             $table->id();

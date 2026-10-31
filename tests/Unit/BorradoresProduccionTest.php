@@ -9,8 +9,12 @@ use App\Models\ConsumoProduccion;
 use App\Models\MaterialProducto;
 use App\Models\MovimientoInventarioCompra;
 use App\Models\Produccion;
+use App\Models\Producto;
 use App\Models\User;
 use App\Services\CalculadoraProduccionService;
+use App\Services\InventarioCompraService;
+use App\Services\ProduccionInventarioService;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\Access\Gate;
 use Illuminate\Container\Container;
 use Illuminate\Contracts\Auth\Access\Gate as GateContract;
@@ -36,6 +40,7 @@ use Illuminate\View\Engines\EngineResolver;
 use Illuminate\View\Factory;
 use Illuminate\View\FileViewFinder;
 use PHPUnit\Framework\Attributes\DataProvider;
+use RuntimeException;
 use Tests\Support\CompraInventarioTestCase;
 use Tests\Support\EsquemaProductoTerminado;
 
@@ -53,6 +58,7 @@ class BorradoresProduccionTest extends CompraInventarioTestCase
             $table->id();
             $table->string('nombre');
             $table->boolean('estado')->default(true);
+            $table->timestamps();
         });
         DB::table('productos')->insert([['id' => 3, 'nombre' => 'Anillo'], ['id' => 5, 'nombre' => 'Pulsera'], ['id' => 9, 'nombre' => 'Collar']]);
         Schema::drop('producciones');
@@ -79,6 +85,7 @@ class BorradoresProduccionTest extends CompraInventarioTestCase
             $table->unique(['producto_id', 'inventario_compra_id']);
             $table->timestamps();
         });
+        (require dirname(__DIR__, 2).'/database/migrations/2026_10_30_000002_agregar_estado_general_recetas.php')->up();
         (require dirname(__DIR__, 2).'/database/migrations/2026_10_02_000011_create_consumos_produccion_table.php')->up();
         (require dirname(__DIR__, 2).'/database/migrations/2026_10_02_000012_agregar_consumo_a_movimientos_inventario_compra.php')->up();
         EsquemaProductoTerminado::crear();
@@ -269,48 +276,234 @@ class BorradoresProduccionTest extends CompraInventarioTestCase
         $antes = $this->snapshot();
         $controller = new MaterialProductoController;
         $grammar = $this->registrarBloqueos();
-        $controller->store(Request::create('/', 'POST', ['producto_id' => 5, 'inventario_compra_id' => 44, 'cantidad_requerida' => '0.0000000001']));
+        $controller->store(Request::create('/', 'POST', ['producto_id' => 5, 'materiales' => [
+            ['inventario_compra_id' => 44, 'cantidad_requerida' => '0.0000000001'],
+        ]]));
         $material = MaterialProducto::where('producto_id', 5)->firstOrFail();
         $this->assertSame('0.0000000001', $material->cantidad_requerida);
-        $this->assertSame(['productos', 'materiales_producto'], array_column($grammar->bloqueos, 'tabla'));
+        $this->assertSame(['productos', 'inventarios_compra', 'materiales_producto'], array_column($grammar->bloqueos, 'tabla'));
         $grammar->bloqueos = [];
-        $controller->update(Request::create('/', 'PUT', ['producto_id' => 3, 'inventario_compra_id' => 44,
-            'cantidad_requerida' => '9999999999.9999999999', 'estado' => true]), $material);
-        $this->assertSame(['productos', 'productos', 'materiales_producto', 'materiales_producto'], array_column($grammar->bloqueos, 'tabla'));
-        $this->assertSame([[3], [5], [$material->id], [3, 44, $material->id]], array_column($grammar->bloqueos, 'parametros'));
+        $datos = $this->datosEdicionReceta($material);
+        $datos['materiales'][0]['cantidad_requerida'] = '9999999999.9999999999';
+        $controller->update(Request::create('/', 'PUT', $datos), $material);
+        $this->assertSame(['productos', 'materiales_producto', 'materiales_producto', 'inventarios_compra'], array_column($grammar->bloqueos, 'tabla'));
+        $this->assertSame([[5], [$material->id], [5], [44]], array_column($grammar->bloqueos, 'parametros'));
         $this->assertSame([1, 1, 1, 1], array_column($grammar->bloqueos, 'transaccion'));
         $material->refresh();
         $this->assertSame('9999999999.9999999999', $material->cantidad_requerida);
         $grammar->bloqueos = [];
         $controller->cambiarEstado($material);
-        $this->assertSame(['productos', 'materiales_producto'], array_column($grammar->bloqueos, 'tabla'));
-        $this->assertFalse($material->fresh()->estado);
+        $this->assertSame(['productos', 'materiales_producto', 'materiales_producto'], array_column($grammar->bloqueos, 'tabla'));
+        $this->assertTrue($material->fresh()->estado);
+        $this->assertFalse(Producto::findOrFail(5)->receta_activa);
         $this->assertSame($antes, $this->snapshot());
     }
 
     public function test_receta_update_usa_producto_actual_en_lugar_de_modelo_obsoleto(): void
     {
         $material = MaterialProducto::firstOrFail();
+        $datos = $this->datosEdicionReceta($material);
         DB::table('materiales_producto')->where('id', $material->id)->update(['producto_id' => 9]);
         $grammar = $this->registrarBloqueos();
-        (new MaterialProductoController)->update(Request::create('/', 'PUT', ['producto_id' => 5,
-            'inventario_compra_id' => 7, 'cantidad_requerida' => '0.1234567891', 'estado' => true]), $material);
-        $this->assertSame([[5], [9], [$material->id], [5, 7, $material->id]], array_column($grammar->bloqueos, 'parametros'));
-        $this->assertSame('0.1234567891', $material->fresh()->cantidad_requerida);
+        $this->rechaza(fn () => (new MaterialProductoController)->update(Request::create('/', 'PUT', $datos), $material), ValidationException::class);
+        $this->assertSame([[9], [$material->id]], array_column($grammar->bloqueos, 'parametros'));
+        $this->assertSame(9, $material->fresh()->producto_id);
+        $this->assertSame('0.1234567890', $material->fresh()->cantidad_requerida);
     }
 
     public function test_receta_duplicada_o_decimal_invalido_no_deja_cambios_parciales(): void
     {
         $antes = $this->filas('materiales_producto');
         $controller = new MaterialProductoController;
-        $datos = ['producto_id' => 3, 'inventario_compra_id' => 7, 'cantidad_requerida' => '1'];
-        $this->rechaza(fn () => $controller->store(Request::create('/', 'POST', $datos)), ValidationException::class);
+        $this->rechaza(fn () => $controller->store(Request::create('/', 'POST', ['producto_id' => 3, 'materiales' => [
+            ['inventario_compra_id' => 7, 'cantidad_requerida' => '1'],
+        ]])), ValidationException::class);
         foreach (['0', '0.00000000001', '10000000000', 0.1] as $cantidad) {
-            $datos['cantidad_requerida'] = $cantidad;
-            $this->rechaza(fn () => $controller->update(Request::create('/', 'PUT', $datos), MaterialProducto::firstOrFail()), ValidationException::class);
+            $edicion = $this->datosEdicionReceta(MaterialProducto::firstOrFail());
+            $edicion['materiales'][0]['cantidad_requerida'] = $cantidad;
+            try {
+                $controller->update(Request::create('/', 'PUT', $edicion), MaterialProducto::firstOrFail());
+                $this->fail('La cantidad inválida debe rechazarse.');
+            } catch (ValidationException $excepcion) {
+                $this->assertArrayHasKey('materiales.0.cantidad_requerida', $excepcion->errors());
+            }
         }
         $this->assertSame($antes, $this->filas('materiales_producto'));
         $this->assertSame(0, DB::connection()->transactionLevel());
+    }
+
+    public function test_crear_varias_lineas_conserva_decimales_receta_previa_e_inventarios(): void
+    {
+        $antes = $this->snapshot();
+        $existente = MaterialProducto::firstOrFail()->getAttributes();
+        $respuesta = (new MaterialProductoController)->store(Request::create('/', 'POST', $this->datosMateriales()));
+        $lineas = MaterialProducto::where('producto_id', 5)->orderBy('inventario_compra_id')->get();
+        $this->assertCount(2, $lineas);
+        $this->assertSame(['0.0000000001', '0.1234567891'], $lineas->pluck('cantidad_requerida')->all());
+        $this->assertTrue($lineas->every(fn ($linea) => $linea->estado));
+        $this->assertSame($existente, MaterialProducto::findOrFail($existente['id'])->getAttributes());
+        $this->assertSame($antes, $this->snapshot());
+        $this->assertSame(route('materiales_producto.index'), $respuesta->getTargetUrl());
+        $this->assertNotEmpty(session('success'));
+    }
+
+    #[DataProvider('cantidadesMaterialInvalidas')]
+    public function test_ultima_cantidad_invalida_se_identifica_por_fila_y_no_guarda_parcialmente(mixed $cantidad): void
+    {
+        $datos = $this->datosMateriales();
+        $datos['materiales'][1]['cantidad_requerida'] = $cantidad;
+        $antes = $this->filas('materiales_producto');
+        $inventariosAntes = $this->snapshotInventarios();
+        try {
+            (new MaterialProductoController)->store(Request::create('/', 'POST', $datos));
+            $this->fail('La última fila debe rechazarse.');
+        } catch (ValidationException $excepcion) {
+            $this->assertArrayHasKey('materiales.1.cantidad_requerida', $excepcion->errors());
+        }
+        $this->assertSame($antes, $this->filas('materiales_producto'));
+        $this->assertSame($inventariosAntes, $this->snapshotInventarios());
+        $this->assertSame(0, DB::connection()->transactionLevel());
+    }
+
+    public static function cantidadesMaterialInvalidas(): array
+    {
+        return [['0'], ['-1'], ['0.00000000001'], ['10000000000'], [0.1], ['1e3'], [[]], ['']];
+    }
+
+    public function test_repite_material_en_el_lote_o_ya_asignado_aunque_inactivo_se_rechaza(): void
+    {
+        $controller = new MaterialProductoController;
+        $datos = $this->datosMateriales();
+        $datos['materiales'][1]['inventario_compra_id'] = 7;
+        $antes = $this->filas('materiales_producto');
+        $this->rechaza(fn () => $controller->store(Request::create('/', 'POST', $datos)), ValidationException::class);
+        $this->assertSame($antes, $this->filas('materiales_producto'));
+        DB::table('materiales_producto')->update(['estado' => false]);
+        $antes = $this->filas('materiales_producto');
+        $datos = $this->datosMateriales(['producto_id' => 3, 'materiales' => [
+            ['inventario_compra_id' => 44, 'cantidad_requerida' => '2'],
+            ['inventario_compra_id' => 7, 'cantidad_requerida' => '3'],
+        ]]);
+        try {
+            $controller->store(Request::create('/', 'POST', $datos));
+            $this->fail('El material existente, incluso inactivo, no debe duplicarse.');
+        } catch (ValidationException $excepcion) {
+            $this->assertArrayHasKey('materiales.1.inventario_compra_id', $excepcion->errors());
+        }
+        $this->assertSame($antes, $this->filas('materiales_producto'));
+    }
+
+    public function test_catalogos_inactivos_lineas_vacias_y_campos_no_permitidos_no_se_guardan(): void
+    {
+        $controller = new MaterialProductoController;
+        $antes = $this->filas('materiales_producto');
+        foreach ([[], array_fill(0, 201, ['inventario_compra_id' => 7, 'cantidad_requerida' => '1']),
+            [['inventario_compra_id' => 7, 'cantidad_requerida' => '1', 'estado' => true]],
+            [['inventario_compra_id' => 999, 'cantidad_requerida' => '1']]] as $lineas) {
+            $this->rechaza(fn () => $controller->store(Request::create('/', 'POST', $this->datosMateriales(['materiales' => $lineas]))), ValidationException::class);
+        }
+        DB::table('productos')->where('id', 5)->update(['estado' => false]);
+        $this->rechaza(fn () => $controller->store(Request::create('/', 'POST', $this->datosMateriales())), ValidationException::class);
+        DB::table('productos')->where('id', 5)->update(['estado' => true]);
+        DB::table('inventarios_compra')->where('id', 44)->update(['estado' => false]);
+        $this->rechaza(fn () => $controller->store(Request::create('/', 'POST', $this->datosMateriales())), ValidationException::class);
+        $this->assertSame($antes, $this->filas('materiales_producto'));
+    }
+
+    public function test_fallo_de_persistencia_en_ultima_linea_revierte_el_lote_completo(): void
+    {
+        $antes = $this->filas('materiales_producto');
+        $inventariosAntes = $this->snapshotInventarios();
+        MaterialProducto::creating(function ($material) {
+            if ((int) $material->producto_id === 5 && (int) $material->inventario_compra_id === 44) {
+                return false;
+            }
+        });
+        $this->rechaza(fn () => (new MaterialProductoController)->store(Request::create('/', 'POST', $this->datosMateriales())), RuntimeException::class);
+        $this->assertSame($antes, $this->filas('materiales_producto'));
+        $this->assertSame($inventariosAntes, $this->snapshotInventarios());
+        $this->assertSame(0, DB::connection()->transactionLevel());
+    }
+
+    public function test_ampliar_receta_preserva_consumos_confirmados_y_la_produccion_futura_usa_todas_las_lineas(): void
+    {
+        \App\Models\Inventario::create(['producto_id' => 3, 'estado' => true]);
+        $produccion = Produccion::create($this->datosProduccion() + ['user_id' => 17]);
+        $servicio = new ProduccionInventarioService(new InventarioCompraService, $this->calculadora);
+        $servicio->confirmarProduccion($produccion->id, 17);
+        $consumos = $this->filas('consumos_produccion');
+        $antes = $this->snapshot();
+        (new MaterialProductoController)->store(Request::create('/', 'POST', $this->datosMateriales([
+            'producto_id' => 3, 'materiales' => [['inventario_compra_id' => 44, 'cantidad_requerida' => '0.25']],
+        ])));
+        $this->assertSame($consumos, $this->filas('consumos_produccion'));
+        $this->assertSame($antes, $this->snapshot());
+        $nueva = Produccion::create($this->datosProduccion() + ['user_id' => 17]);
+        $this->assertCount(2, $this->calculadora->calcular($nueva));
+        $servicio->confirmarProduccion($nueva->id, 17);
+        $this->assertSame(2, ConsumoProduccion::where('produccion_id', $nueva->id)->count());
+        $this->assertSame($consumos[0], $this->filas('consumos_produccion')[0]);
+    }
+
+    public function test_formulario_restaura_filas_y_decimales_escapa_observaciones_y_respeta_permiso_crear(): void
+    {
+        $this->prepararVistas();
+        $datos = $this->datosMateriales();
+        $datos['materiales'][1]['observacion'] = '<script>alert(1)</script>';
+        session()->flashInput($datos);
+        $html = (new MaterialProductoController)->create()->render();
+        $this->assertStringContainsString('Agregar materiales al producto', $html);
+        $this->assertStringContainsString('name="materiales[0][inventario_compra_id]"', $html);
+        $this->assertStringContainsString('name="materiales[1][cantidad_requerida]" value="0.1234567891"', $html);
+        $this->assertStringContainsString('value="0.0000000001"', $html);
+        $this->assertStringContainsString('&lt;script&gt;alert(1)&lt;/script&gt;', $html);
+        $this->assertStringNotContainsString('<script>alert(1)</script>', $html);
+        $this->assertStringContainsString('id="plantilla-material"', $html);
+        $this->assertStringContainsString('Guardar materiales', $html);
+        $this->assertStringNotContainsString('name="estado"', $html);
+        $container = Container::getInstance();
+        $gate = new Gate($container, fn () => new User);
+        $gate->before(fn () => false);
+        $container->instance(GateContract::class, $gate);
+        $html = (new MaterialProductoController)->create()->render();
+        $this->assertStringNotContainsString('Guardar materiales', $html);
+        $this->assertStringNotContainsString('+ Agregar material', $html);
+        $this->assertStringNotContainsString('>Quitar fila<', $html);
+    }
+
+    public function test_selectores_de_creacion_y_edicion_cargan_todo_el_catalogo_activo_con_mas_de_nueve_materiales(): void
+    {
+        $this->prepararVistas();
+        DB::table('inventarios_compra')->where('id', 7)->update(['nombre' => 'Alambre de plata 925']);
+        $base = (array) DB::table('inventarios_compra')->where('id', 7)->first();
+        foreach (range(55, 79) as $id) {
+            DB::table('inventarios_compra')->insert(array_replace($base, ['id' => $id, 'nombre' => 'Materia prima '.$id]));
+        }
+        DB::table('inventarios_compra')->insert(array_replace($base, ['id' => 99, 'nombre' => 'Materia prima inactiva', 'estado' => false]));
+        $controller = new MaterialProductoController;
+        $ancla = MaterialProducto::firstOrFail();
+        session()->flashInput(['producto_id' => 3, 'materiales' => [
+            ['inventario_compra_id' => 79, 'cantidad_requerida' => '0.25'],
+        ]]);
+        foreach ([$controller->create(), $controller->edit($ancla)] as $vista) {
+            $this->assertCount(27, $vista->getData()['inventariosCompra']);
+            $documento = new \DOMDocument;
+            $documento->loadHTML('<?xml encoding="UTF-8">'.$vista->render(), LIBXML_NOERROR | LIBXML_NOWARNING);
+            $xpath = new \DOMXPath($documento);
+            foreach (['//tbody[@id="lineas-materiales"]', '//template[@id="plantilla-material"]'] as $contenedor) {
+                $selector = $contenedor.'//select[@data-campo="inventario_compra_id"]';
+                $this->assertSame(28, $xpath->query($selector.'/option')->length);
+                $alambre = $xpath->query($selector.'/option[2]')->item(0);
+                $this->assertSame('7', $alambre->getAttribute('value'));
+                $this->assertSame('Alambre de plata 925', $alambre->getAttribute('data-nombre'));
+                $this->assertSame('7 · Alambre de plata 925', $alambre->textContent);
+                $this->assertSame(1, $xpath->query($selector.'/option[@value="79"]')->length);
+                $this->assertSame(0, $xpath->query($selector.'/option[@value="99"]')->length);
+                $this->assertSame(1, $xpath->query($contenedor.'//input[@data-buscar-material]')->length);
+                $this->assertStringContainsString('27 materiales activos disponibles', $xpath->query($contenedor.'//*[@data-total-materiales]')->item(0)->textContent);
+            }
+            $this->assertSame(1, $xpath->query('//tbody[@id="lineas-materiales"]//option[@value="79" and @selected]')->length);
+        }
     }
 
     public function test_create_edit_show_muestran_estimacion_y_no_modifican_inventario(): void
@@ -495,6 +688,376 @@ class BorradoresProduccionTest extends CompraInventarioTestCase
         $this->assertSame($antes, $this->snapshot());
     }
 
+    public function test_ver_y_editar_desde_cualquier_linea_muestran_componentes_vigentes_e_historial(): void
+    {
+        $this->prepararVistas();
+        $segunda = $this->crearMaterial('0.2500000000', 44);
+        $segunda->update(['estado' => false, 'observacion' => 'Material histórico']);
+        $antes = $this->snapshot();
+        $controller = new MaterialProductoController;
+        foreach ([$controller->show($segunda), $controller->edit($segunda)] as $vista) {
+            $this->assertCount(2, $vista->getData()['producto']->materialesProducto);
+            $html = $vista->render();
+            foreach (['Material A', 'Material B', '0.1234567890', '0.2500000000', 'Material histórico'] as $texto) {
+                $this->assertStringContainsString($texto, $html);
+            }
+            $this->assertStringContainsString('Componentes retirados', $html);
+            $this->assertStringNotContainsString('Inactivar material', $html);
+            $this->assertStringNotContainsString('type="checkbox"', $html);
+        }
+        $html = $controller->edit(MaterialProducto::firstOrFail())->render();
+        $this->assertStringNotContainsString('name="materiales[1][id]" value="'.$segunda->id.'"', $html);
+        $this->assertStringContainsString('name="huella_receta"', $html);
+        $this->assertGreaterThan(strpos($html, '</template>'), strpos($html, 'name="huella_receta"'));
+        $this->assertStringContainsString('Guardar receta', $html);
+        $this->assertSame($antes, $this->snapshot());
+    }
+
+    public function test_listado_agrupa_por_producto_y_filtra_componentes_vigentes_y_estado_general(): void
+    {
+        $this->prepararVistas();
+        $segunda = $this->crearMaterial('0.2500000000', 44);
+        $otra = MaterialProducto::create(['producto_id' => 5, 'inventario_compra_id' => 7, 'cantidad_requerida' => '0.5000000000', 'estado' => false]);
+        DB::table('productos')->where('id', 5)->update(['receta_activa' => false]);
+        $controller = new MaterialProductoController;
+        $vista = $controller->index(Request::create('/', 'GET'));
+        $this->assertSame(2, $vista->getData()['recetas']->total());
+        $this->assertSame([5, 3], $vista->getData()['recetas']->pluck('id')->all());
+        $this->assertStringContainsString('Ver receta', $vista->render());
+        $filtrada = $controller->index(Request::create('/', 'GET', ['material' => 'Material B', 'cantidad_requerida' => '0.25', 'estado' => '1']));
+        $this->assertSame(1, $filtrada->getData()['recetas']->total());
+        $this->assertCount(2, $filtrada->getData()['recetas']->first()->materialesProducto);
+        $this->assertStringContainsString('Material A', $filtrada->render());
+        $sinCoincidencia = $controller->index(Request::create('/', 'GET', ['material' => 'Material B', 'cantidad_requerida' => '0.1234567890']));
+        $this->assertSame(0, $sinCoincidencia->getData()['recetas']->total());
+        $porId = $controller->index(Request::create('/', 'GET', ['id' => $segunda->id]))->getData()['recetas'];
+        $this->assertSame([3], $porId->pluck('id')->all());
+        $this->assertCount(2, $porId->first()->materialesProducto);
+        $this->assertSame([5], $controller->index(Request::create('/', 'GET', ['id' => $otra->id]))->getData()['recetas']->pluck('id')->all());
+        $this->assertSame(0, $controller->index(Request::create('/', 'GET', ['id' => 999]))->getData()['recetas']->total());
+        $this->assertSame(1, $controller->index(Request::create('/', 'GET', ['estado' => '1']))->getData()['recetas']->total());
+        $this->assertSame([5], $controller->index(Request::create('/', 'GET', ['estado' => '0']))->getData()['recetas']->pluck('id')->all());
+        $this->assertSame(0, $controller->index(Request::create('/', 'GET', ['id' => $segunda->id, 'material' => 'Material A']))->getData()['recetas']->total());
+    }
+
+    public function test_editar_receta_modifica_agrega_y_retira_sin_reescribir_consumos_confirmados(): void
+    {
+        $this->crearMaterial('0.2500000000', 44);
+        $nuevoInventario = (array) DB::table('inventarios_compra')->where('id', 7)->first();
+        DB::table('inventarios_compra')->insert(array_replace($nuevoInventario, ['id' => 55, 'nombre' => 'Material C']));
+        $produccion = Produccion::create($this->datosProduccion() + ['user_id' => 17]);
+        $servicio = new ProduccionInventarioService(new InventarioCompraService, $this->calculadora);
+        $servicio->confirmarProduccion($produccion->id, 17);
+        $historial = $this->filas('consumos_produccion');
+        $antes = $this->snapshot();
+        $ancla = MaterialProducto::firstOrFail();
+        $ids = MaterialProducto::where('producto_id', 3)->pluck('id')->all();
+        $datos = $this->datosEdicionReceta($ancla);
+        $datos['materiales'][0]['cantidad_requerida'] = '0.5000000000';
+        array_pop($datos['materiales']);
+        $datos['materiales'][] = ['inventario_compra_id' => 55, 'cantidad_requerida' => '0.1'];
+        (new MaterialProductoController)->update(Request::create('/', 'PUT', $datos), $ancla);
+        $lineas = MaterialProducto::where('producto_id', 3)->orderBy('id')->get();
+        $this->assertCount(3, $lineas);
+        $this->assertSame($ids, $lineas->take(2)->modelKeys());
+        $this->assertSame('0.5000000000', $lineas[0]->cantidad_requerida);
+        $this->assertFalse($lineas[1]->estado);
+        $this->assertSame($antes, $this->snapshot());
+        $nueva = Produccion::create($this->datosProduccion() + ['user_id' => 17]);
+        $servicio->confirmarProduccion($nueva->id, 17);
+        $this->assertSame([7, 55], ConsumoProduccion::where('produccion_id', $nueva->id)->orderBy('inventario_compra_id')->pluck('inventario_compra_id')->all());
+        $this->assertSame($historial, array_slice($this->filas('consumos_produccion'), 0, 2));
+    }
+
+    public function test_edicion_rechaza_identidades_ajenas_duplicados_y_solicitudes_truncadas(): void
+    {
+        $this->crearMaterial('0.2500000000', 44);
+        $inventario = (array) DB::table('inventarios_compra')->where('id', 7)->first();
+        DB::table('inventarios_compra')->insert(array_replace($inventario, ['id' => 55, 'nombre' => 'Material C']));
+        $ancla = MaterialProducto::firstOrFail();
+        $base = $this->datosEdicionReceta($ancla);
+        $omisiones = $base;
+        array_pop($omisiones['materiales']);
+        unset($omisiones['huella_receta']);
+        $otroId = $base;
+        $otroId['materiales'][0]['id'] = 999;
+        $otroMaterial = $base;
+        $otroMaterial['materiales'][0]['inventario_compra_id'] = 55;
+        $repetido = $base;
+        $repetido['materiales'][] = ['inventario_compra_id' => 7, 'cantidad_requerida' => '0.1'];
+        $cantidadInvalida = $base;
+        $cantidadInvalida['materiales'][1]['cantidad_requerida'] = '0';
+        $antes = $this->filas('materiales_producto');
+        foreach ([$omisiones, $otroId, $otroMaterial, $repetido, $cantidadInvalida, array_replace($base, ['producto_id' => 5])] as $datos) {
+            $this->rechaza(fn () => (new MaterialProductoController)->update(Request::create('/', 'PUT', $datos), $ancla), ValidationException::class);
+            $this->assertSame($antes, $this->filas('materiales_producto'));
+        }
+    }
+
+    public function test_formulario_obsoleto_no_sobrescribe_cambios_ni_materiales_agregados_por_otro_usuario(): void
+    {
+        $ancla = MaterialProducto::firstOrFail();
+        $anterior = $this->datosEdicionReceta($ancla);
+        $nuevo = $anterior;
+        $nuevo['materiales'][0]['cantidad_requerida'] = '0.5';
+        (new MaterialProductoController)->update(Request::create('/', 'PUT', $nuevo), $ancla);
+        $guardado = $this->filas('materiales_producto');
+        try {
+            (new MaterialProductoController)->update(Request::create('/', 'PUT', $anterior), $ancla);
+            $this->fail('El formulario anterior debe rechazarse.');
+        } catch (ValidationException $excepcion) {
+            $this->assertArrayHasKey('receta', $excepcion->errors());
+        }
+        $this->assertSame($guardado, $this->filas('materiales_producto'));
+        $anterior = $this->datosEdicionReceta($ancla);
+        $this->crearMaterial('0.25', 44);
+        $guardado = $this->filas('materiales_producto');
+        $this->rechaza(fn () => (new MaterialProductoController)->update(Request::create('/', 'PUT', $anterior), $ancla), ValidationException::class);
+        $this->assertSame($guardado, $this->filas('materiales_producto'));
+    }
+
+    public function test_fallo_al_guardar_ultima_linea_de_la_edicion_revierte_toda_la_receta(): void
+    {
+        $segunda = $this->crearMaterial('0.25', 44);
+        $ancla = MaterialProducto::firstOrFail();
+        $datos = $this->datosEdicionReceta($ancla);
+        $datos['materiales'][0]['cantidad_requerida'] = '0.5';
+        $datos['materiales'][1]['cantidad_requerida'] = '0.75';
+        $antes = $this->filas('materiales_producto');
+        MaterialProducto::updating(fn ($linea) => $linea->id === $segunda->id ? false : null);
+        $this->rechaza(fn () => (new MaterialProductoController)->update(Request::create('/', 'PUT', $datos), $ancla), RuntimeException::class);
+        $this->assertSame($antes, $this->filas('materiales_producto'));
+    }
+
+    public function test_modificar_edita_toda_la_composicion_y_eliminar_controla_solo_el_estado_general(): void
+    {
+        $ancla = MaterialProducto::firstOrFail();
+        $base = $this->datosEdicionReceta($ancla);
+        $antes = $this->filas('materiales_producto');
+        $this->permisosReceta(['materiales_producto.ver']);
+        $this->rechaza(fn () => (new MaterialProductoController)->update(Request::create('/', 'PUT', $base), $ancla), AuthorizationException::class);
+        $this->rechaza(fn () => (new MaterialProductoController)->cambiarEstado($ancla), AuthorizationException::class);
+        $this->assertSame($antes, $this->filas('materiales_producto'));
+
+        $this->permisosReceta(['materiales_producto.modificar', 'materiales_producto.ver']);
+        $base['materiales'][0]['cantidad_requerida'] = '0.5';
+        $base['materiales'][] = ['inventario_compra_id' => 44, 'cantidad_requerida' => '0.1'];
+        (new MaterialProductoController)->update(Request::create('/', 'PUT', $base), $ancla);
+        $this->assertSame('0.5000000000', $ancla->fresh()->cantidad_requerida);
+        $html = (new MaterialProductoController)->edit($ancla)->render();
+        $this->assertStringContainsString('Guardar receta', $html);
+        $this->assertStringContainsString('+ Agregar material', $html);
+        $this->assertStringContainsString('Quitar fila', $html);
+        $this->assertStringNotContainsString('type="checkbox"', $html);
+        $this->assertStringNotContainsString('Inactivar receta', (new MaterialProductoController)->show($ancla)->render());
+
+        $datos = $this->datosEdicionReceta($ancla);
+        array_shift($datos['materiales']);
+        (new MaterialProductoController)->update(Request::create('/', 'PUT', $datos), $ancla);
+        $this->assertFalse($ancla->fresh()->estado);
+        $this->assertTrue(Producto::findOrFail(3)->receta_activa);
+        $this->permisosReceta(['materiales_producto.ver']);
+        $html = (new MaterialProductoController)->index(Request::create('/'))->render();
+        $this->assertStringNotContainsString('Editar receta', $html);
+        $this->assertStringNotContainsString('Inactivar receta', $html);
+        $this->permisosReceta(['materiales_producto.ver', 'materiales_producto.eliminar']);
+        $this->assertStringContainsString('Inactivar receta', (new MaterialProductoController)->index(Request::create('/'))->render());
+        (new MaterialProductoController)->cambiarEstado($ancla);
+        $this->assertFalse(Producto::findOrFail(3)->receta_activa);
+    }
+
+    public function test_activar_receta_exige_producto_componentes_e_insumos_validos(): void
+    {
+        $ancla = MaterialProducto::firstOrFail();
+        $this->datosEdicionReceta($ancla);
+        DB::table('productos')->where('id', 3)->update(['receta_activa' => false]);
+        $controller = new MaterialProductoController;
+        DB::table('inventarios_compra')->where('id', 7)->update(['estado' => false]);
+        $this->assertStringContainsString('Insumo inactivo', $controller->show($ancla)->render());
+        $this->rechaza(fn () => $controller->cambiarEstado($ancla), ValidationException::class);
+        DB::table('inventarios_compra')->where('id', 7)->update(['estado' => true]);
+        DB::table('productos')->where('id', 3)->update(['estado' => false]);
+        $this->rechaza(fn () => $controller->cambiarEstado($ancla), ValidationException::class);
+        DB::table('productos')->where('id', 3)->update(['estado' => true]);
+        $ancla->update(['estado' => false]);
+        $this->rechaza(fn () => $controller->cambiarEstado($ancla), ValidationException::class);
+        $ancla->update(['estado' => true, 'cantidad_requerida' => '0']);
+        $this->rechaza(fn () => $controller->cambiarEstado($ancla), ValidationException::class);
+        $this->assertFalse(Producto::findOrFail(3)->receta_activa);
+        $ancla->update(['cantidad_requerida' => '0.1234567890']);
+        $controller->cambiarEstado($ancla);
+        $this->assertTrue(Producto::findOrFail(3)->receta_activa);
+        $this->assertTrue($ancla->fresh()->estado);
+        $this->assertSame(1, MaterialProducto::count());
+    }
+
+    public function test_edicion_rechaza_alta_de_insumo_inactivo_aunque_las_otras_lineas_sean_validas(): void
+    {
+        $ancla = MaterialProducto::firstOrFail();
+        $datos = $this->datosEdicionReceta($ancla);
+        $datos['materiales'][0]['cantidad_requerida'] = '0.5';
+        $datos['materiales'][] = ['inventario_compra_id' => 44, 'cantidad_requerida' => '1'];
+        DB::table('inventarios_compra')->where('id', 44)->update(['estado' => false]);
+        $antes = $this->filas('materiales_producto');
+        $this->rechaza(fn () => (new MaterialProductoController)->update(Request::create('/', 'PUT', $datos), $ancla), ValidationException::class);
+        $this->assertSame($antes, $this->filas('materiales_producto'));
+    }
+
+    public function test_filtros_estan_bajo_los_titulos_y_el_boton_afecta_la_receta_completa(): void
+    {
+        $this->prepararVistas();
+        $segunda = $this->crearMaterial('0.2500000000', 44);
+        $primera = MaterialProducto::firstOrFail();
+        $controller = new MaterialProductoController;
+        $documento = new \DOMDocument;
+        $documento->loadHTML('<?xml encoding="UTF-8">'.$controller->index(Request::create('/'))->render(), LIBXML_NOERROR | LIBXML_NOWARNING);
+        $xpath = new \DOMXPath($documento);
+        $this->assertSame(2, $xpath->query('//table/thead/tr')->length);
+        $this->assertSame('table-dark', $xpath->query('//table/thead/tr[1]')->item(0)->getAttribute('class'));
+        $this->assertSame(6, $xpath->query('//table/thead/tr[1]/th')->length);
+        $this->assertSame(6, $xpath->query('//table/thead/tr[2]/th')->length);
+        foreach (['id', 'producto', 'material', 'observacion', 'estado'] as $campo) {
+            $nodo = $xpath->query('//table/thead/tr[2]//*[@name="'.$campo.'"]');
+            $this->assertSame(1, $nodo->length);
+            $this->assertSame('filtros', $nodo->item(0)->getAttribute('form'));
+        }
+        $this->assertSame(1, $xpath->query('//tbody//form')->length);
+        $this->assertSame(2, $xpath->query('//tbody/tr')->length);
+        $this->assertSame('ID material', $xpath->query('//table/thead/tr[1]/th[1]')->item(0)->textContent);
+        $this->assertSame('#'.$primera->id, trim($xpath->query('//tbody/tr[1]/td[1]')->item(0)->textContent));
+        $this->assertSame('#'.$segunda->id, trim($xpath->query('//tbody/tr[2]/td[1]')->item(0)->textContent));
+        $this->assertFalse($xpath->query('//tbody/tr[1]/td[1]')->item(0)->hasAttribute('rowspan'));
+        $this->assertSame('2', $xpath->query('//tbody/tr[1]/td[2]')->item(0)->getAttribute('rowspan'));
+        $this->assertStringContainsString('Material B', $xpath->query('//tbody/tr[2]/td[2]')->item(0)->textContent);
+        $this->assertStringContainsString('Sin observación', $xpath->query('//tbody/tr[2]/td[3]')->item(0)->textContent);
+        $html = $controller->show(MaterialProducto::firstOrFail())->render();
+        $this->assertSame(1, substr_count($html, '>Inactivar receta</button>'));
+        $this->assertStringNotContainsString('Inactivar material', $html);
+    }
+
+    public function test_estado_general_conserva_componentes_y_rechaza_formularios_abiertos_antes_del_cambio(): void
+    {
+        $retirado = $this->crearMaterial('0.25', 44);
+        $retirado->update(['estado' => false]);
+        $ancla = MaterialProducto::firstOrFail();
+        $datos = $this->datosEdicionReceta($ancla);
+        $lineas = $this->filas('materiales_producto');
+        $antes = $this->snapshot();
+        $controller = new MaterialProductoController;
+        $controller->cambiarEstado($retirado);
+        $this->assertFalse(Producto::findOrFail(3)->receta_activa);
+        $this->assertTrue(Producto::findOrFail(3)->estado);
+        $this->assertSame($lineas, $this->filas('materiales_producto'));
+        $this->assertSame($antes, $this->snapshot());
+        $this->rechaza(fn () => $controller->update(Request::create('/', 'PUT', $datos), $ancla), ValidationException::class);
+        $controller->cambiarEstado($ancla);
+        $this->assertTrue(Producto::findOrFail(3)->receta_activa);
+        $this->assertFalse($retirado->fresh()->estado);
+        $this->assertSame($lineas, $this->filas('materiales_producto'));
+    }
+
+    public function test_receta_inactiva_bloquea_estimacion_y_confirmacion_sin_reescribir_produccion_historica(): void
+    {
+        $confirmada = Produccion::create($this->datosProduccion() + ['user_id' => 17]);
+        $servicio = new ProduccionInventarioService(new InventarioCompraService, $this->calculadora);
+        $servicio->confirmarProduccion($confirmada->id, 17);
+        $consumos = $this->filas('consumos_produccion');
+        $borrador = Produccion::create($this->datosProduccion() + ['user_id' => 17]);
+        $borrador->load('producto');
+        (new MaterialProductoController)->cambiarEstado(MaterialProducto::firstOrFail());
+        $antes = $this->snapshot();
+        $this->rechaza(fn () => $this->calculadora->calcular($borrador), ValidationException::class);
+        $this->rechaza(fn () => $servicio->confirmarProduccion($borrador->id, 17), ValidationException::class);
+        $this->assertSame($antes, $this->snapshot());
+        $this->assertSame('BORRADOR', $borrador->fresh()->estado_produccion);
+        $this->assertSame($consumos, $this->filas('consumos_produccion'));
+        $this->assertSame('CONFIRMADA', $confirmada->fresh()->estado_produccion);
+        $this->assertFalse(Producto::findOrFail(3)->receta_activa);
+    }
+
+    public function test_reincorporar_componente_reutiliza_su_id_sin_activar_la_receta(): void
+    {
+        $segunda = $this->crearMaterial('0.25', 44);
+        $ancla = MaterialProducto::firstOrFail();
+        DB::table('productos')->where('id', 3)->update(['receta_activa' => false]);
+        $controller = new MaterialProductoController;
+        $datos = $this->datosEdicionReceta($ancla);
+        array_pop($datos['materiales']);
+        $controller->update(Request::create('/', 'PUT', $datos), $ancla);
+        $this->assertFalse($segunda->fresh()->estado);
+        $datos = $this->datosEdicionReceta($ancla);
+        $datos['materiales'][] = ['inventario_compra_id' => 44, 'cantidad_requerida' => '0.75', 'observacion' => 'Reincorporado'];
+        $controller->update(Request::create('/', 'PUT', $datos), $ancla);
+        $this->assertSame(2, MaterialProducto::count());
+        $this->assertTrue($segunda->fresh()->estado);
+        $this->assertSame('0.7500000000', $segunda->fresh()->cantidad_requerida);
+        $this->assertFalse(Producto::findOrFail(3)->receta_activa);
+        // Quitar y volver a agregar la misma materia prima en una edición tampoco duplica la línea.
+        $datos = $this->datosEdicionReceta($ancla);
+        unset($datos['materiales'][1]['id']);
+        $datos['materiales'][1]['cantidad_requerida'] = '0.5';
+        $controller->update(Request::create('/', 'PUT', $datos), $ancla);
+        $this->assertSame(2, MaterialProducto::count());
+        $this->assertSame('0.5000000000', $segunda->fresh()->cantidad_requerida);
+    }
+
+    public function test_fallo_al_guardar_estado_general_no_modifica_la_receta(): void
+    {
+        $ancla = MaterialProducto::firstOrFail();
+        $antes = $this->filas('productos');
+        $lineas = $this->filas('materiales_producto');
+        Producto::updating(fn () => false);
+        $this->rechaza(fn () => (new MaterialProductoController)->cambiarEstado($ancla), RuntimeException::class);
+        $this->assertSame($antes, $this->filas('productos'));
+        $this->assertSame($lineas, $this->filas('materiales_producto'));
+    }
+
+    public function test_migracion_conserva_recetas_anteriores_y_protege_la_reversion(): void
+    {
+        MaterialProducto::create(['producto_id' => 5, 'inventario_compra_id' => 7, 'cantidad_requerida' => '0.5', 'estado' => false]);
+        $lineas = $this->filas('materiales_producto');
+        $migracion = require dirname(__DIR__, 2).'/database/migrations/2026_10_30_000002_agregar_estado_general_recetas.php';
+        $migracion->down();
+        $this->assertFalse(Schema::hasColumn('productos', 'receta_activa'));
+        $migracion->up();
+        $this->assertTrue(Producto::findOrFail(3)->receta_activa);
+        $this->assertFalse(Producto::findOrFail(5)->receta_activa);
+        $this->assertTrue(Producto::findOrFail(9)->receta_activa);
+        $this->assertSame($lineas, $this->filas('materiales_producto'));
+        $this->rechaza(fn () => $migracion->down(), RuntimeException::class);
+        $this->assertTrue(Schema::hasColumn('productos', 'receta_activa'));
+    }
+
+    private function permisosReceta(array $permisos): void
+    {
+        $gate = new Gate(Container::getInstance(), fn () => new User);
+        $gate->before(fn ($user, $ability) => in_array($ability, $permisos, true));
+        \Illuminate\Support\Facades\Gate::swap($gate);
+    }
+
+    private function datosEdicionReceta(MaterialProducto $ancla): array
+    {
+        if ($this->directorioVistas === null) {
+            $this->prepararVistas();
+        }
+        $datos = (new MaterialProductoController)->edit($ancla)->getData();
+
+        return ['producto_id' => $datos['producto']->id, 'huella_receta' => $datos['huellaReceta'],
+            'materiales' => $datos['materialesActuales']->map(fn ($linea) => [
+                'id' => $linea->id, 'inventario_compra_id' => $linea->inventario_compra_id,
+                'cantidad_requerida' => $linea->getRawOriginal('cantidad_requerida'),
+                'observacion' => $linea->observacion,
+            ])->all()];
+    }
+
+    private function datosMateriales(array $cambios = []): array
+    {
+        return array_replace(['producto_id' => 5, 'materiales' => [
+            ['inventario_compra_id' => 7, 'cantidad_requerida' => '0.0000000001'],
+            ['inventario_compra_id' => 44, 'cantidad_requerida' => '0.1234567891', 'observacion' => 'Material por unidad'],
+        ]], $cambios);
+    }
+
     private function crearMaterial(string $cantidad = '0.1234567890', int $inventarioId = 7): MaterialProducto
     {
         return MaterialProducto::create(['producto_id' => 3, 'inventario_compra_id' => $inventarioId,
@@ -524,7 +1087,7 @@ class BorradoresProduccionTest extends CompraInventarioTestCase
 
             public function compileSelect(Builder $query)
             {
-                if ($query->lock) {
+                if ($query->lock !== null) {
                     $this->bloqueos[] = ['tabla' => $query->from, 'parametros' => $query->getBindings(),
                         'transaccion' => $query->getConnection()->transactionLevel()];
                 }

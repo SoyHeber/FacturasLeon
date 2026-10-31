@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\MaterialProducto;
 use App\Models\Produccion;
+use App\Models\Producto;
 use Brick\Math\BigDecimal;
 use Brick\Math\Exception\MathException;
 use Illuminate\Validation\ValidationException;
@@ -52,9 +53,21 @@ class CalculadoraProduccionService
         return (string) $decimal;
     }
 
+    /**
+     * Calcula el consumo de una producción con la receta vigente, sin mover existencias.
+     * Consulta el estado actual del producto para rechazar una receta inactiva aunque
+     * el llamador conserve una relación cargada antes del cambio. Multiplica cantidades
+     * por unidad con hasta 10 decimales exactos y rechaza vacíos o desbordamientos.
+     * La confirmación utiliza este cálculo bajo el bloqueo del producto; las anulaciones
+     * conservan sus consumos históricos y no dependen de la disponibilidad de la receta.
+     */
     public function calcular(Produccion $produccion): array
     {
         $cantidad = $this->normalizarCantidadProduccion($produccion->getAttributes()['cantidad'] ?? null);
+        $producto = Producto::findOrFail($produccion->producto_id);
+        if (! $producto->receta_activa) {
+            throw ValidationException::withMessages(['receta' => 'La receta del producto está inactiva. Actívela antes de utilizarla en producción.']);
+        }
         $materiales = MaterialProducto::with('inventarioCompra')
             ->where('producto_id', $produccion->producto_id)
             ->where('estado', true)

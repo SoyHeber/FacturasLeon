@@ -30,6 +30,21 @@ use Tests\Support\ProduccionInventarioTestCase;
 
 class AnulacionProduccionInventarioTest extends ProduccionInventarioTestCase
 {
+    public function test_anular_confirmada_con_receta_inactiva_usa_snapshot_y_restaura_existencias(): void
+    {
+        $cantidades = DB::table('inventarios_compra')->orderBy('id')->pluck('cantidad', 'id')->all();
+        $this->confirmar();
+        $consumos = ConsumoProduccion::orderBy('id')->get()->map->getAttributes()->all();
+        DB::table('productos')->where('id', 3)->update(['receta_activa' => false]);
+        $calculadora = Mockery::mock(CalculadoraProduccionService::class);
+        $calculadora->shouldNotReceive('calcular');
+        $anulada = $this->servicioProduccion(null, $calculadora)->anularProduccion($this->produccion->id, 17);
+        $this->assertSame('ANULADA', $anulada->estado_produccion);
+        $this->assertSame($consumos, ConsumoProduccion::orderBy('id')->get()->map->getAttributes()->all());
+        $this->assertSame($cantidades, DB::table('inventarios_compra')->orderBy('id')->pluck('cantidad', 'id')->all());
+        $this->assertFalse((bool) DB::table('productos')->where('id', 3)->value('receta_activa'));
+    }
+
     public function test_cancelar_borrador_solo_registra_estado_fecha_y_usuario(): void
     {
         $antes = $this->snapshot();

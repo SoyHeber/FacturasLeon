@@ -23,6 +23,7 @@ class Producto extends Model
 
     protected $casts = [
         'estado' => 'boolean',
+        'receta_activa' => 'boolean',
     ];
 
     public function categoria()
@@ -38,5 +39,10 @@ class Producto extends Model
     public function inventarios()
     {
         return $this->hasOne(Inventario::class);
+    }
+
+    public function materialesProducto()
+    {
+        return $this->hasMany(MaterialProducto::class)->orderBy('id');
     }
 }

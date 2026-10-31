@@ -82,6 +82,23 @@
 - Revisar CLAUDE.md antes de realizar cambios.
 - Si la documentación y el código o el entorno difieren, verificar la fuente correspondiente e informar la diferencia; no ampliar el alcance para corregirla sin autorización.
 
+## Respeto del diseño y la estructura existentes
+
+- Antes de modificar una pantalla, revisar su diseño actual y un módulo equivalente que sirva de referencia.
+- Conservar los patrones existentes de encabezados, tarjetas, tablas, colores, botones, estados, formularios, filtros y paginación; reutilizar el layout, Bootstrap y las clases del proyecto.
+- En los listados que siguen el patrón de Productos, colocar los filtros en la segunda fila del encabezado de la tabla, debajo de los títulos y alineados con sus columnas. No trasladarlos a un panel separado sin autorización explícita para cambiar el diseño.
+- No rediseñar ni reorganizar una pantalla por iniciativa propia. Si la solución requiere cambiar su estructura, explicar el motivo y obtener autorización antes de hacerlo.
+- Comprobar que el resultado conserva la distribución y las acciones esperadas, incluida su presentación en pantallas pequeñas. Distinguir una revisión del HTML de una comprobación visual en el navegador.
+
+## Revisión integral de los módulos
+
+- Aunque la solicitud mencione una sola vista o función, revisar el módulo completo: listado, creación, consulta, edición, guardado, actualización y cambio de estado.
+- Revisar también las rutas, permisos, validaciones, modelos y servicios relacionados, y los procesos que utilizan sus datos, para detectar efectos sobre inventario, integraciones e historial.
+- Mantener un comportamiento coherente en todas las pantallas afectadas. Las acciones deben operar sobre la entidad solicitada; por ejemplo, inactivar una receta completa no debe convertirse en una inactivación manual de cada material.
+- Verificar que las acciones visibles funcionan y respetan los permisos, y que las modificaciones conservan la trazabilidad, los estados y las restricciones existentes.
+- La revisión integral no autoriza cambios ajenos al alcance aprobado. Presentar las ampliaciones necesarias y esperar autorización antes de escribirlas; comunicar los demás hallazgos como propuestas.
+- Al entregar, indicar qué partes del módulo se revisaron, cuáles se probaron y qué comprobaciones visuales o funcionales quedan pendientes.
+
 ## Calidad del código y anti-slop
 
 - Implementar soluciones proporcionales al problema y al alcance autorizado.
